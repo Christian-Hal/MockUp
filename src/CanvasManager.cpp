@@ -27,11 +27,17 @@ Canvas& CanvasManager::createCanvas(int width, int height, std::string name)
 
 void CanvasManager::undo()
 {
+    if (!activeCanvas) {
+        return;
+    }
     activeCanvas->undo();
 }
 
 void CanvasManager::redo()
 {
+    if (!activeCanvas) {
+        return;
+    }
     activeCanvas->redo();
 }
 
@@ -81,8 +87,9 @@ const std::vector<Canvas>& CanvasManager::getOpenCanvases() const
 
 void CanvasManager::setActiveCanvas(int index)
 {
-
-    if (index > 0 && index < canvases.size()){}
+    if (index < 0 || static_cast<size_t>(index) >= canvases.size()) {
+        return;
+    }
     
     Canvas oldCanvasCopy;
     if(this->hasActive()){

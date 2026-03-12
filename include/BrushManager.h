@@ -24,7 +24,7 @@ class BrushManager
         const std::vector<BrushTool>& getLoadedBrushes();
 
         // function for generating and grabbing the brush dab
-        const std::vector<float> generateBrushDab();
+        const std::vector<float> generateBrushDab(int brushSize);
 
     private:
         // list of all loaded brushes

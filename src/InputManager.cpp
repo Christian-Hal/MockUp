@@ -1,28 +1,17 @@
 #include "InputManager.h"
-#include "CanvasManipulation.h"
-#include "Renderer.h"
-#include "CanvasManager.h"
-#include "UI.h"
-#include "BrushManager.h"
-#include "DrawEngine.h"
-#include "ColorPicker.h"
 
 #include "imgui.h"
 
-#include <algorithm>
+#include <cctype>
+#include <string>
+#include <unordered_map>
+#include <utility>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-
-
-Renderer* currRenderer = nullptr;
-extern CanvasManager canvasManager;
-
-extern UI ui;
-extern Globals global;
-CanvasManipulation canvasManipulation;
+// Mouse event callback functions
+static InputManager::MouseMoveCallback mouseMoveCallback;
+static InputManager::MouseButtonCallback mouseButtonCallback;
+static InputManager::MouseScrollCallback mouseScrollCallback;
+static InputManager::InputActionCallback inputActionCallback;
 
 // current, previous, and the delta of the x,y coordinates of the cursor
 double currX = 0; 
@@ -35,13 +24,23 @@ double deltaY = 0;
 // map for the mouse buttons to see if pressed
 std::unordered_map<int, bool> CurrentMouse;
 
-// maps for key bindings look up and deletion
-// the first map uses keycombo to use functions related to the InputAction
-std::unordered_map<KeyCombo, std::function<void()>, KeyComboHash> KeyBindings;
-std::unordered_map<InputAction, KeyCombo> ActionToKey;
+// uses the current mouse information to build a MouseState struct to give to AppController
+static MouseState buildMouseState()
+{
+	return MouseState{
+		currX,
+		currY,
+		deltaX,
+		deltaY,
+		CurrentMouse[GLFW_MOUSE_BUTTON_LEFT],
+		CurrentMouse[GLFW_MOUSE_BUTTON_RIGHT]
+	};
+}
 
-bool temp1;
-bool temp2;
+// maps for key bindings look up and deletion
+// Key combo -> InputAction lookup used by keyboardCallBack.
+std::unordered_map<KeyCombo, InputAction, KeyComboHash> KeyBindings;
+std::unordered_map<InputAction, KeyCombo> ActionToKey;
 
 // used for "turning on" rebind mode
 static bool WaitingForRebind = false;
@@ -52,14 +51,27 @@ static bool RebindFailed = false;
 // InputAction attempting to rebind
 static InputAction RebindTarget;
 
-// Reference to the DrawEngine object
-extern DrawEngine drawEngine;
-
-// set the glfw callback funcitons up
-void InputManager::init(GLFWwindow* window, Renderer* renderer)
+// Binds the mouse callback functions
+void InputManager::bindMouseCallbacks(
+	MouseMoveCallback moveCb,
+	MouseButtonCallback buttonCb,
+	MouseScrollCallback scrollCb)
 {
-	currRenderer = renderer;
+	// Store AppController handlers for later dispatch from GLFW callbacks.
+	mouseMoveCallback = std::move(moveCb);
+	mouseButtonCallback = std::move(buttonCb);
+	mouseScrollCallback = std::move(scrollCb);
+}
 
+void InputManager::bindInputActionCallback(InputActionCallback actionCb)
+{
+	// Store AppController keyboard handler for InputAction dispatch.
+	inputActionCallback = std::move(actionCb);
+}
+
+// set the glfw callback functions up
+void InputManager::init(GLFWwindow* window)
+{
 	glfwSetMouseButtonCallback(window, mouseButtonCallBack);
 	glfwSetCursorPosCallback(window, cursorPosCallBack);
 	glfwSetScrollCallback(window, scrollCallBack);
@@ -85,27 +97,6 @@ void InputManager::update()
 
 	lastX = currX;
 	lastY = currY;
-
-
-	if (IsMousePressed(GLFW_MOUSE_BUTTON_LEFT) )
-	{
-		switch (ui.getCursorMode())
-		{
-		case UI::CursorMode::Pan:
-			canvasManipulation.panning(deltaX, deltaY);
-			break;
-		case UI::CursorMode::Rotate:
-			canvasManipulation.rotating(currX, currY);
-			break;
-		case UI::CursorMode::ColorPick:
-			ColorPicker::pickColor(currX, currY);
-		}
-	}  
-
-	else if (IsMousePressed(GLFW_MOUSE_BUTTON_RIGHT))
-	{
-		ColorPicker::pickColor(currX, currY);
-	}
 }
 
 // returns the true/false for the part of the mouse run through this function
@@ -125,58 +116,41 @@ double InputManager::getMouseDeltaY() { return deltaY; }
 // callback function for the mouse buttons
 void InputManager::mouseButtonCallBack(GLFWwindow* window, int button, int action, int mods)
 {
-	if (!currRenderer || ImGui::GetIO().WantCaptureMouse)
+	if (ImGui::GetIO().WantCaptureMouse)
 		return;
 
-	// turning the mouse buttons to true on press and false on release
-	// depending on the cursormode currently selected, the respective operation will start
 	if (action == GLFW_PRESS) {
 		CurrentMouse[button] = true;
-
-		if (button == GLFW_MOUSE_BUTTON_LEFT && !CurrentMouse[GLFW_MOUSE_BUTTON_RIGHT])
-		{
-			switch (ui.getCursorMode())
-			{
-			case UI::CursorMode::Rotate:
-				canvasManipulation.startRotate(currX, currY);
-				break;
-			case UI::CursorMode::ZoomIn:
-				canvasManipulation.zooming(1, 0.1, currX, currY, window);
-				break;
-			case UI::CursorMode::ZoomOut:
-				canvasManipulation.zooming(-1, 0.1, currX, currY, window);
-				break;
-			case UI::CursorMode::Draw:
-				if (canvasManager.hasActive())
-					drawEngine.start();
-				break;
-			case UI::CursorMode::Erase:
-				if (canvasManager.hasActive())
-					drawEngine.start();
-				break;
-			}
-		}
 	}
-
 	else if (action == GLFW_RELEASE) {
-		// tell the drawEngine to stop drawing when mouse released
-		if (button == GLFW_MOUSE_BUTTON_LEFT && drawEngine.isDrawing())
-			drawEngine.stop();
-
 		CurrentMouse[button] = false;
 	}
 
+	// Forward the raw button event and current mouse snapshot to AppController.
+	if (mouseButtonCallback) {
+		mouseButtonCallback(buildMouseState(), button, action, mods);
+	}
 }
 
 // cursor x,y position callback, when left mouse button is pressed based on the mode, does the respective thing
 // also consistenly updates the currX/currY with new x,y corrdinates when mouse moves
 void InputManager::cursorPosCallBack(GLFWwindow* window, double xpos, double ypos)
 {
-	if (!currRenderer || ImGui::GetIO().WantCaptureMouse)
+	if (ImGui::GetIO().WantCaptureMouse)
 		return;
+
+	lastX = currX;
+	lastY = currY;
+	deltaX = xpos - currX;
+	deltaY = ypos - currY;
 
 	currX = xpos;
 	currY = ypos;
+
+	// Forward move events continuously so controller can process drag behavior.
+	if (mouseMoveCallback) {
+		mouseMoveCallback(buildMouseState());
+	}
 }
 
 // scoll wheel call back, used for mouse wheel scrolling and rotating when holding r key
@@ -185,7 +159,10 @@ void InputManager::scrollCallBack(GLFWwindow* window, double xoffset, double yof
 	if (ImGui::GetIO().WantCaptureMouse)
 		return;
 
-	canvasManipulation.zooming(yoffset, 0.1, currX, currY, window);
+	// Forward wheel input with current pointer position for zoom-around-cursor logic.
+	if (mouseScrollCallback) {
+		mouseScrollCallback(buildMouseState(), xoffset, yoffset);
+	}
 
 }
 
@@ -234,9 +211,9 @@ void InputManager::keyboardCallBack(GLFWwindow* window, int key, int scancode, i
 
 		auto temp = KeyBindings.find(combo);
 
-		if (temp != KeyBindings.end())
+		if (temp != KeyBindings.end() && inputActionCallback)
 		{
-			temp->second();
+			inputActionCallback(temp->second);
 		}
 	}
 
@@ -257,47 +234,8 @@ bool InputManager::bindAction(InputAction action, int key, int mods)
 	if (old != ActionToKey.end())
 		KeyBindings.erase(old->second);
 
-	// each InputAction like setRotate, setPan, and etc. have a repective function to them
-	// this set the new combination of keys (combo) to that function
-	// undo and redo are just print statements to the terminal for now
-	switch (action)
-	{
-	case InputAction::setRotate:
-		KeyBindings[combo] = []() { ui.setCursorMode(UI::CursorMode::Rotate); };
-		break;
-
-	case InputAction::setPan:
-		KeyBindings[combo] = []() { ui.setCursorMode(UI::CursorMode::Pan); };
-		break;
-
-	case InputAction::setDraw:
-		KeyBindings[combo] = []() { ui.setCursorMode(UI::CursorMode::Draw); };
-		break;
-
-	case InputAction::setErase:
-		KeyBindings[combo] = []() { ui.setCursorMode(UI::CursorMode::Erase); };
-		break;
-
-	case InputAction::resetView:
-		KeyBindings[combo] = []() { canvasManipulation.centerCamera(); };
-		break;
-
-	case InputAction::setColor:
-		KeyBindings[combo] = []() { ui.setCursorMode(UI::CursorMode::ColorPick); };
-		break;
-
-	case InputAction::undo:
-		KeyBindings[combo] = []() { if (canvasManager.hasActive()) canvasManager.undo(); };
-		break;
-
-	case InputAction::redo:
-		KeyBindings[combo] = []() { if (canvasManager.hasActive()) canvasManager.redo(); };
-		break;
-
-	//case InputAction::setZoomDragging:
-	//	KeyBindings[combo] = []() { canvasManipulation.zoomDragging(deltaY, 0.005, currX, currY); };
-	//	break;
-	}
+	// Store combo -> action mapping; AppController decides what each action does.
+	KeyBindings[combo] = action;
 
 	ActionToKey[action] = combo;
 

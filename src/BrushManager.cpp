@@ -7,9 +7,6 @@
 
 #include "BrushManager.h"
 #include "stb_image.h"
-#include "UI.h"
-
-extern UI ui;
 
 /*
     Init method that loads in the default brushes. 
@@ -34,9 +31,8 @@ void BrushManager::init()
 
 // generates and returns a brush dab of the active brush
 // the dab contains the width, height, and then the values of the tip alpha
-const std::vector<float> BrushManager::generateBrushDab()
+const std::vector<float> BrushManager::generateBrushDab(int brushSize)
 {
-    int brushSize = ui.brushSize;
     int baseW = activeBrush->tipWidth;
     int baseH = activeBrush->tipHeight;
 

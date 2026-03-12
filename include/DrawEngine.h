@@ -1,6 +1,7 @@
 #pragma once
 
 #include "StrokeManager.h"
+#include "Canvas.h"
 
 #include <glm/glm.hpp>
 #include <vector>
@@ -31,19 +32,25 @@ class DrawEngine
 
         bool didStamp = false;
 
+        // functions for updating the current brush dab, color, and canvas for drawing
+        void setBrushDab(std::vector<float> newBrushDab);
+        void setColor(Color newColor);
+        void setCanvas(Canvas& newCanvas);
+
     private:
         StrokeManager strokeManager;
         bool drawing = false;
-        int drawSize;
+        int drawSize = 1;
 
         // variables that store stuff for the drawing code in drawPath
         glm::vec2 prev;                         // last point we moved from
         float distanceSinceLastStamp;           // leftover distance since last stamp
         float spacing;                          // spacing between stamps
         bool hasPrev;
-
-        // the brush dab
-        std::vector<float> brushDab;
+        
+        Canvas* curCanvas = nullptr;            // the canvas we're currently drawing on
+        Color curColor;                         // the color we're currently drawing with
+        std::vector<float> curBrushDab;         // the current brush dab being stamped
 
         // Draw the given event path (list of points) onto the canvas
         void drawPath(const std::vector<glm::vec2>& eventPath);

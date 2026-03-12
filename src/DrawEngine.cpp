@@ -1,30 +1,27 @@
 
+#include "Canvas.h"
 #include "DrawEngine.h"
-#include "UI.h"
 #include "CanvasManager.h"
-#include "BrushManager.h"
 #include "Globals.h"
-
+#include <algorithm>
 #include <iostream>
 
 extern Globals global;
-extern UI ui;
 extern CanvasManager canvasManager;
-extern BrushManager brushManager;
-
-
 
 void DrawEngine::init()
 {
+    // set some default values
     drawing = false;
     spacing = 1;
     hasPrev = false;
-    drawSize = 0;
+    drawSize = 1;
     distanceSinceLastStamp = 0;
+    curCanvas = nullptr;
 
+    // initialize the stroke manager
     strokeManager.init();
 }
-
 
 
 bool DrawEngine::isDrawing()
@@ -32,44 +29,45 @@ bool DrawEngine::isDrawing()
     return drawing;
 }
 
-
-
 void DrawEngine::start()
 {
+    // if missing the information needed to draw then don't draw
+    if (!curCanvas || curBrushDab.size() < 2) {
+        return;
+    }
+
     //std::cout << "Draw engine start!" << std::endl;
     drawing = true;
     didStamp = false;
+
+    // Keep stamp spacing valid; zero causes an infinite loop in drawPath.
+    spacing = 1.0f;
+    drawSize = 1;
+
+    // start the stroke
     strokeManager.beginStroke();
-    canvasManager.getActive().beginStrokeRecord();
+    curCanvas->beginStrokeRecord();
 }
-
-
 
 void DrawEngine::stop()
 {
     //std::cout << "Draw engine stop!" << std::endl;
     drawing = false;
-
     strokeManager.endStroke();
 
     if (!didStamp && hasPrev) stampBrush(prev);
 
     hasPrev = false;
     distanceSinceLastStamp = 0;
-    canvasManager.getActive().endStrokeRecord();
+    if (curCanvas) {
+        curCanvas->endStrokeRecord();
+    }
 }
 
 
 
 void DrawEngine::update()
 {
-    if (brushManager.brushChange || drawSize != ui.brushSize) {
-        brushDab = brushManager.generateBrushDab();
-        spacing = brushManager.getActiveBrush().spacing;
-        drawSize = ui.brushSize;
-        brushManager.brushChange = false;
-    }
-
     if (strokeManager.hasValues()) {
         // Get the smoothed event path from the stroke manager
         std::vector<glm::vec2> eventPath = strokeManager.process();
@@ -81,6 +79,8 @@ void DrawEngine::update()
 
 void DrawEngine::drawPath(const std::vector<glm::vec2>& eventPath)
 {
+    const float stampInterval = std::max(0.001f, spacing * static_cast<float>(drawSize));
+
     // for each smoothed point in the event path
     for (const auto& point : eventPath)
     {
@@ -107,10 +107,10 @@ void DrawEngine::drawPath(const std::vector<glm::vec2>& eventPath)
         float remaining = len;
 
         // this basically checks if theres enough space left to stamp another brush dab
-        while (distanceSinceLastStamp + remaining >= (spacing * drawSize)) 
+        while (distanceSinceLastStamp + remaining >= stampInterval) 
         {
             // how far we need to step to get to the next position
-            float step = (spacing * drawSize) - distanceSinceLastStamp;
+            float step = stampInterval - distanceSinceLastStamp;
 
             // calculate the position of the next stamp and stamp
             glm::vec2 stampPos = prev + dir * step;
@@ -131,15 +131,16 @@ void DrawEngine::drawPath(const std::vector<glm::vec2>& eventPath)
 
 void DrawEngine::stampBrush(glm::vec2 position)
 {
-    // grab the active canvsas
-    Canvas& curCanvas = canvasManager.getActive();
+    if (!curCanvas || curBrushDab.size() < 2) {
+        return;
+    }
 
     // grab all needed information from the brush dab
-    float W = brushDab[0];
-    float H = brushDab[1];
+    float W = curBrushDab[0];
+    float H = curBrushDab[1];
 
     // this copies everything but the first two values, which are the width and height
-    std::vector<float> alpha(brushDab.begin() + 2, brushDab.end());
+    std::vector<float> alpha(curBrushDab.begin() + 2, curBrushDab.end());
 
     // calculate other needed information
     int topLeftX = position.x - (W/ 2);
@@ -154,8 +155,7 @@ void DrawEngine::stampBrush(glm::vec2 position)
                 int finalX = topLeftX + c;
                 int finalY = topLeftY + r;
 
-                //curCanvas.setPixel(finalX, finalY, ui.getColor());
-                curCanvas.blendPixel(finalX, finalY, ui.getColor(), ui.getColor().a/255.0);
+                curCanvas->blendPixel(finalX, finalY, curColor, curColor.a/255.0);
             }
         }
     }
@@ -178,8 +178,12 @@ void DrawEngine::processMousePos(double mouseX, double mouseY)
 // takes in a mouse position and returns the converted pixel coordinates on the current canvas
 glm::vec2 DrawEngine::mouseToCanvasCoords(double mouseX, double mouseY)
  {
-    // grab the current canvas
-	Canvas& curCanvas = canvasManager.getActive();
+    if (!curCanvas) {
+        if (!canvasManager.hasActive()) {
+            return glm::vec2(0.0f, 0.0f);
+        }
+        curCanvas = &canvasManager.getActive();
+    }
 
 	// convert the mouse position to screen space (with y flipped)
 	float screenX = mouseX;
@@ -187,8 +191,8 @@ glm::vec2 DrawEngine::mouseToCanvasCoords(double mouseX, double mouseY)
 
 	// grab the center of the canvas
 	glm::vec2 canvasCenter(
-		curCanvas.getWidth() * 0.5f,
-		curCanvas.getHeight() * 0.5f
+        curCanvas->getWidth() * 0.5f,
+        curCanvas->getHeight() * 0.5f
 	);
 
 	// stores the point as a vector for easier manipulation(?)
@@ -197,12 +201,12 @@ glm::vec2 DrawEngine::mouseToCanvasCoords(double mouseX, double mouseY)
 	glm::vec2 p = { screenX, screenY };
 
 	// removes the canvases offset and ensures its centered at (0,0)
-	p -= curCanvas.offset;
+    p -= curCanvas->offset;
 	p -= canvasCenter;
 
 	// calculate the cosine and sine of the negative rotation angle for unrotating the point
-	float c = cosf(-curCanvas.rotation);
-	float s = sinf(-curCanvas.rotation);
+    float c = cosf(-curCanvas->rotation);
+    float s = sinf(-curCanvas->rotation);
 
 	// Simple rotation matrix to rotate the point
 	// if the canvas is rotated X degrees then we need to rotate the point -X degrees to match the canvas space
@@ -213,7 +217,7 @@ glm::vec2 DrawEngine::mouseToCanvasCoords(double mouseX, double mouseY)
 
 	// undo the zoom by dividing the point by the zoom level
 	// if the the canvas is zoomed in by 2 then dividing by 2 will remove the zoom
-	p /= curCanvas.zoom;
+    p /= curCanvas->zoom;
 
 	// move origin back to normal coordinate space
 	p += canvasCenter;
@@ -221,3 +225,13 @@ glm::vec2 DrawEngine::mouseToCanvasCoords(double mouseX, double mouseY)
     return glm::vec2(p.x, p.y);
  }
 
+// updates the information needed to draw: the canvas being drawn on, the brush dab being stamped, and the color used to draw
+void DrawEngine::setBrushDab(std::vector<float> newBrushDab) {
+    curBrushDab = newBrushDab;
+}
+void DrawEngine::setColor(Color newColor) {
+    curColor = newColor;
+}
+void DrawEngine::setCanvas(Canvas& newCanvas) {
+    curCanvas = &newCanvas;
+}

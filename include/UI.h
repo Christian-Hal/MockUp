@@ -1,6 +1,8 @@
 
 #pragma once 
 
+#include <functional>
+#include <string>
 #include <vector>
 
 #include "Renderer.h"
@@ -8,38 +10,54 @@
 #include "Canvas.h"
 #include "Globals.h"
 #include "FrameRenderer.h"
+#include "BrushTool.h"
+#include "InputManager.h"
 
 #include <GLFW/glfw3.h>
 
+#include "CursorMode.h"
 
 class UI {
 
 public:
+	using SetCursorModeCallback = std::function<void(CursorMode)>;
+	using GetCursorModeCallback = std::function<CursorMode()>;
+	using GetBrushListCallback = std::function<const std::vector<BrushTool>&()>;
+	using SetActiveBrushCallback = std::function<void(int)>;
+	using GetActiveBrushCallback = std::function<const BrushTool&()>;
+	using GetHotkeyLabelCallback = std::function<std::string(InputAction)>;
+	using StartRebindCallback = std::function<void(InputAction)>;
+	using BoolCallback = std::function<bool()>;
+
+	// Lets the controller provide cursor state read/write hooks.
+	// UI emits intent through these callbacks instead of owning app state.
+    void bindCursorCallbacks(SetCursorModeCallback setCb, GetCursorModeCallback getCb);
+
+	void bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallback setActiveCb, GetActiveBrushCallback getActiveCb);
+	void bindHotkeyCallbacks(GetHotkeyLabelCallback getLabelCb, StartRebindCallback startCb, BoolCallback isWaitingCb, BoolCallback didFailCb);
+
 	void init(GLFWwindow* window, Renderer& renderer, Globals& g_inst);
 	void draw(CanvasManager& canvasManager, FrameRenderer frameRenderer);
 	void shutdown();
 	Color getColor();
 	void setColor(Color pixelColor);
 	void drawPopup(CanvasManager& canvasManager);
-	static int brushSize; 
-
-	// enum 
-	enum class CursorMode {
-		Draw,
-		Erase,
-		ZoomIn,
-		ZoomOut,
-		Rotate,
-		Pan,
-		Rebind,
-		ColorPick
-	};
+	int brushSize = 1; // default brush size
 
 	CursorMode getCursorMode() const;
-	//void UI::setCursorMode(UI::CursorMode);
 	void setCursorMode(CursorMode);
 
 private:
+	SetCursorModeCallback setCursorModeCb;
+	GetCursorModeCallback getCursorModeCb;
+	GetBrushListCallback getBrushListCb;
+	SetActiveBrushCallback setActiveBrushCb;
+	GetActiveBrushCallback getActiveBrushCb;
+	GetHotkeyLabelCallback getHotkeyLabelCb;
+	StartRebindCallback startRebindCb;
+	BoolCallback isWaitingForRebindCb;
+	BoolCallback didRebindFailCb;
+	
 	void drawLeftPanel(CanvasManager& canvasManager);
 	void drawRightPanel(CanvasManager& canvasManager);
 	void drawTopPanel(CanvasManager& canvasManager);

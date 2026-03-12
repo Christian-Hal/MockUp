@@ -5,14 +5,14 @@
 
 
 extern UI ui;
-extern CanvasManager activeCanvasManager;
+extern CanvasManager canvasManager;
 extern DrawEngine drawEngine;
 
 void ColorPicker::pickColor(double mouseX, double mouseY)
 {
-	if (activeCanvasManager.hasActive())
+	if (canvasManager.hasActive())
 	{
-		Canvas& canvas = activeCanvasManager.getActive();
+		Canvas& canvas = canvasManager.getActive();
 
 		glm::vec2 canvasCoords = drawEngine.mouseToCanvasCoords(mouseX, mouseY);
 		int canvasX = static_cast<int>(canvasCoords.x);

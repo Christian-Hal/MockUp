@@ -2,10 +2,22 @@
 #pragma once
 
 #include <glfw/glfw3.h>
-#include "UI.h"
+#include <string>
+#include <functional>
+
 class Renderer;
 class CanvasManager;
 class Globals;
+
+// Snapshot of mouse information forwarded to AppController.
+struct MouseState {
+    double x;
+    double y;
+    double dx;
+    double dy;
+    bool leftDown;
+    bool rightDown;
+};
 
 struct KeyCombo
 {
@@ -46,7 +58,7 @@ enum class InputAction
 class InputManager
 {
 public:
-    static void init(GLFWwindow* window, Renderer* renderer);
+    static void init(GLFWwindow* window);
     static void update();
     static bool IsMousePressed(int button);
     static double getMouseX();
@@ -60,6 +72,23 @@ public:
     static bool isModifierKey(int key);
     static std::string getKeybind(const KeyCombo& combo);
     static std::string getHotkeyString(InputAction action);
+
+    // InputManager captures raw GLFW events, then forwards them through callback functions
+    // AppController binds the functions and decides behavior using AppState's info
+    using MouseMoveCallback = std::function<void(const MouseState&)>;
+    using MouseButtonCallback = std::function<void(const MouseState&, int button, int action, int mods)>;
+    using MouseScrollCallback = std::function<void(const MouseState&, double xoffset, double yoffset)>;
+    using InputActionCallback = std::function<void(InputAction)>;
+
+    // Setup callback functions for the mouse move/button/scroll events.
+    static void bindMouseCallbacks(
+        MouseMoveCallback moveCb,
+        MouseButtonCallback buttonCb,
+        MouseScrollCallback scrollCb
+    );
+
+    // Setup callback function for resolved keyboard actions.
+    static void bindInputActionCallback(InputActionCallback actionCb);
 
 private:
     static void mouseButtonCallBack(GLFWwindow* window, int button, int action, int mods);

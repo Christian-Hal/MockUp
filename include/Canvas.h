@@ -18,7 +18,7 @@ struct Pixel {
 
 struct StrokePath {
     std::vector<Pixel> pixels;
-    int layerNum; 
+    int layerNum = -1;
 };
 
 class Canvas {

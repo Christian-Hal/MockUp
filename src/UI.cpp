@@ -3,12 +3,11 @@
 
 #include <iostream>
 #include <string>
+#include <utility>
 
 #include "Globals.h"
 #include "CanvasManager.h"
 #include "FrameRenderer.h"
-#include "BrushManager.h"
-#include "InputManager.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -18,8 +17,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-
-
 
 // variables to store info for UI declared up here 
 /// display size
@@ -49,9 +46,6 @@ static float color[4] = { .0f, .0f, .0f, 1.0f };
 // storing time for user input 
 static double lastFrame = 0.0;
 
-// brush size 
-int UI::brushSize = 1;
-
 // mouse flags 
 static ImGuiConfigFlags cursorFlags; 
 
@@ -64,17 +58,30 @@ GLuint my_image_texture = 0;
 extern Globals global;
 
 // state for draw erase button 
-static UI::CursorMode cursorMode = UI::CursorMode::Draw; 
+static CursorMode cursorMode = CursorMode::Draw; 
 
-static Renderer renderer;
+void UI::bindCursorCallbacks(SetCursorModeCallback setCb, GetCursorModeCallback getCb)
+{
+	// Store controller-provided hooks so UI can request state changes
+	// without depending on AppController/AppState directly.
+    setCursorModeCb = std::move(setCb);
+    getCursorModeCb = std::move(getCb);
+}
 
-// brush manager
-extern BrushManager brushManager;
+void UI::bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallback setActiveCb, GetActiveBrushCallback getActiveCb)
+{
+	getBrushListCb = std::move(getListCb);
+	setActiveBrushCb = std::move(setActiveCb);
+	getActiveBrushCb = std::move(getActiveCb);
+}
 
-
-extern InputManager inputManager;
-
-
+void UI::bindHotkeyCallbacks(GetHotkeyLabelCallback getLabelCb, StartRebindCallback startCb, BoolCallback isWaitingCb, BoolCallback didFailCb)
+{
+	getHotkeyLabelCb = std::move(getLabelCb);
+	startRebindCb = std::move(startCb);
+	isWaitingForRebindCb = std::move(isWaitingCb);
+	didRebindFailCb = std::move(didFailCb);
+}
 
 // ----- ImGui code to load and access images in directory -----
 
@@ -134,7 +141,9 @@ bool LoadTextureFromFile(const char* file_name, GLuint* out_texture, int* out_wi
 // note: not all options here return a value. 
 Color UI::getColor()
 {
-	if (cursorMode == UI::CursorMode::Draw) 
+	const CursorMode mode = getCursorMode();
+
+	if (mode == CursorMode::Draw) 
 	{	
 		return Color{
 			static_cast<unsigned char>(color[0] * 255.0f),
@@ -143,7 +152,7 @@ Color UI::getColor()
 			static_cast<unsigned char>(color[3] * 255.0f)
 		};
 	}
-	if (cursorMode == UI::CursorMode::Erase) 
+	if (mode == CursorMode::Erase) 
 	{	
 		return Color{
 			static_cast<unsigned char>(0.f),
@@ -152,6 +161,8 @@ Color UI::getColor()
 			static_cast<unsigned char>(0.f)
 		};
 	}
+
+	return Color{ 0, 0, 0, 0 };
 }
 
 /*
@@ -172,21 +183,31 @@ void UI::setColor(Color currentPixelColor) {
 
 
 // cursor mode getter 
-UI::CursorMode UI::getCursorMode() const {
+CursorMode UI::getCursorMode() const {
+	// Prefer controller-owned state once callbacks are bound.
+	if (getCursorModeCb) {
+		return getCursorModeCb();
+	}
+
 	return cursorMode;
 }
 
 
 
-void UI::setCursorMode(UI::CursorMode temp) {
+void UI::setCursorMode(CursorMode temp) {
+	// Keep local fallback in sync for transitional code paths.
 	cursorMode = temp;
+
+	if (setCursorModeCb) {
+		setCursorModeCb(temp);
+	}
 }
 
 
 
 // UI initialization 
 void UI::init(GLFWwindow* window, Renderer& rendInst, Globals& g_inst) {
-	renderer = rendInst;
+
 	//global = g_inst;
 
 	IMGUI_CHECKVERSION();
@@ -258,7 +279,7 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 		ImGui::SetMouseCursor(ImGuiMouseCursor_None);
 
 		// grab our brush and its tip 
-		BrushTool activeBrush = brushManager.getActiveBrush();
+		BrushTool activeBrush = getActiveBrushCb();
 		const std::vector<float>& tipAlpha = activeBrush.tipAlpha;
 
 		// check if tipAlpha actually has data
@@ -337,73 +358,73 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	ImGui::Begin("Left Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
 	/////// add widgets here ///////
-	// draw / erase buttons
-	if (getCursorMode() == UI::CursorMode::Draw) {
+	// text label that displays current cursor mode
+	if (getCursorMode() == CursorMode::Draw) {
 		ImGui::Text("State: Draw");
 	}
 
-	else if (getCursorMode() == UI::CursorMode::Erase) {
+	else if (getCursorMode() == CursorMode::Erase) {
 		ImGui::Text("State: Erase");
 	}
 
-	else if (getCursorMode() == UI::CursorMode::ZoomIn) {
+	else if (getCursorMode() == CursorMode::ZoomIn) {
 		ImGui::Text("State: Zoom In");
 	}
 
-	else if (getCursorMode() == UI::CursorMode::ZoomOut) {
+	else if (getCursorMode() == CursorMode::ZoomOut) {
 		ImGui::Text("State: Zoom Out");
 	}
 
-	else if (getCursorMode() == UI::CursorMode::Rotate) {
+	else if (getCursorMode() == CursorMode::Rotate) {
 		ImGui::Text("State: Rotate");
 	}
 
-	else if (getCursorMode() == UI::CursorMode::Pan) {
+	else if (getCursorMode() == CursorMode::Pan) {
 		ImGui::Text("State: Pan");
 	}
 
+	else if (getCursorMode() == CursorMode::ColorPick) {
+		ImGui::Text("State: Color Pick"); 
+	}
 
-	if (InputManager::IsWaitingForRebind())
+	// text label that displays rebind status
+	if (isWaitingForRebindCb && isWaitingForRebindCb())
 	{
 		ImGui::Text("Press any key...");
 	}
 
-	if (InputManager::getRebindFail())
+	if (didRebindFailCb && didRebindFailCb())
 	{
 		ImGui::TextColored(ImVec4(1, 0, 0, 1), "Key already bound!");
 	}
-	else if (getCursorMode() == UI::CursorMode::ColorPick) {
-		ImGui::Text("State: Color Pick"); 
-	}
-
-
-
+	
+	// buttons that change the current cursor mode
 	if (ImGui::Button("Draw")) {
-		cursorMode = UI::CursorMode::Draw;
+		setCursorMode(CursorMode::Draw);
 	}
 
 	if (ImGui::Button("Erase")) {
-		cursorMode = UI::CursorMode::Erase;
+		setCursorMode(CursorMode::Erase);
 	}
 
 	if (ImGui::Button("Pan")) {
-		cursorMode = UI::CursorMode::Pan;
+		setCursorMode(CursorMode::Pan);
 	}
 
 	if (ImGui::Button("Rotate")) {
-		cursorMode = UI::CursorMode::Rotate;
+		setCursorMode(CursorMode::Rotate);
 	}
 
 	if (ImGui::Button("Zoom In")) {
-		cursorMode = UI::CursorMode::ZoomIn;
+		setCursorMode(CursorMode::ZoomIn);
 	}
 
 	if (ImGui::Button("Zoom Out")) {
-		cursorMode = UI::CursorMode::ZoomOut;
+		setCursorMode(CursorMode::ZoomOut);
 	}
 
 	if (ImGui::Button("Color Picker")) {
-		cursorMode = UI::CursorMode::ColorPick;
+		setCursorMode(CursorMode::ColorPick);
 	}
 
 	// menu to rebind the various actions that can be done with hotkeys
@@ -411,37 +432,60 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	// call to get the string version of the key combos
 	if (ImGui::BeginMenu("Shortcuts"))
 	{
-		if (ImGui::MenuItem("Rotate", inputManager.getHotkeyString(InputAction::setRotate).c_str()))
+		auto hotkeyLabel = [this](InputAction action) {
+			if (getHotkeyLabelCb) {
+				return getHotkeyLabelCb(action);
+			}
+			return std::string{};
+		};
+
+		if (ImGui::MenuItem("Rotate", hotkeyLabel(InputAction::setRotate).c_str()))
 		{
-			InputManager::StartRebind(InputAction::setRotate);
+			if (startRebindCb) {
+				startRebindCb(InputAction::setRotate);
+			}
 		}
-		if (ImGui::MenuItem("Pan", inputManager.getHotkeyString(InputAction::setPan).c_str()))
+		if (ImGui::MenuItem("Pan", hotkeyLabel(InputAction::setPan).c_str()))
 		{
-			InputManager::StartRebind(InputAction::setPan);
+			if (startRebindCb) {
+				startRebindCb(InputAction::setPan);
+			}
 		}
-		if (ImGui::MenuItem("Draw", inputManager.getHotkeyString(InputAction::setDraw).c_str()))
+		if (ImGui::MenuItem("Draw", hotkeyLabel(InputAction::setDraw).c_str()))
 		{
-			InputManager::StartRebind(InputAction::setDraw);
+			if (startRebindCb) {
+				startRebindCb(InputAction::setDraw);
+			}
 		}
-		if (ImGui::MenuItem("Erase", inputManager.getHotkeyString(InputAction::setErase).c_str()))
+		if (ImGui::MenuItem("Erase", hotkeyLabel(InputAction::setErase).c_str()))
 		{
-			InputManager::StartRebind(InputAction::setErase);
+			if (startRebindCb) {
+				startRebindCb(InputAction::setErase);
+			}
 		}
-		if (ImGui::MenuItem("Undo", inputManager.getHotkeyString(InputAction::undo).c_str()))
+		if (ImGui::MenuItem("Undo", hotkeyLabel(InputAction::undo).c_str()))
 		{
-			InputManager::StartRebind(InputAction::undo);
+			if (startRebindCb) {
+				startRebindCb(InputAction::undo);
+			}
 		}
-		if (ImGui::MenuItem("Redo", inputManager.getHotkeyString(InputAction::redo).c_str()))
+		if (ImGui::MenuItem("Redo", hotkeyLabel(InputAction::redo).c_str()))
 		{
-			InputManager::StartRebind(InputAction::redo);
+			if (startRebindCb) {
+				startRebindCb(InputAction::redo);
+			}
 		}
-		if (ImGui::MenuItem("Center Canvas", inputManager.getHotkeyString(InputAction::resetView).c_str()))
+		if (ImGui::MenuItem("Center Canvas", hotkeyLabel(InputAction::resetView).c_str()))
 		{
-			InputManager::StartRebind(InputAction::resetView);
+			if (startRebindCb) {
+				startRebindCb(InputAction::resetView);
+			}
 		}
-		if (ImGui::MenuItem("Color Picker", inputManager.getHotkeyString(InputAction::setColor).c_str()))
+		if (ImGui::MenuItem("Color Picker", hotkeyLabel(InputAction::setColor).c_str()))
 		{
-			InputManager::StartRebind(InputAction::setColor);
+			if (startRebindCb) {
+				startRebindCb(InputAction::setColor);
+			}
 		}
 
 		ImGui::EndMenu();
@@ -467,7 +511,8 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 
 	// --- Displaying loaded brush options ---
 	// grabs the list of loaded brushes
-	const std::vector<BrushTool>& brushes = brushManager.getLoadedBrushes();
+	static const std::vector<BrushTool> emptyBrushes;
+	const std::vector<BrushTool>& brushes = getBrushListCb ? getBrushListCb() : emptyBrushes;
 
 	// adds a button for each brush that sets it to the active one
 	for(int i = 0; i < brushes.size(); i++)
@@ -475,7 +520,9 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 		std::string buttonName = brushes[i].brushName;
 
 		if(ImGui::Button(buttonName.c_str())){
-			brushManager.setActiveBrush(i);
+			if (setActiveBrushCb) {
+				setActiveBrushCb(i);
+			}
 		}
 	}
 

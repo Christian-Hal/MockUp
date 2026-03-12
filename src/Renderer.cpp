@@ -8,14 +8,6 @@
 #include <string>
 #include <list>
 
-#include "Globals.h"
-#include "CanvasManager.h"
-#include "UI.h"
-#include "BrushTool.h"
-#include "BrushManager.h"
-#include "DrawEngine.h"
-#include "InputManager.h"
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -55,19 +47,6 @@ void main(){
 
 // global instance reference
 extern Globals global;
-extern DrawEngine drawEngine;
-
-// Framebuffer Settings
-int fbWidth = 0, fbHeight = 0;
-
-GLuint lineVAO, lineVBO;
-unsigned int oldShaderProgram = 0;
-
-CanvasManager activeCanvasManager;
-
-extern InputManager inputManager;
-
-
 
 // compile the vertex and fragment shaders 
 static unsigned int compileShader(unsigned int type, const char* source) {
@@ -120,16 +99,12 @@ bool Renderer::init(GLFWwindow* window, Globals& g_inst)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	inputManager.init(window, this);
-
 	return true;
 }
 
 
 void Renderer::beginFrame(CanvasManager& canvasManager)
 {
-	activeCanvasManager = canvasManager;
-
 	// clears the screen
 	glClearColor(0.1f, 0.1f, 0.1f, 0.1f);
 	glClear(GL_COLOR_BUFFER_BIT);
