@@ -5,10 +5,6 @@
 #include <string>
 #include <utility>
 
-#include "Globals.h"
-#include "CanvasManager.h"
-#include "FrameRenderer.h"
-
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -53,9 +49,6 @@ static ImGuiConfigFlags cursorFlags;
 int my_image_width = 0; 
 int my_image_height = 0; 
 GLuint my_image_texture = 0; 
-
-// global instance reference
-extern Globals global;
 
 // state for draw erase button 
 static CursorMode cursorMode = CursorMode::Draw; 

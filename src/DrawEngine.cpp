@@ -1,13 +1,9 @@
 
 #include "Canvas.h"
 #include "DrawEngine.h"
-#include "CanvasManager.h"
-#include "Globals.h"
+
 #include <algorithm>
 #include <iostream>
-
-extern Globals global;
-extern CanvasManager canvasManager;
 
 void DrawEngine::init()
 {
