@@ -5,6 +5,8 @@
 #include <string>
 #include <utility>
 
+#include "ImGuiFileDialog.h"
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -517,6 +519,26 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 				setActiveBrushCb(i);
 			}
 		}
+	}
+
+	if (ImGui::Button("Open File"))
+	{
+		ImGuiFileDialog::Instance()->OpenDialog(
+			"ChooseFileDlgKey",
+			"Choose File",
+			".cpp,.h,.txt"
+		);
+	}
+
+	if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk())
+		{
+			std::string filePath =
+				ImGuiFileDialog::Instance()->GetFilePathName();
+		}
+
+		ImGuiFileDialog::Instance()->Close();
 	}
 
 	// end step
