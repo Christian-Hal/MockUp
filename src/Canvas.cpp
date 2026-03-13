@@ -1,4 +1,4 @@
-
+ 
 #include <vector>
 #include <iostream>
 #include <string>
@@ -163,25 +163,19 @@ const Color* Canvas::getData() const {
     return pixels.data(); 
 }
 
-// Overloading operations
+const std::vector<std::vector<Color>>& Canvas::getLayerData() const {
+    return layerData;
+}
 
 /*
     Equality operator overload for Color datatype. 
 
     Is true if rgba values are equal for both Colors. 
 */
-const std::vector<std::vector<Color>>& Canvas::getLayerData() const {
-    return layerData;
-}
-
-
-
-// Overloading operations
 bool operator==(const Color& c2, const Color& c1)
 {
     return (c1.r == c2.r) && (c1.g == c2.g) && (c1.b == c2.b)  && (c1.a == c2.a);
 }
-
 
 
 /*
@@ -195,7 +189,6 @@ bool operator!=(const Color& c2, const Color& c1)
 {
     return (c1.r != c2.r) || (c1.g != c2.g) || (c1.b != c2.b)  || (c1.a != c2.a);
 }
-
 
 
 /*
@@ -439,4 +432,3 @@ void Canvas::removeLayer(){
 void Canvas::selectLayer(int layerNum){
     curLayer = layerNum;
 }
-

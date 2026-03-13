@@ -24,6 +24,7 @@ class FrameRenderer{
         static int curFrame;
         static int curCanvas;
         static int numCanvas;
+        static bool isPlaying;
         
         // frame number, pixel data for that frame
         static vector<vector<Color>> frames;

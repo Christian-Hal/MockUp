@@ -26,6 +26,7 @@ int FrameRenderer::numCanvas = -1;
 int FrameRenderer::numFrames = -1;
 int FrameRenderer::curCanvas = -1;
 int FrameRenderer::curFrame = -1;
+bool FrameRenderer::isPlaying = false;
 // this will be stored in memory so we can access it quickly everything else gets written to a file
 // we need the frame data so we can play high fps animations
 vector<vector<Color>> FrameRenderer::frames;
@@ -178,19 +179,24 @@ void FrameRenderer::selectFrame(Canvas& canvas, int frameDelta){
 }
 
 void FrameRenderer::play(Canvas& canvas){
-    frames[curFrame - 1] =  vector<Color>(canvas.getData(), canvas.getData() + (canvas.getWidth() * canvas.getHeight()));
-    int start = curFrame;
-    std::thread t([&canvas, start]{
-        int i = start;
-        while (i <= numFrames) {
-            canvas.setPixels(frames[i-1]);
-            i++;
-            std::this_thread::sleep_for(std::chrono::milliseconds(84)); // 42 milliseconds is ~ 24 fps
-        }
-        cout << "exiting the loop" << endl;
-        canvas.setPixels(frames[start-1]);
-    });
-    t.detach();
+    if(!isPlaying){
+        frames[curFrame - 1] =  vector<Color>(canvas.getData(), canvas.getData() + (canvas.getWidth() * canvas.getHeight()));
+        int start = curFrame;
+        std::thread t([&canvas, start]{
+            isPlaying = true;
+            int i = start;
+            while (i <= numFrames) {
+                canvas.setPixels(frames[i-1]);
+                i++;
+                std::this_thread::sleep_for(std::chrono::milliseconds(84)); // 42 milliseconds is ~ 24 fps
+            }
+            cout << "exiting the loop" << endl;
+            canvas.setPixels(frames[start-1]);
+            isPlaying = false;
+
+        });
+        t.detach();
+    }
 
 }
 
