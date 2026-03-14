@@ -340,6 +340,95 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 		showPopup = true;
 	}
 
+	// menu to rebind the various actions that can be done with hotkeys
+	// the getHotkeyString(InputAction::setRotate).c_str() is the funciton 
+	// call to get the string version of the key combos
+	ImGui::SameLine();
+	if (ImGui::Button("Shortcuts")) {
+		ImGui::OpenPopup("Shortcuts Popup");
+	}
+
+	if (ImGui::BeginPopup("Shortcuts Popup"))
+	{
+		auto hotkeyLabel = [this](InputAction action) {
+			if (getHotkeyLabelCb) {
+				return getHotkeyLabelCb(action);
+			}
+			return std::string{};
+		};
+
+		auto triggerRebind = [this](InputAction action) {
+			if (startRebindCb) {
+				startRebindCb(action);
+			}
+			// Close to avoid consuming the next key press while rebinding.
+			ImGui::CloseCurrentPopup();
+		};
+
+		if (ImGui::MenuItem("Rotate", hotkeyLabel(InputAction::setRotate).c_str()))
+		{
+			triggerRebind(InputAction::setRotate);
+		}
+		if (ImGui::MenuItem("Pan", hotkeyLabel(InputAction::setPan).c_str()))
+		{
+			triggerRebind(InputAction::setPan);
+		}
+		if (ImGui::MenuItem("Draw", hotkeyLabel(InputAction::setDraw).c_str()))
+		{
+			triggerRebind(InputAction::setDraw);
+		}
+		if (ImGui::MenuItem("Erase", hotkeyLabel(InputAction::setErase).c_str()))
+		{
+			triggerRebind(InputAction::setErase);
+		}
+		if (ImGui::MenuItem("Undo", hotkeyLabel(InputAction::undo).c_str()))
+		{
+			triggerRebind(InputAction::undo);
+		}
+		if (ImGui::MenuItem("Redo", hotkeyLabel(InputAction::redo).c_str()))
+		{
+			triggerRebind(InputAction::redo);
+		}
+		if (ImGui::MenuItem("Center Canvas", hotkeyLabel(InputAction::resetView).c_str()))
+		{
+			triggerRebind(InputAction::resetView);
+		}
+		if (ImGui::MenuItem("Color Picker", hotkeyLabel(InputAction::setColor).c_str()))
+		{
+			triggerRebind(InputAction::setColor);
+		}
+
+		ImGui::EndPopup();
+	}
+
+	ImGui::SameLine();
+	// Save button
+	if (canvasManager.hasActive() && ImGui::Button("Save File")) {
+		canvasManager.getFrameData(canvasManager);
+	}
+
+	// Future spot for the load button
+	ImGui::SameLine();
+	if (ImGui::Button("Load File"))
+	{
+		ImGuiFileDialog::Instance()->OpenDialog(
+			"ChooseFileDlgKey",
+			"Choose File",
+			".cpp,.h,.txt"
+		);
+	}
+
+	if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk())
+		{
+			std::string filePath =
+				ImGuiFileDialog::Instance()->GetFilePathName();
+		}
+
+		ImGuiFileDialog::Instance()->Close();
+	}
+
 	// end step
 	ImGui::End();
 }
@@ -422,76 +511,6 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 		setCursorMode(CursorMode::ColorPick);
 	}
 
-	// menu to rebind the various actions that can be done with hotkeys
-	// the getHotkeyString(InputAction::setRotate).c_str() is the funciton 
-	// call to get the string version of the key combos
-	if (ImGui::BeginMenu("Shortcuts"))
-	{
-		auto hotkeyLabel = [this](InputAction action) {
-			if (getHotkeyLabelCb) {
-				return getHotkeyLabelCb(action);
-			}
-			return std::string{};
-		};
-
-		if (ImGui::MenuItem("Rotate", hotkeyLabel(InputAction::setRotate).c_str()))
-		{
-			if (startRebindCb) {
-				startRebindCb(InputAction::setRotate);
-			}
-		}
-		if (ImGui::MenuItem("Pan", hotkeyLabel(InputAction::setPan).c_str()))
-		{
-			if (startRebindCb) {
-				startRebindCb(InputAction::setPan);
-			}
-		}
-		if (ImGui::MenuItem("Draw", hotkeyLabel(InputAction::setDraw).c_str()))
-		{
-			if (startRebindCb) {
-				startRebindCb(InputAction::setDraw);
-			}
-		}
-		if (ImGui::MenuItem("Erase", hotkeyLabel(InputAction::setErase).c_str()))
-		{
-			if (startRebindCb) {
-				startRebindCb(InputAction::setErase);
-			}
-		}
-		if (ImGui::MenuItem("Undo", hotkeyLabel(InputAction::undo).c_str()))
-		{
-			if (startRebindCb) {
-				startRebindCb(InputAction::undo);
-			}
-		}
-		if (ImGui::MenuItem("Redo", hotkeyLabel(InputAction::redo).c_str()))
-		{
-			if (startRebindCb) {
-				startRebindCb(InputAction::redo);
-			}
-		}
-		if (ImGui::MenuItem("Center Canvas", hotkeyLabel(InputAction::resetView).c_str()))
-		{
-			if (startRebindCb) {
-				startRebindCb(InputAction::resetView);
-			}
-		}
-		if (ImGui::MenuItem("Color Picker", hotkeyLabel(InputAction::setColor).c_str()))
-		{
-			if (startRebindCb) {
-				startRebindCb(InputAction::setColor);
-			}
-		}
-
-		ImGui::EndMenu();
-	}
-	
-
-	// Save button
-	if (canvasManager.hasActive() && ImGui::Button("Save")) {
-		canvasManager.getFrameData(canvasManager);
-	}
-
 	// color wheel
 	ImGuiColorEditFlags flags = ImGuiColorEditFlags_PickerHueWheel |
 		ImGuiColorEditFlags_NoInputs |
@@ -519,26 +538,6 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 				setActiveBrushCb(i);
 			}
 		}
-	}
-
-	if (ImGui::Button("Open File"))
-	{
-		ImGuiFileDialog::Instance()->OpenDialog(
-			"ChooseFileDlgKey",
-			"Choose File",
-			".cpp,.h,.txt"
-		);
-	}
-
-	if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
-	{
-		if (ImGuiFileDialog::Instance()->IsOk())
-		{
-			std::string filePath =
-				ImGuiFileDialog::Instance()->GetFilePathName();
-		}
-
-		ImGuiFileDialog::Instance()->Close();
 	}
 
 	// end step
