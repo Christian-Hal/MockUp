@@ -350,6 +350,7 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 
 	if (ImGui::BeginPopup("Shortcuts Popup"))
 	{
+		// create a lamda to grab the hotkey label for each action
 		auto hotkeyLabel = [this](InputAction action) {
 			if (getHotkeyLabelCb) {
 				return getHotkeyLabelCb(action);
@@ -357,6 +358,7 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 			return std::string{};
 		};
 
+		// create a lamda to trigger the rebind callback function for each action
 		auto triggerRebind = [this](InputAction action) {
 			if (startRebindCb) {
 				startRebindCb(action);
