@@ -106,7 +106,7 @@ bool Renderer::init(GLFWwindow* window, Globals& g_inst)
 void Renderer::beginFrame(CanvasManager& canvasManager)
 {
 	// clears the screen
-	glClearColor(0.1f, 0.1f, 0.1f, 0.1f);
+	glClearColor(0.35f, 0.35f, 0.35f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	// render the active canvas

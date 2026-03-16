@@ -112,8 +112,6 @@ bool LoadTextureFromMemory(const void* data, size_t data_size, GLuint* out_textu
 	return true;
 }
 
-
-
 // Open and read a file, then forward to LoadTextureFromMemory()
 bool LoadTextureFromFile(const char* file_name, GLuint* out_texture, int* out_width, int* out_height)
 {
@@ -132,7 +130,6 @@ bool LoadTextureFromFile(const char* file_name, GLuint* out_texture, int* out_wi
 	IM_FREE(file_data);
 	return ret;
 }
-
 
 // note: not all options here return a value. 
 Color UI::getColor()
@@ -188,8 +185,6 @@ CursorMode UI::getCursorMode() const {
 	return cursorMode;
 }
 
-
-
 void UI::setCursorMode(CursorMode temp) {
 	// Keep local fallback in sync for transitional code paths.
 	cursorMode = temp;
@@ -199,8 +194,6 @@ void UI::setCursorMode(CursorMode temp) {
 	}
 }
 
-
-
 // UI initialization 
 void UI::init(GLFWwindow* window, Renderer& rendInst, Globals& g_inst) {
 
@@ -209,7 +202,61 @@ void UI::init(GLFWwindow* window, Renderer& rendInst, Globals& g_inst) {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 
-	ImGui::StyleColorsDark();
+	ImGuiStyle& style = ImGui::GetStyle();
+
+	// Clip Studio-inspired grayscale UI styling.
+	//style.WindowRounding = 5.0f;
+	style.ChildRounding = 4.0f;
+	style.FrameRounding = 3.0f;
+	style.GrabRounding = 3.0f;
+	style.ScrollbarRounding = 6.0f;
+	style.FramePadding = ImVec2(6.0f, 4.0f);
+	style.ItemSpacing = ImVec2(8.0f, 6.0f);
+	style.WindowBorderSize = 1.0f;
+	style.FrameBorderSize = 1.0f;
+
+	ImVec4* colors = style.Colors;
+	colors[ImGuiCol_Text] = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
+	colors[ImGuiCol_TextDisabled] = ImVec4(0.58f, 0.58f, 0.58f, 1.00f);
+	colors[ImGuiCol_WindowBg] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+	colors[ImGuiCol_ChildBg] = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
+	colors[ImGuiCol_PopupBg] = ImVec4(0.18f, 0.18f, 0.18f, 0.98f);
+	colors[ImGuiCol_Border] = ImVec4(0.32f, 0.32f, 0.32f, 1.00f);
+	colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+
+	colors[ImGuiCol_FrameBg] = ImVec4(0.23f, 0.23f, 0.23f, 1.00f);
+	colors[ImGuiCol_FrameBgHovered] = ImVec4(0.29f, 0.29f, 0.29f, 1.00f);
+	colors[ImGuiCol_FrameBgActive] = ImVec4(0.34f, 0.34f, 0.34f, 1.00f);
+
+	colors[ImGuiCol_TitleBg] = ImVec4(0.11f, 0.11f, 0.11f, 1.00f);
+	colors[ImGuiCol_TitleBgActive] = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
+	colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.11f, 0.11f, 0.11f, 0.90f);
+	colors[ImGuiCol_MenuBarBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+
+	colors[ImGuiCol_ScrollbarBg] = ImVec4(0.13f, 0.13f, 0.13f, 1.00f);
+	colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
+	colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.38f, 0.38f, 0.38f, 1.00f);
+	colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.44f, 0.44f, 0.44f, 1.00f);
+
+	colors[ImGuiCol_SliderGrab] = ImVec4(0.62f, 0.62f, 0.62f, 1.00f);
+	colors[ImGuiCol_SliderGrabActive] = ImVec4(0.72f, 0.72f, 0.72f, 1.00f);
+
+	colors[ImGuiCol_Button] = ImVec4(0.27f, 0.27f, 0.27f, 1.00f);
+	colors[ImGuiCol_ButtonHovered] = ImVec4(0.35f, 0.35f, 0.35f, 1.00f);
+	colors[ImGuiCol_ButtonActive] = ImVec4(0.43f, 0.43f, 0.43f, 1.00f);
+
+	colors[ImGuiCol_Separator] = ImVec4(0.34f, 0.34f, 0.34f, 1.00f);
+
+	colors[ImGuiCol_ResizeGrip] = ImVec4(0.28f, 0.28f, 0.28f, 0.35f);
+	colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.48f, 0.48f, 0.48f, 0.67f);
+	colors[ImGuiCol_ResizeGripActive] = ImVec4(0.60f, 0.60f, 0.60f, 0.95f);
+
+	colors[ImGuiCol_TextSelectedBg] = ImVec4(0.60f, 0.60f, 0.60f, 0.35f);
+	colors[ImGuiCol_DragDropTarget] = ImVec4(0.92f, 0.92f, 0.92f, 0.95f);
+	colors[ImGuiCol_NavHighlight] = ImVec4(0.78f, 0.78f, 0.78f, 1.00f);
+	colors[ImGuiCol_NavWindowingHighlight] = ImVec4(0.95f, 0.95f, 0.95f, 0.70f);
+	colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.40f);
+	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.50f);
 
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 330 core");
@@ -333,7 +380,7 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 	// initialize the panel
 	ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(w, TopSize), ImGuiCond_Always);
-	ImGui::Begin("Top Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+	ImGui::Begin("Top Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar);
 
 	// add widgets
 	// new canvas pop up
