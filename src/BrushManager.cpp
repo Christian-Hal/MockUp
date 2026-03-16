@@ -24,7 +24,7 @@ void BrushManager::init()
             loaded_Brushes.emplace_back(temp);
     }
 
-    activeBrush = &loaded_Brushes.front();
+    activeBrushIndex = 0;
 
     brushChange = true;
 }
@@ -33,8 +33,14 @@ void BrushManager::init()
 // the dab contains the width, height, and then the values of the tip alpha
 const std::vector<float> BrushManager::generateBrushDab(int brushSize)
 {
-    int baseW = activeBrush->tipWidth;
-    int baseH = activeBrush->tipHeight;
+    if (loaded_Brushes.empty()) {
+        return {};
+    }
+
+    const BrushTool& activeBrush = loaded_Brushes[activeBrushIndex];
+
+    int baseW = activeBrush.tipWidth;
+    int baseH = activeBrush.tipHeight;
 
     int W = baseW * brushSize;
     int H = baseH * brushSize;
@@ -52,7 +58,7 @@ const std::vector<float> BrushManager::generateBrushDab(int brushSize)
         {
             for (int x = 0; x < baseW; x++)
             {
-                float a = activeBrush->tipAlpha[y * baseW + x];
+                float a = activeBrush.tipAlpha[y * baseW + x];
                 for (int sx = 0; sx < brushSize; sx++)
                 {
                     dab.push_back(a);
@@ -85,7 +91,16 @@ const std::vector<BrushTool>& BrushManager::getLoadedBrushes()
 */
 const BrushTool& BrushManager::getActiveBrush()
 {
-    return *activeBrush;
+    if (loaded_Brushes.empty()) {
+        static BrushTool fallback;
+        return fallback;
+    }
+
+    if (activeBrushIndex < 0 || activeBrushIndex >= static_cast<int>(loaded_Brushes.size())) {
+        activeBrushIndex = 0;
+    }
+
+    return loaded_Brushes[activeBrushIndex];
 }
 
 
@@ -97,8 +112,8 @@ const BrushTool& BrushManager::getActiveBrush()
 */
 void BrushManager::setActiveBrush(int index) 
 {
-    if (index >= 0 && index < loaded_Brushes.size()) {
-        activeBrush = &loaded_Brushes[index];
+    if (index >= 0 && index < static_cast<int>(loaded_Brushes.size())) {
+        activeBrushIndex = index;
         brushChange = true;
     }
 }
@@ -283,4 +298,33 @@ uint32_t BrushManager::read_be32(std::ifstream& f)
            (uint32_t(b[1]) << 16) |
            (uint32_t(b[2]) << 8)  |
             uint32_t(b[3]);
+}
+
+void BrushManager::loadBrush(const std::string& path)
+{
+    BrushTool temp = BrushTool();
+
+    // if the path is too short then print an error and return
+    if (path.size() < 4) {
+        std::cerr << "Invalid brush file path: " << path << "\n";
+        return;
+    }
+
+    std::string fileType = path.substr(path.size() - 4);
+    if (fileType == ".gbr") {
+        if (loadBrushFromGBR(path, temp)) {
+            loaded_Brushes.emplace_back(temp);
+            brushChange = true;
+        }
+    }
+    else if (fileType == ".png") {
+        if (loadBrushTipFromPNG(path, temp)) {
+            loaded_Brushes.emplace_back(temp);
+            brushChange = true;
+        }
+    }
+    else {
+        std::cout << "Unsupported brush file type: " << fileType << "\n";
+    }
+    
 }

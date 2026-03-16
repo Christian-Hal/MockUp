@@ -17,6 +17,7 @@ class BrushManager
         bool brushChange = false;
 
         // brush loader methods
+        void loadBrush(const std::string& path);
         bool loadBrushTipFromPNG(const std::string& path, BrushTool& outBrush);
         bool loadBrushFromGBR(const std::string& path, BrushTool& outBrush);
 
@@ -30,11 +31,11 @@ class BrushManager
         // list of all loaded brushes
         std::vector<BrushTool> loaded_Brushes;
 
-        // list of all default brushe paths to load on init
+        // list of all default brush paths to load on init
         const std::vector<std::string> defaultBrushPaths = {"circle.gbr", "cross.gbr", "confetti.gbr"};
 
-        // pointer to the active brush
-        BrushTool* activeBrush = nullptr;
+        // index of the active brush in loaded_Brushes
+        int activeBrushIndex = 0;
 
         // default functions
         void configureAsDefault(BrushTool& brush);

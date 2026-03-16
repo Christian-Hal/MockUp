@@ -25,6 +25,7 @@ public:
 	using GetBrushListCallback = std::function<const std::vector<BrushTool>&()>;
 	using SetActiveBrushCallback = std::function<void(int)>;
 	using GetActiveBrushCallback = std::function<const BrushTool&()>;
+	using LoadBrushCallback = std::function<void(const std::string&)>;
 	using GetHotkeyLabelCallback = std::function<std::string(InputAction)>;
 	using StartRebindCallback = std::function<void(InputAction)>;
 	using BoolCallback = std::function<bool()>;
@@ -32,8 +33,7 @@ public:
 	// Lets the controller provide cursor state read/write hooks.
 	// UI emits intent through these callbacks instead of owning app state.
     void bindCursorCallbacks(SetCursorModeCallback setCb, GetCursorModeCallback getCb);
-
-	void bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallback setActiveCb, GetActiveBrushCallback getActiveCb);
+	void bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallback setActiveCb, GetActiveBrushCallback getActiveCb, LoadBrushCallback loadBrushCb);
 	void bindHotkeyCallbacks(GetHotkeyLabelCallback getLabelCb, StartRebindCallback startCb, BoolCallback isWaitingCb, BoolCallback didFailCb);
 
 	void init(GLFWwindow* window, Renderer& renderer, Globals& g_inst);
@@ -53,6 +53,7 @@ private:
 	GetBrushListCallback getBrushListCb;
 	SetActiveBrushCallback setActiveBrushCb;
 	GetActiveBrushCallback getActiveBrushCb;
+	LoadBrushCallback loadBrushFromFileCb;
 	GetHotkeyLabelCallback getHotkeyLabelCb;
 	StartRebindCallback startRebindCb;
 	BoolCallback isWaitingForRebindCb;

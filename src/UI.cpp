@@ -63,11 +63,12 @@ void UI::bindCursorCallbacks(SetCursorModeCallback setCb, GetCursorModeCallback 
     getCursorModeCb = std::move(getCb);
 }
 
-void UI::bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallback setActiveCb, GetActiveBrushCallback getActiveCb)
+void UI::bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallback setActiveCb, GetActiveBrushCallback getActiveCb, LoadBrushCallback loadBrushCb)
 {
 	getBrushListCb = std::move(getListCb);
 	setActiveBrushCb = std::move(setActiveCb);
 	getActiveBrushCb = std::move(getActiveCb);
+	loadBrushFromFileCb = std::move(loadBrushCb);
 }
 
 void UI::bindHotkeyCallbacks(GetHotkeyLabelCallback getLabelCb, StartRebindCallback startCb, BoolCallback isWaitingCb, BoolCallback didFailCb)
@@ -274,7 +275,7 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 		ImGui::SetMouseCursor(ImGuiMouseCursor_None);
 
 		// grab our brush and its tip 
-		BrushTool activeBrush = getActiveBrushCb();
+		const BrushTool& activeBrush = getActiveBrushCb();
 		const std::vector<float>& tipAlpha = activeBrush.tipAlpha;
 
 		// check if tipAlpha actually has data
@@ -521,7 +522,6 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 }
 
 
-
 void UI::drawRightPanel(CanvasManager& canvasManager) {
 	// initialize the panel
 	ImGui::SetNextWindowPos(ImVec2(w - RightSize, TopSize), ImGuiCond_Always);
@@ -588,7 +588,7 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 		ImGuiFileDialog::Instance()->OpenDialog(
 			"ChooseFileDlgKey",
 			"Choose File",
-			".cpp,.h,.txt"
+			".gbr,.png"
 		);
 	}
 
@@ -596,10 +596,11 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 	{
 		if (ImGuiFileDialog::Instance()->IsOk())
 		{
-			std::string filePath =
-				ImGuiFileDialog::Instance()->GetFilePathName();
+			std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
+			if (loadBrushFromFileCb) {
+				loadBrushFromFileCb(filePath);
+			}
 		}
-
 		ImGuiFileDialog::Instance()->Close();
 	}
 

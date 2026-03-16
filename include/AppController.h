@@ -15,7 +15,8 @@ public:
     void setCursorMode(CursorMode mode);
     CursorMode getCursorMode() const;
 
-    // brush info
+    // brush engine actions
+    void loadBrush(const std::string& path);
     const std::vector<BrushTool>& getBrushList();
     const BrushTool& getActiveBrush();
     void setActiveBrush(int index);

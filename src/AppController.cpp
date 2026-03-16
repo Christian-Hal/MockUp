@@ -62,7 +62,8 @@ bool AppController::init()
 	ui.bindBrushCallbacks(
 		[this]() -> const std::vector<BrushTool>& { return getBrushList(); },
 		[this](int index) { setActiveBrush(index); },
-		[this]() -> const BrushTool& { return getActiveBrush(); }
+		[this]() -> const BrushTool& { return getActiveBrush(); },
+		[this](const std::string& path) { loadBrush(path); }
 	);
 
 	// Route hotkey label/rebind UI actions through controller-owned input flow.
@@ -169,6 +170,11 @@ void AppController::shutdown() {
 	window.destroy();
 }
 
+void AppController::loadBrush(const std::string& path)
+{
+	auto& brushManager = appState.getBrushManager();
+	brushManager.loadBrush(path);
+}
 
 void AppController::setCursorMode(CursorMode mode)
 {
