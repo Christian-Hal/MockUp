@@ -513,35 +513,6 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 		setCursorMode(CursorMode::ColorPick);
 	}
 
-	// color wheel
-	ImGuiColorEditFlags flags = ImGuiColorEditFlags_PickerHueWheel |
-		ImGuiColorEditFlags_NoInputs |
-		ImGuiColorEditFlags_AlphaPreview |
-		ImGuiColorEditFlags_AlphaBar;
-
-	ImGui::ColorPicker4("", color, flags);
-
-	// brush size slider 
-	// value is temporarily significantly lowered due to current brush size implementation 
-	ImGui::SliderInt("Brush Size", &brushSize, 1, 20);
-
-	// --- Displaying loaded brush options ---
-	// grabs the list of loaded brushes
-	static const std::vector<BrushTool> emptyBrushes;
-	const std::vector<BrushTool>& brushes = getBrushListCb ? getBrushListCb() : emptyBrushes;
-
-	// adds a button for each brush that sets it to the active one
-	for(int i = 0; i < brushes.size(); i++)
-	{
-		std::string buttonName = brushes[i].brushName;
-
-		if(ImGui::Button(buttonName.c_str())){
-			if (setActiveBrushCb) {
-				setActiveBrushCb(i);
-			}
-		}
-	}
-
 	// end step
 	LeftSize = ImGui::GetWindowWidth();
 	ImVec2 size = ImGui::GetWindowSize();
@@ -558,6 +529,24 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 	ImGui::Begin("Right Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
 	// add widgets
+	// the color wheel
+	ImGuiColorEditFlags flags = ImGuiColorEditFlags_PickerHueWheel |
+		ImGuiColorEditFlags_NoInputs |
+		ImGuiColorEditFlags_AlphaPreview |
+		ImGuiColorEditFlags_AlphaBar;
+
+	ImGui::ColorPicker4("", color, flags);
+
+	// brush size slider 
+	// value is temporarily significantly lowered due to current brush size implementation 
+	ImGui::SliderInt("Size", &brushSize, 1, 20);
+
+	// adds a little visual split between sections
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	// if there is a canvas then display the layer options
 	if (canvasManager.hasActive())
 	{
 		// save the active canvas for later use
@@ -585,9 +574,52 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 				canvasManager.getActive().selectLayer(i);
 			}
 		}
-		ImGui::Text("Current canvas: %d", canvasManager.getActive().getCurLayer());
+		ImGui::Text("Current Layer: %d", canvasManager.getActive().getCurLayer());
+
+		// adds a little visual split between sections
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
 	}
 
+	// brush import system, will probably get moved when I eventually do a UI overhaul
+	if (ImGui::Button("Import Brush"))
+	{
+		ImGuiFileDialog::Instance()->OpenDialog(
+			"ChooseFileDlgKey",
+			"Choose File",
+			".cpp,.h,.txt"
+		);
+	}
+
+	if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk())
+		{
+			std::string filePath =
+				ImGuiFileDialog::Instance()->GetFilePathName();
+		}
+
+		ImGuiFileDialog::Instance()->Close();
+	}
+
+	// --- Displaying loaded brush options ---
+	// grabs the list of loaded brushes
+	static const std::vector<BrushTool> emptyBrushes;
+	const std::vector<BrushTool>& brushes = getBrushListCb ? getBrushListCb() : emptyBrushes;
+
+	// adds a button for each brush that sets it to the active one
+	ImGui::Text("Loaded Brushes: ");
+	for(int i = 0; i < brushes.size(); i++)
+	{
+		std::string buttonName = brushes[i].brushName;
+
+		if(ImGui::Button(buttonName.c_str())){
+			if (setActiveBrushCb) {
+				setActiveBrushCb(i);
+			}
+		}
+	}
 
 	// end step
 	RightSize = ImGui::GetWindowWidth();
