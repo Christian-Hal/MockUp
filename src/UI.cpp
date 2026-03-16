@@ -373,8 +373,6 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-
-
 // methods for drawing the individual menu panels
 void UI::drawTopPanel(CanvasManager& canvasManager) {
 	// initialize the panel
@@ -483,8 +481,6 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 	ImGui::End();
 }
 
-
-
 void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	// initialize the panel
 	ImGui::SetNextWindowPos(ImVec2(0, TopSize), ImGuiCond_Always);
@@ -560,6 +556,11 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	if (ImGui::Button("Color Picker")) {
 		setCursorMode(CursorMode::ColorPick);
 	}
+
+	// adds a little visual split between sections
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
 
 	// end step
 	LeftSize = ImGui::GetWindowWidth();
