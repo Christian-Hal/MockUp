@@ -428,7 +428,21 @@ void Canvas::removeLayer(){
 }
 
 
-
 void Canvas::selectLayer(int layerNum){
     curLayer = layerNum;
+}
+
+
+void Canvas::loadImage(unsigned char* data)
+{
+    for (int i = 0; i < width * height; i++)
+    {
+        Color c;
+        c.r = data[i * 4 + 0];
+        c.g = data[i * 4 + 1];
+        c.b = data[i * 4 + 2];
+        c.a = data[i * 4 + 3];
+
+        pixels[i] = c;
+    }
 }
