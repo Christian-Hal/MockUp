@@ -283,7 +283,8 @@ bool BrushManager::loadBrushFromGBR(const std::string& path, BrushTool& out)
     out.tipHeight               = read_be32(file);
     uint32_t bpp                = read_be32(file);  // how many bytes are in each pixel
     uint32_t magic              = read_be32(file);  // not important
-    out.spacing                 = read_be32(file);
+    const uint32_t rawSpacing   = read_be32(file);  // spacing is stored as an integer percentage (e.g. 25 means 25%)
+    out.spacing = static_cast<float>(rawSpacing) / 100.0f;
 
     // read in the brush name
     // the header_size is equal to 28 + the name length so we can use that

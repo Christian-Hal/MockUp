@@ -71,7 +71,8 @@ void DrawEngine::update()
 
 void DrawEngine::drawPath(const std::vector<glm::vec2>& eventPath)
 {
-    const float stampInterval = std::max(0.001f, spacing * static_cast<float>(drawSize));
+    const float brushDiameter = std::max(curBrushDab[0], curBrushDab[1]);
+    const float stampInterval = std::max(0.001f, spacing * brushDiameter);
 
     // for each smoothed point in the event path
     for (const auto& point : eventPath)
@@ -140,7 +141,7 @@ void DrawEngine::stampBrush(glm::vec2 position)
     /*int topLeftX = position.x - (W/ 2);
     int topLeftY = position.y - (H / 2);*/
     int topLeftX = static_cast<int>(std::floor(position.x - (W / 2.0f))); 
-    int topLeftY = static_cast<int>(std::floor(position.y - (W / 2.0f))); 
+    int topLeftY = static_cast<int>(std::floor(position.y - (H / 2.0f))); 
 
     for (int r = 0; r < H; r++) 
     {
