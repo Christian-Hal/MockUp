@@ -85,7 +85,7 @@ const std::vector<float> BrushManager::generateBrushDab(int requestedBrushSize)
     // checking cache before doing any calculation 
     for (const auto& cachedDab : s_dabCache) {
         // if there have been no changes since our last dab generation, reuse last dab generation 
-        if (cachedDab.brush == activeBrush && cachedDab.diameter == requestedBrushSize) {
+        if (cachedDab.brush == &activeBrush && cachedDab.diameter == requestedBrushSize) {
             return cachedDab.dab; 
         }
     }
@@ -120,22 +120,26 @@ const std::vector<float> BrushManager::generateBrushDab(int requestedBrushSize)
     dab.push_back(static_cast<float>(W));
     dab.push_back(static_cast<float>(H));
 
-    // 
+    // for the billinear filtering 
+    const auto& src = activeBrush.tipAlpha; 
 
-    for (int y = 0; y < baseH; y++)
+    // mapping each target pixel to source space and sampling using bilinear filtering 
+    float invScaleX = static_cast<float>(baseW) / static_cast<float>(W); 
+    float invScaleY = static_cast<float>(baseH) / static_cast<float>(H); 
+
+    for (int y = 0; y < H; ++y)
     {
-        for (int sy = 0; sy < requestedBrushSize; sy++)
+		float srcY = (y + 0.5f) * invScaleY - 0.5f;
+        for (int x = 0; x < W; ++x)
         {
-            for (int x = 0; x < baseW; x++)
-            {
-                float a = activeBrush.tipAlpha[y * baseW + x];
-                for (int sx = 0; sx < brushSize; sx++)
-                {
-                    dab.push_back(a);
-                }
-            }
+            float srcX = (x + 0.5f) * invScaleX - 0.5f; 
+            float sample = bilinearSample(src, baseW, baseH, srcX, srcY); 
+            dab.push_back(std::clamp(sample, 0.0f, 1.0f)); 
         }
     }
+
+    // cache it 
+    s_dabCache.push_back(DabCache{ &activeBrush, requestedBrushSize, dab });
 
     return dab;
 }
