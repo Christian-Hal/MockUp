@@ -128,15 +128,19 @@ void DrawEngine::stampBrush(glm::vec2 position)
     }
 
     // grab all needed information from the brush dab
-    float W = curBrushDab[0];
-    float H = curBrushDab[1];
+    /*float W = curBrushDab[0];
+    float H = curBrushDab[1];*/
+    int W = static_cast<int>(std::lround(curBrushDab[0])); 
+    int H = static_cast<int>(std::lround(curBrushDab[1])); 
 
     // this copies everything but the first two values, which are the width and height
     std::vector<float> alpha(curBrushDab.begin() + 2, curBrushDab.end());
 
     // calculate other needed information
-    int topLeftX = position.x - (W/ 2);
-    int topLeftY = position.y - (H / 2);
+    /*int topLeftX = position.x - (W/ 2);
+    int topLeftY = position.y - (H / 2);*/
+    int topLeftX = static_cast<int>(std::floor(position.x - (W / 2.0f))); 
+    int topLeftY = static_cast<int>(std::floor(position.y - (W / 2.0f))); 
 
     for (int r = 0; r < H; r++) 
     {
@@ -164,10 +168,12 @@ void DrawEngine::processMousePos(double canvasX, double canvasY)
 
 // updates the information needed to draw: the canvas being drawn on, the brush dab being stamped, and the color used to draw
 void DrawEngine::setBrushDab(std::vector<float> newBrushDab, float spacing, int drawSize) {
-    curBrushDab = newBrushDab;
+    //curBrushDab = newBrushDab;
+    curBrushDab = std::move(newBrushDab); 
 
     this->spacing = spacing;
-    this->drawSize = drawSize;
+    //this->drawSize = drawSize;
+    this->drawSize = std::max(1, drawSize); 
 }
 void DrawEngine::setColor(Color newColor) {
     curColor = newColor;
