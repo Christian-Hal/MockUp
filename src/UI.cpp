@@ -497,7 +497,7 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 
 			if (data)
 			{
-				// getting ride of the path to the file to just get hte name
+				// getting ride of the path to the file to get the name
 				std::filesystem::path pathObj(filePath);
 				std::string fileName = pathObj.stem().string();
 				
