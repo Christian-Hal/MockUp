@@ -25,6 +25,7 @@ class BrushManager
         const std::vector<BrushTool>& getLoadedBrushes();
 
         // function for generating and grabbing the brush dab
+        // want brush size to be a diameter measurement as opposed to a multiplicativie relationship 
         const std::vector<float> generateBrushDab(int brushSize);
 
     private:

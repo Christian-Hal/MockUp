@@ -8,6 +8,43 @@
 #include "BrushManager.h"
 #include "stb_image.h"
 
+// ----- Billinear Sampling helper function ----- 
+static float bilinearSample(const std::vector<float>& src, int srcW, int srcH, float x, float y) {
+    int x0 = static_cast<int>(std::floor(x));
+    int y0 = static_cast<int>(std::floor(y));
+    int x1 = std::min(srcW - 1, x0 + 1);
+    int y1 = std::min(srcH - 1, y0 + 1);
+    float sx = x - static_cast<float>(x0);
+    float sy = y - static_cast<float>(y0);
+
+    auto at = [&](int xi, int yi) -> float {
+        xi = std::clamp(xi, 0, srcW - 1);
+        yi = std::clamp(yi, 0, srcH - 1);
+        return src[yi * srcW + xi];
+        };
+
+    float a00 = at(x0, y0);
+    float a10 = at(x1, y0);
+    float a01 = at(x0, y1);
+    float a11 = at(x1, y1);
+
+    float i0 = a00 + (a10 - a00) * sx;
+    float i1 = a01 + (a11 - a01) * sx;
+    return i0 + (i1 - i0) * sy;
+}
+
+
+
+// dab cache for brush pointer and brush size as an integer diameter
+struct DabCache {
+    const BrushTool* brush;
+    int diameter; // our new concept of brush size is the pixel diameter that the tip takes up 
+    std::vector<float> dab;
+};
+
+static std::vector<DabCache> s_dabCache; 
+
+
 /*
     Init method that loads in the default brushes. 
 
@@ -29,32 +66,65 @@ void BrushManager::init()
     brushChange = true;
 }
 
+
+
 // generates and returns a brush dab of the active brush
 // the dab contains the width, height, and then the values of the tip alpha
-const std::vector<float> BrushManager::generateBrushDab(int brushSize)
-{
+const std::vector<float> BrushManager::generateBrushDab(int requestedBrushSize)
+{ 
     if (loaded_Brushes.empty()) {
         return {};
     }
 
     const BrushTool& activeBrush = loaded_Brushes[activeBrushIndex];
 
+    // clamping to min brush size of 1 pixel, should already be accounted for with UI element 
+    // might not be needed  
+    //if (requestedBrushSize < 1) requestedBrushSize = 1; 
+
+    // checking cache before doing any calculation 
+    for (const auto& cachedDab : s_dabCache) {
+        // if there have been no changes since our last dab generation, reuse last dab generation 
+        if (cachedDab.brush == activeBrush && cachedDab.diameter == requestedBrushSize) {
+            return cachedDab.dab; 
+        }
+    }
+
+    // grabbing brush resolution 
     int baseW = activeBrush.tipWidth;
     int baseH = activeBrush.tipHeight;
+    // clamping a minimum 
+    if (baseW <= 0) baseW = 1;
+    if (baseH <= 0) baseH = 1;
 
-    int W = baseW * brushSize;
-    int H = baseH * brushSize;
+    // -- deprecated previous multiplicative brush size 
+    // -- remove this entirely after new brush size is complete 
+    //int W = baseW * requestedBrushSize;
+    //int H = baseH * requestedBrushSize;
+     
+    // ---- KEY: actual brush size part ----
+    // taking the max of the base resolution diamater 
+    int baseMax = std::max(baseW, baseH); 
+    // determining our scale factor by dividing the UI brush size by the base resolution diameter 
+    float scale = static_cast<float>(requestedBrushSize) / static_cast<float>(baseMax); 
+
+    // actual brush height and width accounting for scale factor 
+    int W = std::max(1, static_cast<int>(std::round(baseW * scale))); 
+    int H = std::max(1, static_cast<int>(std::round(baseH * scale))); 
+
 
     std::vector<float> dab;
     dab.reserve(2 + W * H);
 
     // the first two values in the dab are the width and height of the tip
-    dab.push_back(W);
-    dab.push_back(H);
+    dab.push_back(static_cast<float>(W));
+    dab.push_back(static_cast<float>(H));
+
+    // 
 
     for (int y = 0; y < baseH; y++)
     {
-        for (int sy = 0; sy < brushSize; sy++)
+        for (int sy = 0; sy < requestedBrushSize; sy++)
         {
             for (int x = 0; x < baseW; x++)
             {
