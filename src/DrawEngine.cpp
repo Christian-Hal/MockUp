@@ -128,9 +128,6 @@ void DrawEngine::stampBrush(glm::vec2 position)
         return;
     }
 
-    // grab all needed information from the brush dab
-    /*float W = curBrushDab[0];
-    float H = curBrushDab[1];*/
     int W = static_cast<int>(std::lround(curBrushDab[0])); 
     int H = static_cast<int>(std::lround(curBrushDab[1])); 
 
@@ -138,8 +135,6 @@ void DrawEngine::stampBrush(glm::vec2 position)
     std::vector<float> alpha(curBrushDab.begin() + 2, curBrushDab.end());
 
     // calculate other needed information
-    /*int topLeftX = position.x - (W/ 2);
-    int topLeftY = position.y - (H / 2);*/
     int topLeftX = static_cast<int>(std::floor(position.x - (W / 2.0f))); 
     int topLeftY = static_cast<int>(std::floor(position.y - (H / 2.0f))); 
 

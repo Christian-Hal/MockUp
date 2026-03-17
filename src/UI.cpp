@@ -131,6 +131,8 @@ bool LoadTextureFromFile(const char* file_name, GLuint* out_texture, int* out_wi
 	return ret;
 }
 
+
+
 // note: not all options here return a value. 
 Color UI::getColor()
 {
@@ -157,6 +159,8 @@ Color UI::getColor()
 
 	return Color{ 0, 0, 0, 0 };
 }
+
+
 
 /*
 	Setter for color
@@ -193,6 +197,8 @@ void UI::setCursorMode(CursorMode temp) {
 		setCursorModeCb(temp);
 	}
 }
+
+
 
 // UI initialization 
 void UI::init(GLFWwindow* window, Renderer& rendInst, Globals& g_inst) {
@@ -772,6 +778,8 @@ void UI::drawPopup(CanvasManager& canvasManager)
 
 			// create the new canvas
 			canvasManager.createCanvas(temp_w, temp_h, temp_n);
+			// centering the newly created canvas 
+			
 
 			showPopup = false;
 			temp_n = "Untitled";

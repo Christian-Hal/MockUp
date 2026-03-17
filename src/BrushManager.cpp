@@ -78,10 +78,6 @@ const std::vector<float> BrushManager::generateBrushDab(int requestedBrushSize)
 
     const BrushTool& activeBrush = loaded_Brushes[activeBrushIndex];
 
-    // clamping to min brush size of 1 pixel, should already be accounted for with UI element 
-    // might not be needed  
-    //if (requestedBrushSize < 1) requestedBrushSize = 1; 
-
     // checking cache before doing any calculation 
     for (const auto& cachedDab : s_dabCache) {
         // if there have been no changes since our last dab generation, reuse last dab generation 
@@ -96,12 +92,7 @@ const std::vector<float> BrushManager::generateBrushDab(int requestedBrushSize)
     // clamping a minimum 
     if (baseW <= 0) baseW = 1;
     if (baseH <= 0) baseH = 1;
-
-    // -- deprecated previous multiplicative brush size 
-    // -- remove this entirely after new brush size is complete 
-    //int W = baseW * requestedBrushSize;
-    //int H = baseH * requestedBrushSize;
-     
+   
     // ---- KEY: actual brush size part ----
     // taking the max of the base resolution diamater 
     int baseMax = std::max(baseW, baseH); 

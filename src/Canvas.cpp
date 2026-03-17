@@ -53,7 +53,7 @@ void Canvas::endStrokeRecord()
     {
         undoStack.push_back(activeStroke);
         redoStack.clear();
-        if (undoStack.size() > 5) {
+        if (undoStack.size() > 200) {
             undoStack.erase(undoStack.begin());
         }
     }
