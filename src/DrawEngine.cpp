@@ -71,7 +71,7 @@ void DrawEngine::update()
 
 void DrawEngine::drawPath(const std::vector<glm::vec2>& eventPath)
 {
-    const float brushDiameter = std::max(curBrushDab[0], curBrushDab[1]);
+    const float brushDiameter = (curBrushDab[0] + curBrushDab[1]) / 2.0f;
     const float stampInterval = std::max(0.001f, spacing * brushDiameter);
 
     // for each smoothed point in the event path
