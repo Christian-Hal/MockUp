@@ -2,8 +2,11 @@
 #pragma once
 
 #include <string>
-
+#include <vector>
+#include <cstdint>
 #include "BrushTool.h"
+
+#include "tinyxml2.h"
 
 class BrushManager 
 {
@@ -16,10 +19,8 @@ class BrushManager
         void setActiveBrush(int index);
         bool brushChange = false;
 
-        // brush loader methods
+        // brush loader method
         void loadBrush(const std::string& path);
-        bool loadBrushTipFromPNG(const std::string& path, BrushTool& outBrush);
-        bool loadBrushFromGBR(const std::string& path, BrushTool& outBrush);
 
         // various getter methods
         const std::vector<BrushTool>& getLoadedBrushes();
@@ -38,9 +39,17 @@ class BrushManager
         // index of the active brush in loaded_Brushes
         int activeBrushIndex = 0;
 
+        // brush loader methods
+        bool loadBrushTipFromPNG(const std::string& path, BrushTool& outBrush); // loads from a file path
+        bool loadBrushFromGBR(const std::string& path, BrushTool& outBrush);
+        bool loadBrushFromKPP(const std::string& path, BrushTool& outBrush);
+
         // default functions
         void configureAsDefault(BrushTool& brush);
 
         // helper functions
         uint32_t read_be32(std::ifstream& f);
+        bool extractFile(const std::string& zipPath, const std::string& filename, std::vector<unsigned char>& out);
+        bool loadTipFromPNG(const std::vector<unsigned char>& pngData, BrushTool& brush);
+        float getParam(tinyxml2::XMLDocument& doc, const char* name, float defaultVal);
 };

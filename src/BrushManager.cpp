@@ -4,9 +4,12 @@
 #include <algorithm>
 #include <string>
 #include <fstream>
+#include <cctype>
 
 #include "BrushManager.h"
 #include "stb_image.h"
+
+#include "miniz.h"
 
 // ----- Billinear Sampling helper function ----- 
 static float bilinearSample(const std::vector<float>& src, int srcW, int srcH, float x, float y) {
@@ -32,8 +35,6 @@ static float bilinearSample(const std::vector<float>& src, int srcW, int srcH, f
     float i1 = a01 + (a11 - a01) * sx;
     return i0 + (i1 - i0) * sy;
 }
-
-
 
 // dab cache for brush pointer and brush size as an integer diameter
 struct DabCache {
@@ -65,7 +66,6 @@ void BrushManager::init()
 
     brushChange = true;
 }
-
 
 
 // generates and returns a brush dab of the active brush
@@ -370,13 +370,14 @@ void BrushManager::loadBrush(const std::string& path)
 {
     BrushTool temp = BrushTool();
 
-    // if the path is too short then print an error and return
-    if (path.size() < 4) {
+    const size_t dotPos = path.find_last_of('.');
+    if (dotPos == std::string::npos) {
         std::cerr << "Invalid brush file path: " << path << "\n";
         return;
     }
 
-    std::string fileType = path.substr(path.size() - 4);
+    std::string fileType = path.substr(dotPos);
+    std::transform(fileType.begin(), fileType.end(), fileType.begin(), ::tolower);
     if (fileType == ".gbr") {
         if (loadBrushFromGBR(path, temp)) {
             loaded_Brushes.emplace_back(temp);
@@ -389,8 +390,149 @@ void BrushManager::loadBrush(const std::string& path)
             brushChange = true;
         }
     }
+    else if (fileType == ".kpp") {
+        if (loadBrushFromKPP(path, temp)) {
+            loaded_Brushes.emplace_back(temp);
+            brushChange = true;
+        }
+    }
     else {
         std::cout << "Unsupported brush file type: " << fileType << "\n";
     }
     
+}
+
+bool BrushManager::loadBrushFromKPP(const std::string& path, BrushTool& outBrush)
+{
+    std::vector<unsigned char> xmlData;
+    std::vector<unsigned char> pngData;
+
+    if (!extractFile(path, "preset.xml", xmlData) ||
+        !extractFile(path, "brush_tip.png", pngData))
+    {
+        std::cerr << "Failed to extract preset.xml or brush_tip.png from KPP.\n";
+        return false;
+    }
+
+    // Parse XML
+    tinyxml2::XMLDocument doc;
+    if (doc.Parse((char*)xmlData.data(), xmlData.size()) != tinyxml2::XML_SUCCESS)
+    {
+        std::cerr << "Failed to parse preset.xml: " << doc.ErrorStr() << "\n";
+        return false;
+    }
+
+    auto root = doc.FirstChildElement("preset");
+    if (!root)
+    {
+        std::cerr << "Missing <preset> root in XML.\n";
+        return false;
+    }
+
+    // Brush name
+    if (auto nameElem = root->FirstChildElement("name"))
+        outBrush.brushName = nameElem->GetText();
+    else
+        outBrush.brushName = "Unnamed Brush";
+
+    // Brush parameters
+    outBrush.spacing = getParam(doc, "spacing", 0.2f);
+    outBrush.opacity = getParam(doc, "opacity", 1.0f);
+    outBrush.hardness = getParam(doc, "hardness", 1.0f);
+    outBrush.rotateWithStroke = getParam(doc, "rotateWithStroke", 0.0f) > 0.5f;
+
+    // Load brush tip
+    if (!loadTipFromPNG(pngData, outBrush))
+    {
+        std::cerr << "Failed to load brush tip PNG.\n";
+        return false;
+    }
+
+    return true;
+}
+
+float BrushManager::getParam(tinyxml2::XMLDocument& doc, const char* name, float defaultVal)
+{
+    auto root = doc.FirstChildElement("preset");
+    if (!root) return defaultVal;
+
+    for (tinyxml2::XMLElement* param = root->FirstChildElement("param"); param; param = param->NextSiblingElement("param"))
+    {
+        if (param->Attribute("name") && std::strcmp(param->Attribute("name"), name) == 0)
+        {
+            tinyxml2::XMLElement* valElem = param->FirstChildElement("value");
+            if (valElem && valElem->GetText())
+                return std::stof(valElem->GetText());
+        }
+    }
+    return defaultVal;
+}
+
+bool BrushManager::extractFile(const std::string& zipPath, const std::string& filename, std::vector<unsigned char>& out)
+{
+    mz_zip_archive zip;
+    memset(&zip, 0, sizeof(zip));
+
+    if (!mz_zip_reader_init_file(&zip, zipPath.c_str(), 0))
+    {
+        std::cerr << "Failed to open ZIP: " << zipPath << "\n";
+        return false;
+    }
+
+    int fileIndex = mz_zip_reader_locate_file(&zip, filename.c_str(), nullptr, 0);
+    if (fileIndex < 0)
+    {
+        std::cerr << "File not found in ZIP: " << filename << "\n";
+        mz_zip_reader_end(&zip);
+        return false;
+    }
+
+    size_t size = 0;
+    void* data = mz_zip_reader_extract_to_heap(&zip, fileIndex, &size, 0);
+    if (!data)
+    {
+        std::cerr << "Failed to extract file: " << filename << "\n";
+        mz_zip_reader_end(&zip);
+        return false;
+    }
+
+    out.assign((unsigned char*)data, (unsigned char*)data + size);
+    mz_free(data);
+    mz_zip_reader_end(&zip);
+
+    return true;
+}
+
+bool BrushManager::loadTipFromPNG(const std::vector<unsigned char>& pngData, BrushTool& brush)
+{
+    int w, h, channels;
+    unsigned char* img = stbi_load_from_memory(pngData.data(), pngData.size(), &w, &h, &channels, 4);
+    if (!img)
+    {
+        std::cerr << "Failed to decode PNG in memory.\n";
+        return false;
+    }
+
+    brush.tipWidth  = w;
+    brush.tipHeight = h;
+    brush.tipAlpha.resize(w * h);
+
+    for (int i = 0; i < w * h; ++i)
+    {
+        unsigned char r = img[i * 4 + 0];
+        unsigned char g = img[i * 4 + 1];
+        unsigned char b = img[i * 4 + 2];
+        unsigned char a = img[i * 4 + 3];
+
+        float luminance =
+            (0.2126f * r +
+             0.7152f * g +
+             0.0722f * b) / 255.0f;
+
+        float alpha = (a / 255.0f) * luminance;
+        brush.tipAlpha[i] = std::clamp(alpha, 0.0f, 1.0f);
+    }
+
+    stbi_image_free(img);
+    return true;
 }

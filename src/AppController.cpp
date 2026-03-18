@@ -13,6 +13,8 @@
 #include "InputManager.h"
 #include "CanvasManipulation.h"
 
+#include <algorithm>
+
 static int SCR_WIDTH = 1280;
 static int SCR_HEIGHT = 720;
 
@@ -176,7 +178,13 @@ void AppController::shutdown() {
 void AppController::loadBrush(const std::string& path)
 {
 	auto& brushManager = appState.getBrushManager();
+	const auto beforeCount = brushManager.getLoadedBrushes().size();
 	brushManager.loadBrush(path);
+
+	const auto afterCount = brushManager.getLoadedBrushes().size();
+	if (afterCount > beforeCount) {
+		setActiveBrush(static_cast<int>(afterCount - 1));
+	}
 }
 
 void AppController::setCursorMode(CursorMode mode)
@@ -205,6 +213,16 @@ void AppController::setActiveBrush(int index)
 {
 	auto& brushManager = appState.getBrushManager();
 	brushManager.setActiveBrush(index);
+
+	auto& ui = appState.getUI();
+	const BrushTool& activeBrush = brushManager.getActiveBrush();
+
+	// Imported bitmap brushes can look like a single pixel when size is 1.
+	// Nudge the size to a visible value when selecting larger brush tips.
+	if (ui.brushSize <= 1 && (activeBrush.tipWidth > 1 || activeBrush.tipHeight > 1)) {
+		const int maxTipDimension = std::max(activeBrush.tipWidth, activeBrush.tipHeight);
+		ui.brushSize = std::clamp(maxTipDimension, 3, 20);
+	}
 }
 
 std::string AppController::getHotkeyString(InputAction action)

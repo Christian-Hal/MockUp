@@ -659,7 +659,7 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 		ImGuiFileDialog::Instance()->OpenDialog(
 			"ChooseFileDlgKey",
 			"Choose File",
-			".gbr,.png"
+			".gbr,.png,.kpp"
 		);
 	}
 

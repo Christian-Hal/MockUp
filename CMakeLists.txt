@@ -10,6 +10,14 @@ add_subdirectory(external/glfw)
 add_library(glad external/glad/src/glad.c)
 target_include_directories(glad PUBLIC external/glad/include)
 
+# miniz
+add_library(miniz STATIC external/miniz/miniz.c)
+target_include_directories(miniz PUBLIC external/miniz)
+
+# tinyxml2
+add_library(tinyxml2 STATIC external/tinyxml2/tinyxml2.cpp)
+target_include_directories(tinyxml2 PUBLIC external/tinyxml2)
+
 # ImGui
 add_library(imgui
     external/imgui/imgui.cpp
@@ -54,6 +62,8 @@ if(WIN32)
         glad
         imgui
         opengl32
+	tinyxml2
+	miniz
     )
 elseif(APPLE)
     find_library(COCOA Cocoa REQUIRED)
@@ -65,6 +75,8 @@ elseif(APPLE)
         glfw
         glad
         imgui
+	tinyxml2
+	miniz
         ${OPENGL}
         ${COCOA}
         ${IOKIT}
@@ -76,6 +88,8 @@ else()
         glfw
         glad
         imgui
+	tinyxml2
+	miniz
         GL
         X11
         pthread
