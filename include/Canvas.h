@@ -41,6 +41,8 @@ class Canvas {
         friend bool operator!=(const Color& c2, const Color& c1);
         friend Color operator*(const Color& c2, const Color& c1);
 
+        bool colorEquals(const Color& c2, const Color& c1) ;
+        const Color colorTimes(const Color& c2, const Color& c1);
 
         const std::string getName() const;
         void setName(std::string name);

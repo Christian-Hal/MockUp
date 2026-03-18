@@ -224,6 +224,15 @@ Color operator*(const Color& c2, const Color& c1){
 }
 
 
+bool Canvas::colorEquals(const Color& c2, const Color& c1){
+    return c1 == c2;
+}
+
+const Color Canvas::colorTimes(const Color& c2, const Color& c1){
+    return c2 * c1;
+}
+
+
 
 /*
     If the pixel at a given coordinate is within bounds, 
