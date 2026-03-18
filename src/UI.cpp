@@ -334,12 +334,24 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 		// check if tipAlpha actually has data
 		if (tipAlpha.empty()) return;
 
+		// brush dimensions 
 		int tw = activeBrush.tipWidth;
 		int th = activeBrush.tipHeight;
+
+		// This brush size value is now the diameter of the brush tip 
 		float scale = (float)UI::brushSize;
 
 		// grab mouse position and initialize draw list 
 		ImVec2 mousePos = ImGui::GetMousePos();
+
+		/*
+			---- WHAT TO DO -----
+			NEED TO TAKE THE BRUSH STAMP AND DRAW ONLY THE EDGE PIXELS 
+			WOULD REQUIRE WIRING TOGETHER THE DRAW ENGINE AND UI 
+			
+			WE CAN STILL GET THE BRUSH SIZE FROM THE UI ELEMENT BUT NEED 
+			TO ACCOUNT FOR IT BEING THE DIAMETER NOW 
+		*/
 
 		// *** TEMP FIX ***
 		// drawing the custom cursor only if the brushsize is large enough
