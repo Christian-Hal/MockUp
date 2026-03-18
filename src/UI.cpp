@@ -63,6 +63,11 @@ void UI::bindCursorCallbacks(SetCursorModeCallback setCb, GetCursorModeCallback 
     getCursorModeCb = std::move(getCb);
 }
 
+void UI::bindCanvasCallbacks(ResetCanvasPositionCallback resetPositionCb)
+{
+	resetCanvasPositionCb = std::move(resetPositionCb);
+}
+
 void UI::bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallback setActiveCb, GetActiveBrushCallback getActiveCb, LoadBrushCallback loadBrushCb)
 {
 	getBrushListCb = std::move(getListCb);
@@ -790,8 +795,9 @@ void UI::drawPopup(CanvasManager& canvasManager)
 
 			// create the new canvas
 			canvasManager.createCanvas(temp_w, temp_h, temp_n);
+
 			// centering the newly created canvas 
-			
+			resetCanvasPositionCb();
 
 			showPopup = false;
 			temp_n = "Untitled";

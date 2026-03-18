@@ -66,6 +66,9 @@ bool AppController::init()
 		[this](const std::string& path) { loadBrush(path); }
 	);
 
+	// Bind reset canvas position callback
+	ui.bindCanvasCallbacks([this]() {canvasManipulation.centerCamera(appState.getCanvasManager().getActive()); });
+
 	// Route hotkey label/rebind UI actions through controller-owned input flow.
 	ui.bindHotkeyCallbacks(
 		[this](InputAction action) { return getHotkeyString(action); },
