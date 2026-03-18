@@ -16,7 +16,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#include <filesystem>
+
 std::string overwritePath;
 
 // variables to store info for UI declared up here 
@@ -419,6 +419,9 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 
 		config.fileName = canvasManager.getActive().getName();
 
+		// ImGuiFileDialog has a built in detection for overwriting a file and makes a popup as well.
+		config.flags = ImGuiFileDialogFlags_ConfirmOverwrite;
+
 		ImGuiFileDialog::Instance()->OpenDialog(
 			"SaveImageDlg",
 			"Save Image",
@@ -433,45 +436,13 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 			std::string filePath =
 				ImGuiFileDialog::Instance()->GetFilePathName();
 
-			if (std::filesystem::exists(filePath))
-			{
-				overwritePath = filePath;
-				ImGui::OpenPopup("Overwrite File?");
-			}
-			else
-			{
-				canvasManager.saveToFile(filePath);
-			}
+			canvasManager.saveToFile(filePath);
 		}
 
 		ImGuiFileDialog::Instance()->Close();
 	}
 
-	// creating pop up if the file name is already used
-	if (ImGui::BeginPopupModal("Overwrite File?", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		ImGui::Text("This file already exists.");
-		ImGui::Text("Do you want to overwrite it?");
-		ImGui::Separator();
-
-		if (ImGui::Button("Yes", ImVec2(120, 0)))
-		{
-			canvasManager.saveToFile(overwritePath);
-			overwritePath.clear();
-			ImGui::CloseCurrentPopup();
-		}
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("Cancel", ImVec2(120, 0)))
-		{
-			overwritePath.clear();
-			ImGui::CloseCurrentPopup();
-		}
-
-		ImGui::EndPopup();
-	}
-
+	//loading file
 	ImGui::SameLine();
 	if (ImGui::Button("Load File"))
 	{
@@ -489,27 +460,7 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 			std::string filePath =
 				ImGuiFileDialog::Instance()->GetFilePathName();
 
-			int width, height, channels;
-			stbi_set_flip_vertically_on_load(true);
-
-			// loads file data into memory
-			unsigned char* data = stbi_load(filePath.c_str(), &width, &height, &channels, 4);
-
-			if (data)
-			{
-				// getting ride of the path to the file to get the name
-				std::filesystem::path pathObj(filePath);
-				std::string fileName = pathObj.stem().string();
-				
-				// creating new canvas
-				Canvas& canvas = canvasManager.createCanvas(width, height, fileName);
-
-				// converts data into pixels onto the canvas
-				canvas.loadImage(data);
-
-				// freeing up memory
-				stbi_image_free(data);
-			}
+			canvasManager.loadFromFile(filePath);
 		}
 
 		ImGuiFileDialog::Instance()->Close();

@@ -7,6 +7,8 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+#include <filesystem>
+#include <stb_image.h>
 
 
 Canvas& CanvasManager::createCanvas(int width, int height, std::string name)
@@ -100,6 +102,8 @@ void CanvasManager::setActiveCanvas(int index)
     FrameRenderer::updateCanvas(&oldCanvasCopy, activeCanvas, index);
 }
 
+
+
 // didn't change the main "saving" fucntion of it just implemented it to work with new file system
 void CanvasManager::saveToFile(const std::string& path)
 {
@@ -134,4 +138,27 @@ void CanvasManager::saveToFile(const std::string& path)
 }
 
 
+// 
+void CanvasManager::loadFromFile(const std::string& filePath)
+{
+    int width, height, channels;
+    stbi_set_flip_vertically_on_load(true);
 
+    unsigned char* data = stbi_load(filePath.c_str(), &width, &height, &channels, 4);
+
+    if (data)
+    {
+        // getting ride of the path to the file to get the name
+        std::filesystem::path pathObj(filePath);
+        std::string fileName = pathObj.stem().string();
+
+        // creating new canvas
+        Canvas& canvas = createCanvas(width, height, fileName);
+
+        // converts data into pixels onto the canvas
+        canvas.loadImage(data);
+
+        // freeing up memory
+        stbi_image_free(data);
+    }
+}
