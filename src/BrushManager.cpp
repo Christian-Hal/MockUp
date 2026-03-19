@@ -397,10 +397,59 @@ void BrushManager::loadBrush(const std::string& path)
             brushChange = true;
         }
     }
+    else if (fileType == ".jbr") {
+        if (loadBrushFromJBR(path, temp)) {
+            loaded_Brushes.emplace_back(temp);
+            brushChange = true;
+        }
+    }
     else {
         std::cout << "Unsupported brush file type: " << fileType << "\n";
     }
     
+}
+
+bool BrushManager::loadBrushFromJBR(const std::string& path, BrushTool& outBrush)
+{
+    // .jbr is a ZIP archive containing:
+    //   brush.json  — brush settings (name, spacing, opacity, etc.)
+    //   texture.png — the brush tip image
+    std::vector<unsigned char> jsonData;
+    std::vector<unsigned char> pngData;
+
+    if (!extractFile(path, "brush.json", jsonData) ||
+        !extractFile(path, "texture.png", pngData))
+    {
+        std::cerr << "Failed to extract brush.json or texture.png from JBR: " << path << "\n";
+        return false;
+    }
+
+    // Parse JSON for brush settings
+    try
+    {
+        using json = nlohmann::json;
+        json j = json::parse(jsonData.begin(), jsonData.end());
+
+        outBrush.brushName      = j.value("name",    "Unnamed Brush");
+        outBrush.spacing        = j.value("spacing",  0.1f);
+        outBrush.opacity        = j.value("opacity",  1.0f);
+        outBrush.hardness       = j.value("hardness", 1.0f);
+        outBrush.rotateWithStroke = j.value("rotateWithStroke", false);
+    }
+    catch (const nlohmann::json::exception& e)
+    {
+        std::cerr << "Failed to parse brush.json in JBR: " << e.what() << "\n";
+        return false;
+    }
+
+    // Load tip from the embedded PNG
+    if (!loadTipFromPNG(pngData, outBrush))
+    {
+        std::cerr << "Failed to load texture.png from JBR.\n";
+        return false;
+    }
+
+    return true;
 }
 
 bool BrushManager::loadBrushFromKPP(const std::string& path, BrushTool& outBrush)

@@ -43,6 +43,7 @@ class BrushManager
         bool loadBrushTipFromPNG(const std::string& path, BrushTool& outBrush); // loads from a file path
         bool loadBrushFromGBR(const std::string& path, BrushTool& outBrush);
         bool loadBrushFromKPP(const std::string& path, BrushTool& outBrush);
+        bool loadBrushFromJBR(const std::string& path, BrushTool& outBrush);
 
         // default functions
         void configureAsDefault(BrushTool& brush);

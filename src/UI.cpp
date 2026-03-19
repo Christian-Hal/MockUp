@@ -610,7 +610,7 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 
 	// brush size slider 
 	// value is temporarily significantly lowered due to current brush size implementation 
-	ImGui::SliderInt("Size", &brushSize, 1, 20);
+	ImGui::SliderInt("Size", &brushSize, 1, 100);
 
 	// adds a little visual split between sections
 	ImGui::Spacing();
@@ -659,7 +659,7 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 		ImGuiFileDialog::Instance()->OpenDialog(
 			"ChooseFileDlgKey",
 			"Choose File",
-			".gbr,.png,.kpp"
+			".gbr,.png,.kpp,.jbr"
 		);
 	}
 
