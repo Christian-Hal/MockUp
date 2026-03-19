@@ -114,6 +114,7 @@ void FrameRenderer::updateCanvas(Canvas* oldCanvas, Canvas* newCanvas, int newCa
 // loads new frame with blank canvas
 void FrameRenderer::createFrame(Canvas& canvas){
     // Save the old frame
+    removeOnionSkin(canvas);
     frames[curFrame - 1] =  vector<Color>(canvas.getData(), canvas.getData() + (canvas.getWidth() * canvas.getHeight()));
     writeAllData(&canvas);
     numFrames++;
@@ -135,6 +136,7 @@ void FrameRenderer::createFrame(Canvas& canvas){
     // create function that renames any other frames that come after
     rename(true);
     writeAllData(&canvas);
+    updateOnionSkin(canvas);
 }
 
 // remove current frame and update file names accordingly
