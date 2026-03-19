@@ -27,6 +27,8 @@ int FrameRenderer::numFrames = -1;
 int FrameRenderer::curCanvas = -1;
 int FrameRenderer::curFrame = -1;
 bool FrameRenderer::isPlaying = false;
+int FrameRenderer::numBefore = 1;
+int FrameRenderer::numAfter = 1;
 // this will be stored in memory so we can access it quickly everything else gets written to a file
 // we need the frame data so we can play high fps animations
 vector<vector<Color>> FrameRenderer::frames;
@@ -54,6 +56,7 @@ FrameRenderer::FrameRenderer()
 void FrameRenderer::newCanvas(Canvas* oldCanvas, Canvas* newCanvas){
     // Save the data if there already was a canvas
     if(numCanvas != 0){
+        removeOnionSkin(*oldCanvas);
         frames[curFrame - 1] = vector<Color>(oldCanvas->getData(), oldCanvas->getData() + (oldCanvas->getWidth() * oldCanvas->getHeight()));
         writeAllData(oldCanvas);
     }
@@ -68,6 +71,7 @@ void FrameRenderer::newCanvas(Canvas* oldCanvas, Canvas* newCanvas){
     frames.clear();
     frames.push_back(vector<Color>(newCanvas->getData(), newCanvas->getData() + (newCanvas->getWidth() * newCanvas->getHeight())));
     writeAllData(newCanvas);
+    updateOnionSkin(*newCanvas);
 }
 
 // this function is called whenever you move from one canvas to another
@@ -79,8 +83,10 @@ void FrameRenderer::updateCanvas(Canvas* oldCanvas, Canvas* newCanvas, int newCa
     
     // Save data
     if(numCanvas != 0){
+        removeOnionSkin(*oldCanvas);
         frames[curFrame - 1] =  vector<Color>(oldCanvas->getData(), oldCanvas->getData() + (oldCanvas->getWidth() * oldCanvas->getHeight()));
         writeAllData(oldCanvas);
+        
     }
 
     // update internal values
@@ -98,6 +104,7 @@ void FrameRenderer::updateCanvas(Canvas* oldCanvas, Canvas* newCanvas, int newCa
     frames = readPixelData(meta);
     newCanvas->setPixels(frames[curFrame - 1]);
     newCanvas->setLayerData(readLayerData(meta));
+    updateOnionSkin(*newCanvas);
 }
 
 
@@ -150,7 +157,7 @@ void FrameRenderer::removeFrame(Canvas& canvas){
         int* meta = readMetaData();
         canvas.setPixels(frames[curFrame-1]);
         canvas.setLayerData(readLayerData(meta));
-    
+        updateOnionSkin(canvas);
     }
 }
 
@@ -160,17 +167,20 @@ void FrameRenderer::removeFrame(Canvas& canvas){
 void FrameRenderer::selectFrame(Canvas& canvas, int frameDelta){
     if(0 < curFrame + frameDelta && curFrame + frameDelta <= numFrames){
         // save data to drive
+        removeOnionSkin(canvas);
         frames[curFrame - 1] =  vector<Color>(canvas.getData(), canvas.getData() + (canvas.getWidth() * canvas.getHeight()));
         writeAllData(&canvas);
         curFrame = curFrame + frameDelta;
         int* meta = readMetaData();
         canvas.setPixels(frames[curFrame-1]);
         canvas.setLayerData(readLayerData(meta));
+        updateOnionSkin(canvas);
     }
 }
 
 void FrameRenderer::play(Canvas& canvas){
     if(!isPlaying){
+        removeOnionSkin(canvas);
         frames[curFrame - 1] =  vector<Color>(canvas.getData(), canvas.getData() + (canvas.getWidth() * canvas.getHeight()));
         int start = 1;
         std::thread t([&canvas, start]{
@@ -183,14 +193,14 @@ void FrameRenderer::play(Canvas& canvas){
             }
             canvas.setPixels(frames[curFrame - 1]);
             isPlaying = false;
-
+            updateOnionSkin(canvas);
         });
         t.detach();
     }
 
 }
 
-void FrameRenderer::updateOnionSkin(Canvas& canvas, int numBefore, int numAfter){
+void FrameRenderer::updateOnionSkin(Canvas& canvas){
     
         Color green = {0,255,0,128};
         Color blendedColor = canvas.colorTimes(canvas.getBackgroundColor(), green);
@@ -211,7 +221,7 @@ void FrameRenderer::updateOnionSkin(Canvas& canvas, int numBefore, int numAfter)
         green = {255, 0, 0, 128};
         blendedColor = canvas.colorTimes(canvas.getBackgroundColor(), green);
         for(int i = 0; i < numAfter; i++){
-            if(curFrame != numFrames){ // This line needs fixing
+            if(curFrame < numFrames - i){ // This line needs fixing
                 for(int j = 0; j < layDat[0].size(); j++){
                     if(!canvas.colorEquals(frames[curFrame + i][j], canvas.getBackgroundColor())){
                         int x = j % canvas.getWidth();

@@ -563,7 +563,7 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	ImGui::Spacing();
 
 	if(ImGui::Button("Onion Skin Test")){
-		FrameRenderer::updateOnionSkin(canvasManager.getActive(), 1, 1);
+		FrameRenderer::updateOnionSkin(canvasManager.getActive());
 	}
 	if(ImGui::Button("Onion Skin remove")){
 		FrameRenderer::removeOnionSkin(canvasManager.getActive());

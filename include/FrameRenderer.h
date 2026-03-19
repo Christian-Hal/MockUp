@@ -17,7 +17,7 @@ class FrameRenderer{
         static void removeFrame(Canvas& canvas);
         static void selectFrame(Canvas& canvas, int frameDelta);
         static void play(Canvas& canvas);
-        static void updateOnionSkin(Canvas& canvas, int numBefore, int numAfter);
+        static void updateOnionSkin(Canvas& canvas);
         static void removeOnionSkin(Canvas& canvas);
         void shutdown();
 
@@ -27,6 +27,8 @@ class FrameRenderer{
         static int curCanvas;
         static int numCanvas;
         static bool isPlaying;
+        static int numBefore;
+        static int numAfter;
         
         // frame number, pixel data for that frame
         static vector<vector<Color>> frames;
