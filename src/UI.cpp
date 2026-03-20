@@ -329,66 +329,67 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 
 	// keep default cursor when no canvas 
 	if (!(ImGui::GetIO().WantCaptureMouse) && canvasManager.getNumCanvases() > 0) {
-		// erase standard mouse
-		ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+		if (UI::getCursorMode() == CursorMode::Draw || UI::getCursorMode() == CursorMode::Erase) {
+			// erase standard mouse
+			ImGui::SetMouseCursor(ImGuiMouseCursor_None);
 
-		// grab our brush and its tip 
-		const BrushTool& activeBrush = getActiveBrushCb();
-		const std::vector<float>& tipAlpha = activeBrush.tipAlpha;
+			// grab our brush and its tip 
+			const BrushTool& activeBrush = getActiveBrushCb();
+			const std::vector<float>& tipAlpha = activeBrush.tipAlpha;
 
-		// check if tipAlpha actually has data
-		if (tipAlpha.empty()) return;
+			// check if tipAlpha actually has data
+			if (tipAlpha.empty()) return;
 
-		// brush dimensions 
-		int tw = activeBrush.tipWidth;
-		int th = activeBrush.tipHeight;
+			// brush dimensions 
+			int tw = activeBrush.tipWidth;
+			int th = activeBrush.tipHeight;
 
-		// This brush size value is now the diameter of the brush tip 
-		float scale = (float)UI::brushSize;
+			// This brush size value is now the diameter of the brush tip 
+			float scale = (float)UI::brushSize;
 
-		// grab mouse position and initialize draw list 
-		ImVec2 mousePos = ImGui::GetMousePos();
+			// grab mouse position and initialize draw list 
+			ImVec2 mousePos = ImGui::GetMousePos();
 
-		/*
-			---- WHAT TO DO -----
-			NEED TO TAKE THE BRUSH STAMP AND DRAW ONLY THE EDGE PIXELS 
-			WOULD REQUIRE WIRING TOGETHER THE DRAW ENGINE AND UI 
-			
-			WE CAN STILL GET THE BRUSH SIZE FROM THE UI ELEMENT BUT NEED 
-			TO ACCOUNT FOR IT BEING THE DIAMETER NOW 
-		*/
+			/*
+				---- WHAT TO DO -----
+				NEED TO TAKE THE BRUSH STAMP AND DRAW ONLY THE EDGE PIXELS
+				WOULD REQUIRE WIRING TOGETHER THE DRAW ENGINE AND UI
 
-		// *** TEMP FIX ***
-		// drawing the custom cursor only if the brushsize is large enough
-		if (scale >= 3) {
-			ImDrawList* drawList = ImGui::GetForegroundDrawList();
+				WE CAN STILL GET THE BRUSH SIZE FROM THE UI ELEMENT BUT NEED
+				TO ACCOUNT FOR IT BEING THE DIAMETER NOW
+			*/
 
-			// center brush tip
-			// NOTE: once we are able to draw from a single click, the float values in these 
-			// calculations might need to be slightly changed 
-			ImVec2 offset = ImVec2(mousePos.x - (tw * scale * 0.3f), mousePos.y - (th * scale * 0.3f));
+			// *** TEMP FIX ***
+			// drawing the custom cursor only if the brushsize is large enough
+			if (scale >= 3) {
+				ImDrawList* drawList = ImGui::GetForegroundDrawList();
 
-			for (int y = 0; y < th; y++) {
-				for (int x = 0; x < tw; x++) {
-					int i = y * tw + x;
+				// center brush tip
+				// NOTE: once we are able to draw from a single click, the float values in these 
+				// calculations might need to be slightly changed 
+				ImVec2 offset = ImVec2(mousePos.x - (tw * scale * 0.3f), mousePos.y - (th * scale * 0.3f));
 
-					// edge pixels, for the cursor outline, are only those with alpha values above a threshold
-					if (tipAlpha[i] > 0.01f) {
-						ImVec2 p_min = ImVec2(offset.x + (x * scale * 0.63), offset.y + (y * scale * 0.63));
-						ImVec2 p_max = ImVec2(p_min.x + scale, p_min.y + scale);
+				for (int y = 0; y < th; y++) {
+					for (int x = 0; x < tw; x++) {
+						int i = y * tw + x;
 
-						// drawing those pixels, color value is fix
-						drawList->AddRect(p_min, p_max, IM_COL32(128, 128, 128, 255));
+						// edge pixels, for the cursor outline, are only those with alpha values above a threshold
+						if (tipAlpha[i] > 0.01f) {
+							ImVec2 p_min = ImVec2(offset.x + (x * scale * 0.63), offset.y + (y * scale * 0.63));
+							ImVec2 p_max = ImVec2(p_min.x + scale, p_min.y + scale);
+
+							// drawing those pixels, color value is fix
+							drawList->AddRect(p_min, p_max, IM_COL32(128, 128, 128, 255));
+						}
 					}
 				}
 			}
-		}
 
-		// if brush size is smaller, then draw default circle cursor
-		else {
-			ImGui::GetForegroundDrawList()->AddCircle(ImGui::GetMousePos(), 10, IM_COL32(255, 0, 0, 255));
+			// if brush size is smaller, then draw default circle cursor
+			else {
+				ImGui::GetForegroundDrawList()->AddCircle(ImGui::GetMousePos(), 10, IM_COL32(255, 0, 0, 255));
+			}
 		}
-
 		
 	}
 
