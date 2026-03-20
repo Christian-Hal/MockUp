@@ -562,11 +562,12 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	ImGui::Separator();
 	ImGui::Spacing();
 
-	if(ImGui::Button("Onion Skin Test")){
-		FrameRenderer::updateOnionSkin(canvasManager.getActive());
-	}
-	if(ImGui::Button("Onion Skin remove")){
-		FrameRenderer::removeOnionSkin(canvasManager.getActive());
+	if(canvasManager.hasActive()){
+		if(ImGui::Button("Toggle Onion Skins")){
+			FrameRenderer::removeOnionSkin(canvasManager.getActive());
+			FrameRenderer::toggleOnionSkin();
+			FrameRenderer::updateOnionSkin(canvasManager.getActive());
+		}
 	}
 	// end step
 	LeftSize = ImGui::GetWindowWidth();
@@ -691,21 +692,22 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 	ImGui::Begin("Bottom Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
 	// add widgets
-	ImGui::Text("UNFINISHED");
-
 	// only display animation settings if there is an active canvas
 	if(canvasManager.hasActive())
 	{
-		if(ImGui::Button("Next Frame")){
-			FrameRenderer::selectFrame(canvasManager.getActive(), 1);
-		}
 		if(ImGui::Button("Previous Frame")){
 			FrameRenderer::selectFrame(canvasManager.getActive(), -1);
 		}
-
+		ImGui::SameLine();
+		if(ImGui::Button("Next Frame")){
+			FrameRenderer::selectFrame(canvasManager.getActive(), 1);
+		}
+		
+		//ImGui::SliderInt()
 		if(ImGui::Button("Create Frame")){
 			FrameRenderer::createFrame(canvasManager.getActive());
 		}
+		ImGui::SameLine();
 		if(ImGui::Button("Remove Frame")){
 			FrameRenderer::removeFrame(canvasManager.getActive());
 		}

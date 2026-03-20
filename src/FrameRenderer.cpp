@@ -27,8 +27,9 @@ int FrameRenderer::numFrames = -1;
 int FrameRenderer::curCanvas = -1;
 int FrameRenderer::curFrame = -1;
 bool FrameRenderer::isPlaying = false;
-int FrameRenderer::numBefore = 1;
-int FrameRenderer::numAfter = 1;
+int FrameRenderer::numBefore = 3;
+int FrameRenderer::numAfter = 3;
+bool FrameRenderer::onionSkinEnabled = true;
 // this will be stored in memory so we can access it quickly everything else gets written to a file
 // we need the frame data so we can play high fps animations
 vector<vector<Color>> FrameRenderer::frames;
@@ -142,6 +143,7 @@ void FrameRenderer::createFrame(Canvas& canvas){
 // remove current frame and update file names accordingly
 void FrameRenderer::removeFrame(Canvas& canvas){
     if(numFrames > 1){
+        removeOnionSkin(canvas);
         // erases the frameData
         frames.erase(frames.begin() + curFrame - 1);
         // erases the layerData
@@ -180,6 +182,14 @@ void FrameRenderer::selectFrame(Canvas& canvas, int frameDelta){
     }
 }
 
+/* 
+This function plays the animation
+
+it uses one thread on the CPU so it can run in parallel with the program and will cycle through
+the "Frames" vector until it gets to the end.
+
+after this the thread gets detached so it can be used by other things
+*/
 void FrameRenderer::play(Canvas& canvas){
     if(!isPlaying){
         removeOnionSkin(canvas);
@@ -198,19 +208,20 @@ void FrameRenderer::play(Canvas& canvas){
             updateOnionSkin(canvas);
         });
         t.detach();
+
     }
 
 }
 
 void FrameRenderer::updateOnionSkin(Canvas& canvas){
-    
+    if(onionSkinEnabled){
         Color green = {0,255,0,128};
         Color blendedColor = canvas.colorTimes(canvas.getBackgroundColor(), green);
         int oldLayer = canvas.getCurLayer();
         canvas.selectLayer(0);
         vector<vector<Color>> layDat = canvas.getLayerData();
         for(int i = 0; i < numBefore; i++){
-            if(curFrame > numBefore - (i)){ // this line needs fixing
+            if(curFrame > 1 + i){
                 for(int j = 0; j < layDat[0].size(); j++){
                     if(!canvas.colorEquals(frames[curFrame - 2 - i][j], canvas.getBackgroundColor())){
                         int x = j % canvas.getWidth();
@@ -234,6 +245,7 @@ void FrameRenderer::updateOnionSkin(Canvas& canvas){
             }
         }
         canvas.selectLayer(oldLayer);
+    }
 }
 
 void FrameRenderer::removeOnionSkin(Canvas& canvas){
@@ -245,6 +257,10 @@ void FrameRenderer::removeOnionSkin(Canvas& canvas){
         canvas.setPixel(i % wid, i / wid, canvas.getBackgroundColor());
     }
     canvas.selectLayer(oldLayer);
+}
+
+void FrameRenderer::toggleOnionSkin(){
+    onionSkinEnabled = !onionSkinEnabled;
 }
 
 // removes all of the files after shutdown so you dont eat up storage.
