@@ -329,6 +329,7 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 
 	// keep default cursor when no canvas 
 	if (!(ImGui::GetIO().WantCaptureMouse) && canvasManager.getNumCanvases() > 0) {
+		// only show the custom cursor if we are drawing or erasing 
 		if (UI::getCursorMode() == CursorMode::Draw || UI::getCursorMode() == CursorMode::Erase) {
 			// erase standard mouse
 			ImGui::SetMouseCursor(ImGuiMouseCursor_None);
@@ -610,8 +611,7 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 	ImGui::ColorPicker4("", color, flags);
 
 	// brush size slider 
-	// value is temporarily significantly lowered due to current brush size implementation 
-	ImGui::SliderInt("Size", &brushSize, 1, 100);
+	ImGui::SliderInt("Size", &brushSize, 1, 500, "%d", ImGuiSliderFlags_Logarithmic);
 
 	// adds a little visual split between sections
 	ImGui::Spacing();
