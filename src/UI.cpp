@@ -45,28 +45,30 @@ static float color[4] = { .0f, .0f, .0f, 1.0f };
 static double lastFrame = 0.0;
 
 // mouse flags 
-static ImGuiConfigFlags cursorFlags; 
+static ImGuiConfigFlags cursorFlags;
 
 // for imported images  
-int my_image_width = 0; 
-int my_image_height = 0; 
-GLuint my_image_texture = 0; 
+int my_image_width = 0;
+int my_image_height = 0;
+GLuint my_image_texture = 0;
 
 // state for draw erase button 
-static CursorMode cursorMode = CursorMode::Draw; 
+static CursorMode cursorMode = CursorMode::Draw;
 
 void UI::bindCursorCallbacks(SetCursorModeCallback setCb, GetCursorModeCallback getCb)
 {
 	// Store controller-provided hooks so UI can request state changes
 	// without depending on AppController/AppState directly.
-    setCursorModeCb = std::move(setCb);
-    getCursorModeCb = std::move(getCb);
+	setCursorModeCb = std::move(setCb);
+	getCursorModeCb = std::move(getCb);
 }
+
 
 void UI::bindCanvasCallbacks(ResetCanvasPositionCallback resetPositionCb)
 {
 	resetCanvasPositionCb = std::move(resetPositionCb);
 }
+
 
 void UI::bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallback setActiveCb, GetActiveBrushCallback getActiveCb, LoadBrushCallback loadBrushCb)
 {
@@ -76,6 +78,7 @@ void UI::bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallba
 	loadBrushFromFileCb = std::move(loadBrushCb);
 }
 
+
 void UI::bindHotkeyCallbacks(GetHotkeyLabelCallback getLabelCb, StartRebindCallback startCb, BoolCallback isWaitingCb, BoolCallback didFailCb)
 {
 	getHotkeyLabelCb = std::move(getLabelCb);
@@ -83,6 +86,7 @@ void UI::bindHotkeyCallbacks(GetHotkeyLabelCallback getLabelCb, StartRebindCallb
 	isWaitingForRebindCb = std::move(isWaitingCb);
 	didRebindFailCb = std::move(didFailCb);
 }
+
 
 // ----- ImGui code to load and access images in directory -----
 
@@ -137,14 +141,13 @@ bool LoadTextureFromFile(const char* file_name, GLuint* out_texture, int* out_wi
 }
 
 
-
 // note: not all options here return a value. 
 Color UI::getColor()
 {
 	const CursorMode mode = getCursorMode();
 
-	if (mode == CursorMode::Draw) 
-	{	
+	if (mode == CursorMode::Draw)
+	{
 		return Color{
 			static_cast<unsigned char>(color[0] * 255.0f),
 			static_cast<unsigned char>(color[1] * 255.0f),
@@ -152,8 +155,8 @@ Color UI::getColor()
 			static_cast<unsigned char>(color[3] * 255.0f)
 		};
 	}
-	if (mode == CursorMode::Erase) 
-	{	
+	if (mode == CursorMode::Erase)
+	{
 		return Color{
 			static_cast<unsigned char>(0.f),
 			static_cast<unsigned char>(0.f),
@@ -166,22 +169,20 @@ Color UI::getColor()
 }
 
 
-
 /*
 	Setter for color
 
-	@param currentPixelColor: The color of the pixel that the cursor is currently 
-						      hovering over. 
+	@param currentPixelColor: The color of the pixel that the cursor is currently
+							  hovering over.
 */
 void UI::setColor(Color currentPixelColor) {
-	color[0] = currentPixelColor.r / 255.0f; 
-	color[1] = currentPixelColor.g / 255.0f; 
-	color[2] = currentPixelColor.b / 255.0f; 
-	color[3] = currentPixelColor.a / 255.0f; 
+	color[0] = currentPixelColor.r / 255.0f;
+	color[1] = currentPixelColor.g / 255.0f;
+	color[2] = currentPixelColor.b / 255.0f;
+	color[3] = currentPixelColor.a / 255.0f;
 
 
 }
-
 
 
 // cursor mode getter 
@@ -202,7 +203,6 @@ void UI::setCursorMode(CursorMode temp) {
 		setCursorModeCb(temp);
 	}
 }
-
 
 
 // UI initialization 
@@ -277,7 +277,6 @@ void UI::init(GLFWwindow* window, Renderer& rendInst, Globals& g_inst) {
 }
 
 
-
 // NOTE: called in render loop 
 void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 {
@@ -309,7 +308,7 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 
 		}
 	}
-	
+
 
 	// draw the four main menu panels
 	if (showPanels) {
@@ -326,7 +325,15 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 
 
 	// ----- Cursor Customization -----
+	drawCustomCursor(canvasManager);
 
+
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+
+void UI::drawCustomCursor(CanvasManager& canvasManager) {
 	// keep default cursor when no canvas 
 	if (!(ImGui::GetIO().WantCaptureMouse) && canvasManager.getNumCanvases() > 0) {
 		// only show the custom cursor if we are drawing or erasing 
@@ -346,30 +353,20 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 			int th = activeBrush.tipHeight;
 
 			// This brush size value is now the diameter of the brush tip 
-			float scale = (float)UI::brushSize; 
-			//int scale = UI::brushSize; <- probably better 
+			//float scale = (float)UI::brushSize; 
+			int cursorSize = std::max(1, brushSize);
 
 			// grab mouse position and initialize draw list 
 			ImVec2 mousePos = ImGui::GetMousePos();
 
-			/*
-				---- WHAT TO DO -----
-				NEED TO TAKE THE BRUSH STAMP AND DRAW ONLY THE EDGE PIXELS
-				WOULD REQUIRE WIRING TOGETHER THE DRAW ENGINE AND UI
-
-				WE CAN STILL GET THE BRUSH SIZE FROM THE UI ELEMENT BUT NEED
-				TO ACCOUNT FOR IT BEING THE DIAMETER NOW
-			*/
-
-			// *** TEMP FIX ***
-			// drawing the custom cursor only if the brushsize is large enough
-			if (scale >= 3) {
+			// drawing the custom cursor only if the brushsize is 
+			if (cursorSize >= 3) {
 				ImDrawList* drawList = ImGui::GetForegroundDrawList();
 
 				// center brush tip
 				// NOTE: once we are able to draw from a single click, the float values in these 
 				// calculations might need to be slightly changed 
-				ImVec2 offset = ImVec2(mousePos.x - (tw * scale * 0.3f), mousePos.y - (th * scale * 0.3f));
+				ImVec2 offset = ImVec2(mousePos.x - (tw * cursorSize * 0.3f), mousePos.y - (th * cursorSize * 0.3f));
 
 				for (int y = 0; y < th; y++) {
 					for (int x = 0; x < tw; x++) {
@@ -377,8 +374,8 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 
 						// edge pixels, for the cursor outline, are only those with alpha values above a threshold
 						if (tipAlpha[i] > 0.01f) {
-							ImVec2 p_min = ImVec2(offset.x + (x * scale * 0.63), offset.y + (y * scale * 0.63));
-							ImVec2 p_max = ImVec2(p_min.x + scale, p_min.y + scale);
+							ImVec2 p_min = ImVec2(offset.x + (x * cursorSize * 0.63), offset.y + (y * cursorSize * 0.63));
+							ImVec2 p_max = ImVec2(p_min.x + cursorSize, p_min.y + cursorSize);
 
 							// drawing those pixels, color value is fix
 							drawList->AddRect(p_min, p_max, IM_COL32(128, 128, 128, 255));
@@ -392,12 +389,10 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 				ImGui::GetForegroundDrawList()->AddCircle(ImGui::GetMousePos(), 10, IM_COL32(255, 0, 0, 255));
 			}
 		}
-		
-	}
 
-	ImGui::Render();
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	}
 }
+
 
 // methods for drawing the individual menu panels
 void UI::drawTopPanel(CanvasManager& canvasManager) {
@@ -428,7 +423,7 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 				return getHotkeyLabelCb(action);
 			}
 			return std::string{};
-		};
+			};
 
 		// create a lamda to trigger the rebind callback function for each action
 		auto triggerRebind = [this](InputAction action) {
@@ -437,7 +432,7 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 			}
 			// Close to avoid consuming the next key press while rebinding.
 			ImGui::CloseCurrentPopup();
-		};
+			};
 
 		if (ImGui::MenuItem("Rotate", hotkeyLabel(InputAction::setRotate).c_str()))
 		{
@@ -507,6 +502,7 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 	ImGui::End();
 }
 
+
 void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	// initialize the panel
 	ImGui::SetNextWindowPos(ImVec2(0, TopSize), ImGuiCond_Always);
@@ -540,7 +536,7 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	}
 
 	else if (getCursorMode() == CursorMode::ColorPick) {
-		ImGui::Text("State: Color Pick"); 
+		ImGui::Text("State: Color Pick");
 	}
 
 	// text label that displays rebind status
@@ -553,7 +549,7 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	{
 		ImGui::TextColored(ImVec4(1, 0, 0, 1), "Key already bound!");
 	}
-	
+
 	// buttons that change the current cursor mode
 	if (ImGui::Button("Draw")) {
 		setCursorMode(CursorMode::Draw);
@@ -617,7 +613,7 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 	// ----- NOTE: a limited amount is added right now, will add full when UI rework is settled -----
 	if (ImGui::Button("5"))  brushSize = 5;
 	ImGui::SameLine();
-	if (ImGui::Button("10")) brushSize = 10; 
+	if (ImGui::Button("10")) brushSize = 10;
 	ImGui::SameLine();
 	if (ImGui::Button("100")) brushSize = 100;
 
@@ -634,24 +630,24 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 		ImGui::Text("file is open");
 		ImGui::Text("file size is: ");
 		ImGui::Text("%dx%d", canvasManager.getActive().getWidth(), canvasManager.getActive().getHeight());
-		
+
 		// Create the layer buttons
-		if(ImGui::Button("New Layer")){
+		if (ImGui::Button("New Layer")) {
 			// increase the number of layers by 1
 			canvasManager.getActive().createLayer();
 		}
 		// remove a layer button 
-		
-		if(ImGui::Button("Remove Layer")){
-			if(canvasManager.getActive().getNumLayers() > 2){
+
+		if (ImGui::Button("Remove Layer")) {
+			if (canvasManager.getActive().getNumLayers() > 2) {
 				// decrease the number of layers by 1
-				canvasManager.getActive().removeLayer();				
+				canvasManager.getActive().removeLayer();
 			}
 		}
 
-		for(int i = 1; i < canvasManager.getActive().getNumLayers(); i++){
+		for (int i = 1; i < canvasManager.getActive().getNumLayers(); i++) {
 			std::string buttonName = "Canvas Layer " + std::to_string(i);
-			if(ImGui::Button(buttonName.c_str())){
+			if (ImGui::Button(buttonName.c_str())) {
 				canvasManager.getActive().selectLayer(i);
 			}
 		}
@@ -692,11 +688,11 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 
 	// adds a button for each brush that sets it to the active one
 	ImGui::Text("Loaded Brushes: ");
-	for(int i = 0; i < brushes.size(); i++)
+	for (int i = 0; i < brushes.size(); i++)
 	{
 		std::string buttonName = brushes[i].brushName;
 
-		if(ImGui::Button(buttonName.c_str())){
+		if (ImGui::Button(buttonName.c_str())) {
 			if (setActiveBrushCb) {
 				setActiveBrushCb(i);
 			}
@@ -721,22 +717,22 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 	ImGui::Text("UNFINISHED");
 
 	// only display animation settings if there is an active canvas
-	if(canvasManager.hasActive())
+	if (canvasManager.hasActive())
 	{
-		if(ImGui::Button("Next Frame")){
+		if (ImGui::Button("Next Frame")) {
 			FrameRenderer::selectFrame(canvasManager.getActive(), 1);
 		}
-		if(ImGui::Button("Previous Frame")){
+		if (ImGui::Button("Previous Frame")) {
 			FrameRenderer::selectFrame(canvasManager.getActive(), -1);
 		}
 
-		if(ImGui::Button("Create Frame")){
+		if (ImGui::Button("Create Frame")) {
 			FrameRenderer::createFrame(canvasManager.getActive());
 		}
-		if(ImGui::Button("Remove Frame")){
+		if (ImGui::Button("Remove Frame")) {
 			FrameRenderer::removeFrame(canvasManager.getActive());
 		}
-		if(ImGui::Button("Play")){
+		if (ImGui::Button("Play")) {
 			FrameRenderer::play(canvasManager.getActive());
 		}
 	}
@@ -748,7 +744,6 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 		BotSize = ImGui::GetWindowHeight();
 	ImGui::End();
 }
-
 
 
 void UI::drawCanvasTabs(CanvasManager& canvasManager)
@@ -765,11 +760,11 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 	const std::vector<Canvas>& canvases = canvasManager.getOpenCanvases();
 
 	// adds a button for each canvas that sets it to the active one
-	for(int i = 0; i < canvasManager.getNumCanvases(); i++)
+	for (int i = 0; i < canvasManager.getNumCanvases(); i++)
 	{
 		std::string buttonName = canvases[i].getName();
 
-		if(ImGui::Button(buttonName.c_str())){
+		if (ImGui::Button(buttonName.c_str())) {
 			canvasManager.setActiveCanvas(i);
 		}
 
@@ -779,7 +774,6 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 	// end step
 	ImGui::End();
 }
-
 
 
 // canvas size popup 
@@ -795,7 +789,7 @@ void UI::drawPopup(CanvasManager& canvasManager)
 
 	// specifying canvas size 
 	if (ImGui::BeginPopupModal("New Canvas", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-		
+
 		ImGui::InputInt("Width:", &temp_w);
 		ImGui::InputInt("Height:", &temp_h);
 		ImGui::InputText("File Name:", &temp_n);
@@ -827,7 +821,6 @@ void UI::drawPopup(CanvasManager& canvasManager)
 	}
 
 }
-
 
 
 // ending and cleanup 

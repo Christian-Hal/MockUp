@@ -62,6 +62,7 @@ private:
 	BoolCallback didRebindFailCb;
 	ResetCanvasPositionCallback resetCanvasPositionCb;
 	
+	void drawCustomCursor(CanvasManager& canvasManager); 
 	void drawLeftPanel(CanvasManager& canvasManager);
 	void drawRightPanel(CanvasManager& canvasManager);
 	void drawTopPanel(CanvasManager& canvasManager);
