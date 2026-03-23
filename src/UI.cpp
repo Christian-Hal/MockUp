@@ -476,6 +476,9 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 		{
 			triggerRebind(InputAction::setDraw);
 		}
+		if (ImGui::MenuItem("Fill", hotkeyLabel(InputAction::setFill).c_str())){
+			triggerRebind(InputAction::setFill);
+		}
 		if (ImGui::MenuItem("Erase", hotkeyLabel(InputAction::setErase).c_str()))
 		{
 			triggerRebind(InputAction::setErase);
@@ -615,6 +618,10 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 		ImGui::Text("State: Draw");
 	}
 
+	else if (getCursorMode() == CursorMode::Fill){
+		ImGui::Text("State: Fill");
+	}
+
 	else if (getCursorMode() == CursorMode::Erase) {
 		ImGui::Text("State: Erase");
 	}
@@ -655,6 +662,10 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 		setCursorMode(CursorMode::Draw);
 	}
 
+	if (ImGui::Button("Fill")) {
+		setCursorMode(CursorMode::Fill);
+	}
+
 	if (ImGui::Button("Erase")) {
 		setCursorMode(CursorMode::Erase);
 	}
@@ -684,6 +695,13 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	ImGui::Separator();
 	ImGui::Spacing();
 
+	if(canvasManager.hasActive()){
+		if(ImGui::Button("Toggle Onion Skins")){
+			FrameRenderer::removeOnionSkin(canvasManager.getActive());
+			FrameRenderer::toggleOnionSkin();
+			FrameRenderer::updateOnionSkin(canvasManager.getActive());
+		}
+	}
 	// end step
 	LeftSize = ImGui::GetWindowWidth();
 	ImVec2 size = ImGui::GetWindowSize();
@@ -814,22 +832,23 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 	ImGui::Begin("Bottom Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
 	// add widgets
-	ImGui::Text("UNFINISHED");
-
 	// only display animation settings if there is an active canvas
 	if (canvasManager.hasActive())
 	{
-		if (ImGui::Button("Next Frame")) {
-			FrameRenderer::selectFrame(canvasManager.getActive(), 1);
-		}
-		if (ImGui::Button("Previous Frame")) {
+		if(ImGui::Button("Previous Frame")){
 			FrameRenderer::selectFrame(canvasManager.getActive(), -1);
 		}
-
-		if (ImGui::Button("Create Frame")) {
+		ImGui::SameLine();
+		if(ImGui::Button("Next Frame")){
+			FrameRenderer::selectFrame(canvasManager.getActive(), 1);
+		}
+		
+		//ImGui::SliderInt()
+		if(ImGui::Button("Create Frame")){
 			FrameRenderer::createFrame(canvasManager.getActive());
 		}
-		if (ImGui::Button("Remove Frame")) {
+		ImGui::SameLine();
+		if(ImGui::Button("Remove Frame")){
 			FrameRenderer::removeFrame(canvasManager.getActive());
 		}
 		if (ImGui::Button("Play")) {
