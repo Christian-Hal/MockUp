@@ -316,6 +316,8 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 		}
 	}
 
+	// ----- Cursor Customization -----
+	drawCustomCursor(canvasManager);
 
 	// draw the four main menu panels
 	if (showPanels) {
@@ -331,8 +333,7 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 	if (canvasManager.getNumCanvases() > 1) { drawCanvasTabs(canvasManager); }
 
 
-	// ----- Cursor Customization -----
-	drawCustomCursor(canvasManager);
+	
 
 
 	ImGui::Render();
@@ -359,7 +360,7 @@ void UI::drawCustomCursor(CanvasManager& canvasManager) {
 		float zoom = canvasManager.getActive().zoom; 
 
 		ImVec2 mousePos = ImGui::GetMousePos();
-		ImDrawList* drawList = ImGui::GetForegroundDrawList();
+		ImDrawList* drawList = ImGui::GetBackgroundDrawList();
 
 		// accounting for zoom 
 		float displayW = W * zoom; 
