@@ -374,9 +374,10 @@ void UI::drawCustomCursor(CanvasManager& canvasManager) {
 
 		if (brushSize >= 3) {
 			for (int y = 0; y < H; y++) {
+				int flippedY = H - 1 - y;
 				for (int x = 0; x < W; x++) {
 					// bro idk what this evil magic line of code is 
-					float alpha = dab[2 + (y * W + x)];
+					float alpha = dab[2 + (flippedY * W + x)];
 
 					// only drawing pixels that are part of the brush tip shape
 					if (alpha > 0.1f) {
@@ -582,10 +583,14 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 			if (extension == ".ora")
 			{
 				canvasManager.loadORA(filePath);
+				// centering the loaded image 
+				resetCanvasPositionCb();
 			}
 			else
 			{
 				canvasManager.loadFromFile(filePath);
+				// centering the loaded image 
+				resetCanvasPositionCb();
 			}
 			
 		}

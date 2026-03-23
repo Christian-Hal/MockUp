@@ -556,8 +556,12 @@ bool BrushManager::extractFile(const std::string& zipPath, const std::string& fi
 
 bool BrushManager::loadTipFromPNG(const std::vector<unsigned char>& pngData, BrushTool& brush)
 {
+
+    // Ensure brush tip loads with correct orientation (OpenGL expects bottom-left origin)
+    stbi_set_flip_vertically_on_load(1);
     int w, h, channels;
     unsigned char* img = stbi_load_from_memory(pngData.data(), pngData.size(), &w, &h, &channels, 4);
+    stbi_set_flip_vertically_on_load(0); // Reset to default after load
     if (!img)
     {
         std::cerr << "Failed to decode PNG in memory.\n";
