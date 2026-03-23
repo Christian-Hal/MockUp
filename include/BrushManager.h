@@ -34,7 +34,7 @@ class BrushManager
         std::vector<BrushTool> loaded_Brushes;
 
         // list of all default brush paths to load on init
-        const std::vector<std::string> defaultBrushPaths = {"circle.gbr", "cross.gbr", "confetti.gbr"};
+        const std::vector<std::string> defaultBrushPaths = {"circle.gbr", "confetti.gbr"}; //"cross.gbr"
 
         // index of the active brush in loaded_Brushes
         int activeBrushIndex = 0;
