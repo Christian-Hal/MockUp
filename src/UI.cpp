@@ -12,6 +12,7 @@
 #include "imgui_impl_opengl3.h"
 #include <imgui_stdlib.h>
 
+
 #define _CRT_SECURE_NO_WARNINGS
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -55,6 +56,7 @@ GLuint my_image_texture = 0;
 // state for draw erase button 
 static CursorMode cursorMode = CursorMode::Draw;
 
+
 void UI::bindCursorCallbacks(SetCursorModeCallback setCb, GetCursorModeCallback getCb)
 {
 	// Store controller-provided hooks so UI can request state changes
@@ -70,12 +72,14 @@ void UI::bindCanvasCallbacks(ResetCanvasPositionCallback resetPositionCb)
 }
 
 
-void UI::bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallback setActiveCb, GetActiveBrushCallback getActiveCb, LoadBrushCallback loadBrushCb)
+void UI::bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallback setActiveCb, GetActiveBrushCallback getActiveCb, LoadBrushCallback loadBrushCb,
+	GenerateBrushDabCallback genDabCb)
 {
 	getBrushListCb = std::move(getListCb);
 	setActiveBrushCb = std::move(setActiveCb);
 	getActiveBrushCb = std::move(getActiveCb);
 	loadBrushFromFileCb = std::move(loadBrushCb);
+	generateDabCb = std::move(genDabCb);
 }
 
 
@@ -88,10 +92,7 @@ void UI::bindHotkeyCallbacks(GetHotkeyLabelCallback getLabelCb, StartRebindCallb
 }
 
 
-void UI::bindBrushSizeCallbacks(GetBrushSizeCallback brushSizeCb)
-{
-	getBrushSizeCb = std::move(brushSizeCb); 
-}
+
 
 
 // ----- ImGui code to load and access images in directory -----
@@ -340,63 +341,48 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 
 
 void UI::drawCustomCursor(CanvasManager& canvasManager) {
-	// keep default cursor when no canvas 
-	if (!(ImGui::GetIO().WantCaptureMouse) && canvasManager.getNumCanvases() > 0) {
-		// only show the custom cursor if we are drawing or erasing 
-		if (UI::getCursorMode() == CursorMode::Draw || UI::getCursorMode() == CursorMode::Erase) {
-			// erase standard mouse
-			ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+	// only use custom cursor if a canvas is open, we are hovering over it, and we are drawing/erasing
+	if (ImGui::GetIO().WantCaptureMouse || canvasManager.getNumCanvases() <= 0) return;
 
-			// grab our brush and its tip 
-			const BrushTool& activeBrush = getActiveBrushCb();
-			const std::vector<float>& tipAlpha = activeBrush.tipAlpha;
+	if (UI::getCursorMode() == CursorMode::Draw || UI::getCursorMode() == CursorMode::Erase) {
+		ImGui::SetMouseCursor(ImGuiMouseCursor_None);
 
-			// check if tipAlpha actually has data
-			if (tipAlpha.empty()) return;
+		// grabbing the brush size from BrushManager
+		std::vector<float> dab = generateDabCb(brushSize);
+		if (dab.size() < 2) return;
 
-			// brush dimensions 
-			int tw = activeBrush.tipWidth;
-			int th = activeBrush.tipHeight;
+		// grabbing the dimensions at the start of dab vector 
+		int W = static_cast<int>(dab[0]);
+		int H = static_cast<int>(dab[1]);
+		const float* pixels = &dab[2];
 
-			// This brush size value is now the diameter of the brush tip 
-			//float scale = (float)UI::brushSize; 
+		ImVec2 mousePos = ImGui::GetMousePos();
+		ImDrawList* drawList = ImGui::GetForegroundDrawList();
 
-			getBrushSizeCb(); 
+		if (brushSize >= 3) {
+			// calculating and centering offset by subtracting half the width/height of the GENERATED dab
+			ImVec2 origin = ImVec2(mousePos.x - (W * 0.5f), mousePos.y - (H * 0.5f));
 
-			int cursorSize = std::max(1, brushSize);
+			for (int y = 0; y < H; y++) {
+				for (int x = 0; x < W; x++) {
+					float alpha = pixels[y * W + x];
 
-			// grab mouse position and initialize draw list 
-			ImVec2 mousePos = ImGui::GetMousePos();
+					// only drawing pixels that are part of the brush tip shape
+					if (alpha > 0.1f) {
+						ImVec2 p_min = ImVec2(origin.x + x, origin.y + y);
+						ImVec2 p_max = ImVec2(p_min.x + 1.0f, p_min.y + 1.0f);
 
-			// drawing the custom cursor only if the brushsize is 
-			if (cursorSize >= 3) {
-				ImDrawList* drawList = ImGui::GetForegroundDrawList();
-
-				// center brush tip
-				ImVec2 offset = ImVec2(mousePos.x - (tw * cursorSize * 0.3f), mousePos.y - (th * cursorSize * 0.3f));
-
-				for (int y = 0; y < th; y++) {
-					for (int x = 0; x < tw; x++) {
-						int i = y * tw + x;
-
-						// edge pixels, for the cursor outline, are only those with alpha values above a threshold
-						if (tipAlpha[i] > 0.01f) {
-							ImVec2 p_min = ImVec2(offset.x + (x * cursorSize * 0.63), offset.y + (y * cursorSize * 0.63));
-							ImVec2 p_max = ImVec2(p_min.x + cursorSize, p_min.y + cursorSize);
-
-							// drawing those pixels, color value is fix
-							drawList->AddRect(p_min, p_max, IM_COL32(128, 128, 128, 255));
-						}
+						// setting the cursor color 
+						drawList->AddRectFilled(p_min, p_max, IM_COL32(128, 128, 128, 150));
 					}
 				}
 			}
-
-			// if brush size is smaller, then draw default circle cursor
-			else {
-				ImGui::GetForegroundDrawList()->AddCircle(ImGui::GetMousePos(), 10, IM_COL32(255, 0, 0, 255));
-			}
 		}
-
+		else {
+			// default for smaller sizes
+			// want to possibly add cross around smaller brush sizes 
+			drawList->AddCircle(mousePos, 1.5f, IM_COL32(128, 128, 128, 255));
+		}
 	}
 }
 

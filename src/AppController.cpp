@@ -65,14 +65,13 @@ bool AppController::init()
 		[this]() -> const std::vector<BrushTool>& { return getBrushList(); },
 		[this](int index) { setActiveBrush(index); },
 		[this]() -> const BrushTool& { return getActiveBrush(); },
-		[this](const std::string& path) { loadBrush(path); }
+		[this](const std::string& path) { loadBrush(path); },
+		[this](int size) { return appState.getBrushManager().generateBrushDab(size); }
 	);
 
 	// Bind reset canvas position callback
 	ui.bindCanvasCallbacks([this]() {canvasManipulation.centerCamera(appState.getCanvasManager().getActive()); });
 
-	// Bind grabbing brush tip scale 
-	ui.bindBrushSizeCallbacks([this]() {brushManager.generateBrushDab(appState.getBrushManager().generateBrushDab()); };
 
 	// Route hotkey label/rebind UI actions through controller-owned input flow.
 	ui.bindHotkeyCallbacks(
