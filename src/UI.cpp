@@ -412,6 +412,11 @@ void UI::drawCustomCursor(CanvasManager& canvasManager) {
 			drawOutlinedLine(ImVec2(mousePos.x + gap, mousePos.y), ImVec2(mousePos.x + crossSize, mousePos.y));
 		}
 	}
+
+	// if they are manipulating the canvas change to the grab cursor 
+	else if (UI::getCursorMode() == CursorMode::Pan || UI::getCursorMode() == CursorMode::Rotate) {
+		ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+	}
 }
 
 
