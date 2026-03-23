@@ -27,8 +27,8 @@ int FrameRenderer::numFrames = -1;
 int FrameRenderer::curCanvas = -1;
 int FrameRenderer::curFrame = -1;
 bool FrameRenderer::isPlaying = false;
-int FrameRenderer::numBefore = 3;
-int FrameRenderer::numAfter = 3;
+int FrameRenderer::numBefore = 1;
+int FrameRenderer::numAfter = 1;
 bool FrameRenderer::onionSkinEnabled = true;
 // this will be stored in memory so we can access it quickly everything else gets written to a file
 // we need the frame data so we can play high fps animations
