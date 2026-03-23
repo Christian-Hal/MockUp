@@ -51,8 +51,9 @@ enum class InputAction
     undo,
     redo,
     resetView,
-    setColor
-    //setZoomDragging
+    setColor,
+    setClickZoomIn,
+    setClickZoomOut
 };
 
 class InputManager

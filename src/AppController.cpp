@@ -340,6 +340,12 @@ void AppController::onInputAction(InputAction action)
 	case InputAction::setColor:
 		setCursorMode(CursorMode::ColorPick);
 		break;
+	case InputAction::setClickZoomIn:
+		setCursorMode(CursorMode::ZoomIn);
+		break;
+	case InputAction::setClickZoomOut:
+		setCursorMode(CursorMode::ZoomOut);
+		break;
 	case InputAction::undo:
 		if (canvasManager.hasActive()) {
 			canvasManager.undo();

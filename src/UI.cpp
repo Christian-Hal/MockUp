@@ -394,6 +394,14 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 		{
 			triggerRebind(InputAction::redo);
 		}
+		if (ImGui::MenuItem("Zoom In", hotkeyLabel(InputAction::setClickZoomIn).c_str()))
+		{
+			triggerRebind(InputAction::setClickZoomIn);
+		}
+		if (ImGui::MenuItem("Zoom Out", hotkeyLabel(InputAction::setClickZoomOut).c_str()))
+		{
+			triggerRebind(InputAction::setClickZoomOut);
+		}
 		if (ImGui::MenuItem("Center Canvas", hotkeyLabel(InputAction::resetView).c_str()))
 		{
 			triggerRebind(InputAction::resetView);
