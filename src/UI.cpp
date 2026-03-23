@@ -425,7 +425,7 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 		ImGuiFileDialog::Instance()->OpenDialog(
 			"SaveImageDlg",
 			"Save Image",
-			".png,.jpg",
+			".png,.jpg,.ora",
 			config
 		);
 	}
@@ -436,7 +436,18 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 			std::string filePath =
 				ImGuiFileDialog::Instance()->GetFilePathName();
 
-			canvasManager.saveToFile(filePath);
+			std::string extension =
+				ImGuiFileDialog::Instance()->GetCurrentFilter();
+
+			if (extension == ".ora")
+			{
+				canvasManager.saveORA(filePath);
+			}
+
+			else
+			{
+				canvasManager.saveToFile(filePath);
+			}
 		}
 
 		ImGuiFileDialog::Instance()->Close();
@@ -449,7 +460,7 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 		ImGuiFileDialog::Instance()->OpenDialog(
 			"ChooseFileDlgKey",
 			"Choose File",
-			".png,.jpg"
+			".png,.jpg,.ora"
 		);
 	}
 
@@ -460,7 +471,18 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 			std::string filePath =
 				ImGuiFileDialog::Instance()->GetFilePathName();
 
-			canvasManager.loadFromFile(filePath);
+			std::string extension =
+				ImGuiFileDialog::Instance()->GetCurrentFilter();
+
+			if (extension == ".ora")
+			{
+				canvasManager.loadORA(filePath);
+			}
+			else
+			{
+				canvasManager.loadFromFile(filePath);
+			}
+			
 		}
 
 		ImGuiFileDialog::Instance()->Close();

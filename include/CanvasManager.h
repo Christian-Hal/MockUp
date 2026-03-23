@@ -38,7 +38,8 @@ class CanvasManager {
 
         void saveToFile(const std::string& path);
         void loadFromFile(const std::string& filepath);
-
+        void saveORA(const std::string& path);
+        void loadORA(const std::string& filepath);
 
     private:
         // list of active canvases for when we implement the tab system

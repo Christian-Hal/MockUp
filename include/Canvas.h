@@ -67,7 +67,7 @@ class Canvas {
 
         bool canUndo() const;
         bool canRedo() const;
-        void loadImage(unsigned char* data);
+        void loadImage(unsigned char* data, int layerIndex);
 
     private:
         // canvas settings
