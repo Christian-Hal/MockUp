@@ -17,6 +17,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+
+std::string overwritePath;
+
 // variables to store info for UI declared up here 
 /// display size
 float w, h;
@@ -484,6 +487,14 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 		{
 			triggerRebind(InputAction::redo);
 		}
+		if (ImGui::MenuItem("Zoom In", hotkeyLabel(InputAction::setClickZoomIn).c_str()))
+		{
+			triggerRebind(InputAction::setClickZoomIn);
+		}
+		if (ImGui::MenuItem("Zoom Out", hotkeyLabel(InputAction::setClickZoomOut).c_str()))
+		{
+			triggerRebind(InputAction::setClickZoomOut);
+		}
 		if (ImGui::MenuItem("Center Canvas", hotkeyLabel(InputAction::resetView).c_str()))
 		{
 			triggerRebind(InputAction::resetView);
@@ -498,18 +509,59 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 
 	ImGui::SameLine();
 	// Save button
-	if (canvasManager.hasActive() && ImGui::Button("Save File")) {
-		canvasManager.getFrameData(canvasManager);
+
+	// only appears if there is a canvas
+	if (canvasManager.hasActive() && ImGui::Button("Save File"))
+	{
+		IGFD::FileDialogConfig config;
+
+		// the  path the file explorer starts in. "." is the current active directory
+		config.path = ".";
+
+		config.fileName = canvasManager.getActive().getName();
+
+		// ImGuiFileDialog has a built in detection for overwriting a file and makes a popup as well.
+		config.flags = ImGuiFileDialogFlags_ConfirmOverwrite;
+
+		ImGuiFileDialog::Instance()->OpenDialog(
+			"SaveImageDlg",
+			"Save Image",
+			".png,.jpg,.ora",
+			config
+		);
+	}
+	if (ImGuiFileDialog::Instance()->Display("SaveImageDlg"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk())
+		{
+			std::string filePath =
+				ImGuiFileDialog::Instance()->GetFilePathName();
+
+			std::string extension =
+				ImGuiFileDialog::Instance()->GetCurrentFilter();
+
+			if (extension == ".ora")
+			{
+				canvasManager.saveORA(filePath);
+			}
+
+			else
+			{
+				canvasManager.saveToFile(filePath);
+			}
+		}
+
+		ImGuiFileDialog::Instance()->Close();
 	}
 
-	// Future spot for the load button
+	//loading file
 	ImGui::SameLine();
 	if (ImGui::Button("Load File"))
 	{
 		ImGuiFileDialog::Instance()->OpenDialog(
 			"ChooseFileDlgKey",
 			"Choose File",
-			".cpp,.h,.txt"
+			".png,.jpg,.ora"
 		);
 	}
 
@@ -519,6 +571,19 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 		{
 			std::string filePath =
 				ImGuiFileDialog::Instance()->GetFilePathName();
+
+			std::string extension =
+				ImGuiFileDialog::Instance()->GetCurrentFilter();
+
+			if (extension == ".ora")
+			{
+				canvasManager.loadORA(filePath);
+			}
+			else
+			{
+				canvasManager.loadFromFile(filePath);
+			}
+			
 		}
 
 		ImGuiFileDialog::Instance()->Close();
