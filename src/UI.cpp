@@ -559,21 +559,25 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 	if (ImGui::Button("Load File"))
 	{
 		ImGuiFileDialog::Instance()->OpenDialog(
-			"ChooseFileDlgKey",
+			"LoadFileDlg",
 			"Choose File",
 			".png,.jpg,.ora"
 		);
 	}
 
-	if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+	if (ImGuiFileDialog::Instance()->Display("LoadFileDlg"))
 	{
 		if (ImGuiFileDialog::Instance()->IsOk())
 		{
 			std::string filePath =
 				ImGuiFileDialog::Instance()->GetFilePathName();
 
+			std::cout << "filepath" << std::endl;
+
 			std::string extension =
 				ImGuiFileDialog::Instance()->GetCurrentFilter();
+
+			std::cout << "extension" << std::endl;
 
 			if (extension == ".ora")
 			{
