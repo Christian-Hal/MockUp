@@ -869,8 +869,8 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 
 
 void UI::drawBlockPanel(CanvasManager& canvasManager){
-	ImGui::SetNextWindowPos(ImVec2(0,0));
-    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+	ImGui::SetNextWindowPos(ImVec2(LeftSize, TopSize));
+    ImGui::SetNextWindowSize(ImVec2(w - LeftSize - RightSize, h - TopSize - BotSize));
     ImGui::Begin("Blocker", nullptr,
 		ImGuiWindowFlags_NoDecoration | 
 		ImGuiWindowFlags_NoBackground);
