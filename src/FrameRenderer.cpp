@@ -1,6 +1,8 @@
 
 // included libraries for functionality
 #include "FrameRenderer.h"
+#include "imgui.h"
+
 #include <iostream>
 #include <fstream>
 #include <filesystem>
@@ -30,6 +32,7 @@ bool FrameRenderer::isPlaying = false;
 int FrameRenderer::numBefore = 1;
 int FrameRenderer::numAfter = 1;
 bool FrameRenderer::onionSkinEnabled = true;
+bool FrameRenderer::inputBlocked = false;
 // this will be stored in memory so we can access it quickly everything else gets written to a file
 // we need the frame data so we can play high fps animations
 vector<vector<Color>> FrameRenderer::frames;
@@ -191,7 +194,8 @@ after this the thread gets detached so it can be used by other things
 void FrameRenderer::play(Canvas& canvas){
     if(!isPlaying){
         removeOnionSkin(canvas);
-        frames[curFrame - 1] =  vector<Color>(canvas.getData(), canvas.getData() + (canvas.getWidth() * canvas.getHeight()));
+        inputBlocked = true;
+        frames[curFrame - 1] = vector<Color>(canvas.getData(), canvas.getData() + (canvas.getWidth() * canvas.getHeight()));
         int start = 1;
         std::thread t([&canvas, start]{
             isPlaying = true;
@@ -204,9 +208,9 @@ void FrameRenderer::play(Canvas& canvas){
             canvas.setPixels(frames[curFrame - 1]);
             isPlaying = false;
             updateOnionSkin(canvas);
+            inputBlocked = false;
         });
         t.detach();
-
     }
 
 }

@@ -21,6 +21,7 @@ class FrameRenderer{
         static void removeOnionSkin(Canvas& canvas);
         static void toggleOnionSkin();
         void shutdown();
+        static bool inputBlocked;
 
     private:
         static int numFrames;

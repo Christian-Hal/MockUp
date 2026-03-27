@@ -77,6 +77,7 @@ private:
 	void drawRightPanel(CanvasManager& canvasManager);
 	void drawTopPanel(CanvasManager& canvasManager);
 	void drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRenderer);
+	void drawBlockPanel(CanvasManager& canvasManager);
 	void drawCanvasTabs(CanvasManager& canvasManager);
 
 

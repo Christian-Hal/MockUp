@@ -334,7 +334,10 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 
 	// canvas tab panel shown only if more than 1 canvas is open
 	if (canvasManager.getNumCanvases() > 1) { drawCanvasTabs(canvasManager); }
-
+	
+	if(FrameRenderer::inputBlocked){
+			drawBlockPanel(canvasManager);
+		}
 
 
 
@@ -865,6 +868,14 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 }
 
 
+void UI::drawBlockPanel(CanvasManager& canvasManager){
+	ImGui::SetNextWindowPos(ImVec2(0,0));
+    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+    ImGui::Begin("Blocker", nullptr,
+		ImGuiWindowFlags_NoDecoration | 
+		ImGuiWindowFlags_NoBackground);
+    ImGui::End();
+}
 void UI::drawCanvasTabs(CanvasManager& canvasManager)
 {
 	// initialize the panel
