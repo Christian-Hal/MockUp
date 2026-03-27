@@ -270,6 +270,13 @@ void FrameRenderer::shutdown(){
     fs::remove_all("./frameDatas");
 }
 
+int FrameRenderer::getCurFrame(){
+    return curFrame;
+}
+
+int FrameRenderer::getNumFrames(){
+    return numFrames;
+}
 
 // --------------------- Private functions ------------------------------ 
 void FrameRenderer::writeAllData(Canvas* canvas){

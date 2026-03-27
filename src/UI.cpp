@@ -838,33 +838,57 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 	// only display animation settings if there is an active canvas
 	if (canvasManager.hasActive())
 	{
-		if(ImGui::Button("Previous Frame")){
-			FrameRenderer::selectFrame(canvasManager.getActive(), -1);
-		}
-		ImGui::SameLine();
-		if(ImGui::Button("Next Frame")){
-			FrameRenderer::selectFrame(canvasManager.getActive(), 1);
-		}
-		
-		//ImGui::SliderInt()
-		if(ImGui::Button("Create Frame")){
+		int currentFrame = FrameRenderer::getCurFrame();
+		int totalFrames = FrameRenderer::getNumFrames();
+		if (ImGui::Button("+")) {
 			FrameRenderer::createFrame(canvasManager.getActive());
 		}
 		ImGui::SameLine();
-		if(ImGui::Button("Remove Frame")){
+		if (ImGui::Button("-")) {	
 			FrameRenderer::removeFrame(canvasManager.getActive());
 		}
-		if (ImGui::Button("Play")) {
+		ImGui::SameLine();
+		if (ImGui::Button("Play animation")){
 			FrameRenderer::play(canvasManager.getActive());
 		}
-	}
 
-	// end step
-	if (ImGui::GetWindowHeight() > h - 2 * TopSize)
-		BotSize = h - 2 * TopSize;
-	else
-		BotSize = ImGui::GetWindowHeight();
-	ImGui::End();
+		// --- Timeline ---
+		ImGui::Separator();
+
+		const float frameWidth  = 28.0f;
+		const float frameHeight = 28.0f;
+
+		for (int i = 1; i <= totalFrames; i++) {
+			// highlight selected frame
+			if (i == currentFrame) {
+				ImGui::PushStyleColor(ImGuiCol_Button,     ImVec4(0.7f, 0.7f, 1.0f, 1.0f));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.8f, 0.8f, 1.0f, 1.0f));
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.6f, 0.6f, 0.9f, 1.0f));
+			}
+
+			// frame button
+			char label[16];
+			snprintf(label, sizeof(label), "%d", i);
+
+			if (ImGui::Button(label, ImVec2(frameWidth, frameHeight))) {
+				FrameRenderer::selectFrame(canvasManager.getActive(), i - currentFrame);
+			}
+
+			if (i == currentFrame)
+				ImGui::PopStyleColor(3);
+
+			ImGui::SameLine();
+		}
+
+		ImGui::NewLine();
+		}
+
+		// end step
+		if (ImGui::GetWindowHeight() > h - 2 * TopSize)
+			BotSize = h - 2 * TopSize;
+		else
+			BotSize = ImGui::GetWindowHeight();
+		ImGui::End();
 }
 
 
