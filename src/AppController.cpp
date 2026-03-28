@@ -396,6 +396,18 @@ void AppController::onInputAction(InputAction action)
 			FrameRenderer::updateOnionSkin(canvasManager.getActive());
 		}
 		break;
+	case InputAction::nextFrame:
+		if (canvasManager.hasActive())
+		{
+			FrameRenderer::selectFrame(canvasManager.getActive(), 1);
+		}
+		break;
+	case InputAction::prevFrame:
+		if (canvasManager.hasActive())
+		{
+			FrameRenderer::selectFrame(canvasManager.getActive(), -1);
+		}
+		break;
 	default:
 		break;
 	}

@@ -55,7 +55,9 @@ enum class InputAction
     setColor,
     setClickZoomIn,
     setClickZoomOut,
-    onionSkinToggle
+    onionSkinToggle,
+    nextFrame,
+    prevFrame
 };
 
 class InputManager

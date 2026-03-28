@@ -511,6 +511,14 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 		{
 			triggerRebind(InputAction::onionSkinToggle);
 		}
+		if (ImGui::MenuItem("Next Frame", hotkeyLabel(InputAction::nextFrame).c_str()))
+		{
+			triggerRebind(InputAction::nextFrame);
+		}
+		if (ImGui::MenuItem("Previous Frame", hotkeyLabel(InputAction::prevFrame).c_str()))
+		{
+			triggerRebind(InputAction::prevFrame);
+		}
 
 		ImGui::EndPopup();
 	}
