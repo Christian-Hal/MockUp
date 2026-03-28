@@ -388,6 +388,14 @@ void AppController::onInputAction(InputAction action)
 			canvasManipulation.centerCamera(canvas);
 		}
 		break;
+	case InputAction::onionSkinToggle:
+		if (canvasManager.hasActive())
+		{
+			FrameRenderer::removeOnionSkin(canvasManager.getActive());
+			FrameRenderer::toggleOnionSkin();
+			FrameRenderer::updateOnionSkin(canvasManager.getActive());
+		}
+		break;
 	default:
 		break;
 	}

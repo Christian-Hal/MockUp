@@ -88,7 +88,8 @@ void InputManager::init(GLFWwindow* window)
 	bindAction(InputAction::resetView, GLFW_KEY_R, GLFW_MOD_CONTROL);
 	bindAction(InputAction::setColor, GLFW_KEY_C, 0);
 	bindAction(InputAction::setClickZoomIn, GLFW_KEY_Z, 0);
-	bindAction(InputAction::setClickZoomOut, GLFW_KEY_X, 0);
+	bindAction(InputAction::setClickZoomOut, GLFW_KEY_Z, GLFW_MOD_SHIFT);
+	bindAction(InputAction::onionSkinToggle, GLFW_KEY_4, 0);
 	//bindAction(InputAction::setZoomDragging, GLFW_KEY_SPACE, GLFW_MOD_CONTROL);
 }
 

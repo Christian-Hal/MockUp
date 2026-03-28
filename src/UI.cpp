@@ -507,6 +507,10 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 		{
 			triggerRebind(InputAction::setColor);
 		}
+		if (ImGui::MenuItem("Onion Skin Toggle", hotkeyLabel(InputAction::onionSkinToggle).c_str()))
+		{
+			triggerRebind(InputAction::onionSkinToggle);
+		}
 
 		ImGui::EndPopup();
 	}
