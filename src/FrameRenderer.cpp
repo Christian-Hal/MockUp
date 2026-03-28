@@ -31,7 +31,7 @@ int FrameRenderer::curFrame = -1;
 bool FrameRenderer::isPlaying = false;
 int FrameRenderer::numBefore = 1;
 int FrameRenderer::numAfter = 1;
-bool FrameRenderer::onionSkinEnabled = true;
+bool FrameRenderer::onionSkinEnabled = false;
 bool FrameRenderer::inputBlocked = false;
 // this will be stored in memory so we can access it quickly everything else gets written to a file
 // we need the frame data so we can play high fps animations
@@ -270,14 +270,34 @@ void FrameRenderer::shutdown(){
     fs::remove_all("./frameDatas");
 }
 
+// gets the current frame (which is a number from 1-NumFrames)
 int FrameRenderer::getCurFrame(){
     return curFrame;
 }
 
+// gets the total number of frames in this canvas
 int FrameRenderer::getNumFrames(){
     return numFrames;
 }
+// returns the number of onion skin frames shown before
+int FrameRenderer::getNumAfter(){
+    return numAfter;
+}
+void FrameRenderer::setNumAfter(int newNumAfter){
+    if(newNumAfter <= numFrames && newNumAfter >= 0){
+        numAfter = newNumAfter;
+    }
+}
 
+int FrameRenderer::getNumBefore(){
+    return numBefore;
+}
+
+void FrameRenderer::setNumBefore(int newNumBefore){
+    if(newNumBefore <= numFrames && newNumBefore >= 0){
+        numBefore = newNumBefore;
+    }
+}
 // --------------------- Private functions ------------------------------ 
 void FrameRenderer::writeAllData(Canvas* canvas){
     writeMetaData(canvas);

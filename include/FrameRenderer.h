@@ -24,6 +24,10 @@ class FrameRenderer{
         static bool inputBlocked;
         static int getCurFrame();
         static int getNumFrames();
+        static int getNumAfter();
+        static void setNumAfter(int newNumAfter);
+        static int getNumBefore();
+        static void setNumBefore(int newNumBefore);
 
     private:
         static int numFrames;

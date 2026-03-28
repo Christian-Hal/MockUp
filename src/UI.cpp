@@ -698,13 +698,7 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	ImGui::Separator();
 	ImGui::Spacing();
 
-	if(canvasManager.hasActive()){
-		if(ImGui::Button("Toggle Onion Skins")){
-			FrameRenderer::removeOnionSkin(canvasManager.getActive());
-			FrameRenderer::toggleOnionSkin();
-			FrameRenderer::updateOnionSkin(canvasManager.getActive());
-		}
-	}
+
 	// end step
 	LeftSize = ImGui::GetWindowWidth();
 	ImVec2 size = ImGui::GetWindowSize();
@@ -850,6 +844,24 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 		ImGui::SameLine();
 		if (ImGui::Button("Play animation")){
 			FrameRenderer::play(canvasManager.getActive());
+		}
+		ImGui::SameLine();
+		ImGui::Spacing();
+		if (ImGui::Button("Toggle Onion Skins")){
+			FrameRenderer::removeOnionSkin(canvasManager.getActive());
+			FrameRenderer::toggleOnionSkin();
+			FrameRenderer::updateOnionSkin(canvasManager.getActive());
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("<-")){
+			FrameRenderer::setNumBefore(FrameRenderer::getNumBefore() + 1);
+			FrameRenderer::updateOnionSkin(canvasManager.getActive());
+
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("->")){
+			FrameRenderer::setNumAfter(FrameRenderer::getNumAfter() + 1);
+			FrameRenderer::updateOnionSkin(canvasManager.getActive());
 		}
 
 		// --- Timeline ---
