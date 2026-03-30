@@ -298,6 +298,13 @@ void UI::drawUI(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 	displayWidth = io.DisplaySize.x;
 	displayHeight = io.DisplaySize.y;
 
+	// compute the panel sizes if needed
+	// they should only ever be 0 at init, so this is really only called on the first time drawn
+	if (TopSize == 0) { TopSize = static_cast<int>(0.05 * displayHeight); }
+	if (BotSize == 0) { BotSize = static_cast<int>(0.05 * displayHeight); }
+	if (LeftSize == 0) { LeftSize = static_cast<int>(0.1 * displayWidth); }
+	if (RightSize == 0) { RightSize = static_cast<int>(0.1 * displayWidth); }
+
 	// draw the new canvas pop up
 	drawNewCanvasPopup(canvasManager);
 
@@ -305,8 +312,8 @@ void UI::drawUI(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 	drawCustomCursor(canvasManager);
 
 	// draw ui based on the UI's current state
-	// if (curState == UIState::start_menu)		{drawStartScreen(canvasManager);}
-	if (curState == UIState::main_screen) 	{drawMainScreen(canvasManager, frameRenderer);}
+	if (curState == UIState::start_menu)		{drawStartScreen(canvasManager);}
+	else if (curState == UIState::main_screen) 	{drawMainScreen(canvasManager, frameRenderer);}
 
 	// top panel is drawn regardless of the state 
 	drawTopPanel(canvasManager);
@@ -315,14 +322,92 @@ void UI::drawUI(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
+void UI::drawStartScreen(CanvasManager& canvasManager)
+{
+	// panel sizes for start screen
+	int start_left = static_cast<int>(0.25 * displayWidth);
+	int start_right = static_cast<int>(0.75 * displayWidth);
+
+	// draw the left part of the start screen (save and load buttons)
+	ImGui::SetNextWindowPos(ImVec2(0, TopSize), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(start_left, displayHeight), ImGuiCond_Always);
+	ImGui::Begin("Left Start Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+
+	ImVec2 buttonSize = ImVec2(160, 42); 	// makes the buttons bigger
+	float centerX = (start_left - 160) * 0.5f;
+
+	ImGui::Dummy(ImVec2(0, 40)); 			// creates some vertical space
+	ImGui::SetCursorPosX(centerX); 			// center the button
+
+	if (ImGui::Button("Create File", buttonSize)) 
+	{
+		showPopup = true;
+	}
+
+	ImGui::Dummy(ImVec2(0, 10)); 			// creates some vertical space
+	ImGui::SetCursorPosX(centerX); 			// center the button
+
+	if (ImGui::Button("Open File", buttonSize))
+	{
+		ImGuiFileDialog::Instance()->OpenDialog(
+			"LoadFileDlg",
+			"Choose File",
+			".png,.jpg,.ora"
+		);
+	}
+
+	if (ImGuiFileDialog::Instance()->Display("LoadFileDlg"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk())
+		{
+			std::string filePath =
+				ImGuiFileDialog::Instance()->GetFilePathName();
+
+			std::cout << "filepath" << std::endl;
+
+			std::string extension =
+				ImGuiFileDialog::Instance()->GetCurrentFilter();
+
+			std::cout << "extension" << std::endl;
+
+			if (extension == ".ora")
+			{
+				canvasManager.loadORA(filePath);
+				// centering the loaded image 
+				resetCanvasPositionCb();
+			}
+			else
+			{
+				canvasManager.loadFromFile(filePath);
+				// centering the loaded image 
+				resetCanvasPositionCb();
+			}
+
+			// if the current UI state is the start menu then change it to the main screen
+			if (curState == UIState::start_menu) {curState = UIState::main_screen;}
+			
+		}
+
+		ImGuiFileDialog::Instance()->Close();
+	}
+
+	// end step
+	ImGui::End();
+
+	// draw the right part of the start screen (recent activity)
+	ImGui::SetNextWindowPos(ImVec2(start_left, TopSize), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(start_right, displayHeight), ImGuiCond_Always);
+	ImGui::Begin("Right Start Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+
+	ImGui::Text("Recent Actvity: (work in progress)");
+
+	// end step
+	ImGui::End();
+
+}
+
 void UI::drawMainScreen(CanvasManager& canvasManager, FrameRenderer frameRenderer) 
 {
-	// compute the panel sizes
-	if (TopSize == 0) { TopSize = static_cast<int>(0.05 * displayHeight); }
-	if (BotSize == 0) { BotSize = static_cast<int>(0.05 * displayHeight); }
-	if (LeftSize == 0) { LeftSize = static_cast<int>(0.1 * displayWidth); }
-	if (RightSize == 0) { RightSize = static_cast<int>(0.1 * displayWidth); }
-
 	// -- user input to hide UI panels --
 	// only allow this if the canvas creation popup is not active 
 	if (!ImGui::IsPopupOpen("New Canvas")) {
@@ -595,6 +680,9 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 				// centering the loaded image 
 				resetCanvasPositionCb();
 			}
+
+			// if the current UI state is the start menu then change it to the main screen
+			if (curState == UIState::start_menu) {curState = UIState::main_screen;}
 			
 		}
 
