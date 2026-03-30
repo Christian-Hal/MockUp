@@ -523,9 +523,13 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 		{
 			triggerRebind(InputAction::newFile);
 		}
-		if (ImGui::MenuItem("New Layer", hotkeyLabel(InputAction::newFrame).c_str()))
+		if (ImGui::MenuItem("New Frame", hotkeyLabel(InputAction::newFrame).c_str()))
 		{
 			triggerRebind(InputAction::newFrame);
+		}
+		if (ImGui::MenuItem("Remove Frame", hotkeyLabel(InputAction::removeFrame).c_str()))
+		{
+			triggerRebind(InputAction::removeFrame);
 		}
 
 		ImGui::EndPopup();

@@ -59,7 +59,8 @@ enum class InputAction
     nextFrame,
     prevFrame,
     newFile,
-    newFrame
+    newFrame,
+    removeFrame
 };
 
 class InputManager
