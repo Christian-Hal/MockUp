@@ -93,6 +93,7 @@ void InputManager::init(GLFWwindow* window)
 	bindAction(InputAction::nextFrame, GLFW_KEY_2, 0);
 	bindAction(InputAction::prevFrame, GLFW_KEY_1, 0);
 	bindAction(InputAction::newFile, GLFW_KEY_N, GLFW_MOD_CONTROL);
+	bindAction(InputAction::newFrame, GLFW_KEY_3, 0);
 	//bindAction(InputAction::setZoomDragging, GLFW_KEY_SPACE, GLFW_MOD_CONTROL);
 }
 

@@ -58,7 +58,8 @@ enum class InputAction
     onionSkinToggle,
     nextFrame,
     prevFrame,
-    newFile
+    newFile,
+    newFrame
 };
 
 class InputManager

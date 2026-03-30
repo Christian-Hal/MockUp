@@ -523,6 +523,10 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 		{
 			triggerRebind(InputAction::newFile);
 		}
+		if (ImGui::MenuItem("New Layer", hotkeyLabel(InputAction::newFrame).c_str()))
+		{
+			triggerRebind(InputAction::newFrame);
+		}
 
 		ImGui::EndPopup();
 	}
