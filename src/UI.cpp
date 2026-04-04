@@ -30,7 +30,7 @@ int LeftSize = 0;
 int RightSize = 0;
 
 // state initial pop up 
-static bool showPopup = false;
+static bool showCanvasCreationPopup = false;
 
 // show panels 
 static bool showPanels = true;
@@ -290,6 +290,17 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
+	// testing the main menu implementation
+	if (ImGui::BeginMainMenuBar()) {
+		if (ImGui::BeginMenu("File")) {
+			if (ImGui::MenuItem("New...				Ctrl+N")) {
+				showCanvasCreationPopup = true;
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMainMenuBar();
+	}
+
 	// grab the window display size
 	ImGuiIO& io = ImGui::GetIO();
 	w = io.DisplaySize.x;
@@ -325,14 +336,10 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 	}
 
 	// top panel drawn regardless of input 
-	drawTopPanel(canvasManager);
+	//drawTopPanel(canvasManager);
 
 	// canvas tab panel shown only if more than 1 canvas is open
 	if (canvasManager.getNumCanvases() > 1) { drawCanvasTabs(canvasManager); }
-
-
-
-
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -385,6 +392,7 @@ void UI::drawCustomCursor(CanvasManager& canvasManager) {
 				}
 			}
 		}
+		// the default cross cursor used for smaller brush sizes 
 		else {
 			ImVec2 center = ImVec2(origin.x + (displayW * 0.5f), origin.y + (displayH * 0.5f));
 
@@ -429,8 +437,10 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 	// add widgets
 	// new canvas pop up
 	if (ImGui::Button("New File")) {
-		showPopup = true;
+		showCanvasCreationPopup = true;
 	}
+
+
 
 	// menu to rebind the various actions that can be done with hotkeys
 	// the getHotkeyString(InputAction::setRotate).c_str() is the funciton 
@@ -594,7 +604,7 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 		}
 
 		ImGuiFileDialog::Instance()->Close();
-	}
+	} 
 
 	// end step
 	ImGui::End();
@@ -898,7 +908,7 @@ void UI::drawPopup(CanvasManager& canvasManager)
 	static int temp_h = 1080;
 	static std::string temp_n = "Untitled";
 
-	if (showPopup) {
+	if (showCanvasCreationPopup) {
 		ImGui::OpenPopup("New Canvas");
 	}
 
@@ -918,7 +928,7 @@ void UI::drawPopup(CanvasManager& canvasManager)
 			// centering the newly created canvas 
 			resetCanvasPositionCb();
 
-			showPopup = false;
+			showCanvasCreationPopup = false;
 			temp_n = "Untitled";
 
 			ImGui::CloseCurrentPopup();
@@ -927,7 +937,7 @@ void UI::drawPopup(CanvasManager& canvasManager)
 		ImGui::SameLine();
 
 		if (ImGui::Button("Cancel")) {
-			showPopup = false;
+			showCanvasCreationPopup = false;
 			temp_n = "Untitled";
 			ImGui::CloseCurrentPopup();
 		}
@@ -939,7 +949,22 @@ void UI::drawPopup(CanvasManager& canvasManager)
 
 
 // dropdown button for file, animation, settings, and more 
-void UI::drawDropdownButton(CanvasManager& canvasManager) {
+void UI::drawMainMenu() {
+	/*if (ImGui::BeginPopup("testing popup")) {
+		if (ImGui::MenuItem("Option 1: ")) {
+
+		}
+		ImGui::EndPopup(); 
+	}*/ 
+
+
+	if (ImGui::BeginMainMenuBar()) {
+		if (ImGui::BeginMenu("File")) {
+			if (ImGui::MenuItem("New...			Ctrl+N")) {
+				showCanvasCreationPopup = true;
+			}
+		}
+	}
 
 }
 

@@ -78,5 +78,5 @@ private:
 	void drawTopPanel(CanvasManager& canvasManager);
 	void drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRenderer);
 	void drawCanvasTabs(CanvasManager& canvasManager);
-	void drawDropdownButton(CanvasManager& canvasManager);
+	void drawMainMenu();
 };
