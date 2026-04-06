@@ -12,10 +12,13 @@
 #include "Window.h"
 #include "CursorMode.h"
 
+#include <filesystem>
+
 class AppState {
 public:
     // initialize the app state and create instances for the different app components
     void init();
+    void shutdown();
 
     // central component accessors used by AppController
     Window& getWindow();
@@ -32,8 +35,34 @@ public:
     CursorMode getCursorMode() const;
     void setCursorMode(CursorMode mode);
 
+    // recent activity functions
+    void loadRecentActivity();
+    void saveRecentActivity();
+
+    // Get the folder path for MockUp in Documents
+    const std::filesystem::path& getMockUpFolderPath() const { return mockUpFolderPath; }
+    
+    void addFileToRecentActivity(const std::string& filePath);
+    const std::vector<std::string>& getRecentActivity();
+
 private:
+    // Centralized application components.
+    Window window;
+    Renderer renderer;
+    UI ui;
+    CanvasManager canvasManager;
+    BrushManager brushManager;
+    DrawEngine drawEngine;
+    FrameRenderer frameRenderer;
+    InputManager inputManager;
+
     // Current cursor mode variable
     CursorMode currentCursorMode = CursorMode::Draw; // set the default mode
+
+    // Recent activity list
+    std::vector<std::string> recentActivity;
+
+    // Path to the MockUp folder in Documents
+    std::filesystem::path mockUpFolderPath;
 
 };

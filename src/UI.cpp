@@ -1,7 +1,7 @@
-
 #include "UI.h"
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <utility>
 
@@ -91,8 +91,11 @@ void UI::bindHotkeyCallbacks(GetHotkeyLabelCallback getLabelCb, StartRebindCallb
 	didRebindFailCb = std::move(didFailCb);
 }
 
-
-
+void UI::bindRecentActivityCallbacks(saveToRecentActivityCallback saveCb, getRecentActivityCallback getCb)
+{
+	saveToRecentActivityCb = std::move(saveCb);
+	getRecentActivityCb = std::move(getCb);
+}
 
 
 // ----- ImGui code to load and access images in directory -----
@@ -282,6 +285,7 @@ void UI::init(GLFWwindow* window, Renderer& rendInst, Globals& g_inst) {
 
 	// storing window for user input 
 	windowStorage = window;
+
 }
 
 
@@ -305,8 +309,8 @@ void UI::drawUI(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 	if (LeftSize == 0) { LeftSize = static_cast<int>(0.1 * displayWidth); }
 	if (RightSize == 0) { RightSize = static_cast<int>(0.1 * displayWidth); }
 
-	// draw the new canvas pop up
-	drawNewCanvasPopup(canvasManager);
+	// ----- Call the various popup draws so they get drawn when needed -----
+	drawNewCanvasPopup(canvasManager); // draw the new canvas pop up
 
 	// ----- Cursor Customization -----
 	drawCustomCursor(canvasManager);
@@ -383,6 +387,9 @@ void UI::drawStartScreen(CanvasManager& canvasManager)
 				resetCanvasPositionCb();
 			}
 
+			// save to recent activity list
+			saveToRecentActivityCb(filePath);
+
 			// if the current UI state is the start menu then change it to the main screen
 			if (curState == UIState::start_menu) {curState = UIState::main_screen;}
 			
@@ -399,11 +406,44 @@ void UI::drawStartScreen(CanvasManager& canvasManager)
 	ImGui::SetNextWindowSize(ImVec2(start_right, displayHeight), ImGuiCond_Always);
 	ImGui::Begin("Right Start Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 
-	ImGui::Text("Recent Actvity: (work in progress)");
+	ImGui::Text("Recent Actvity: ");
+
+	// adds a little visual split between sections
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	// display recent activity list
+	if (getRecentActivityCb) {
+		const std::vector<std::string>& recentActivity = getRecentActivityCb();
+		for (const std::string& filePath : recentActivity) {
+			// grab the filename from the file path for display
+			size_t lastSlash = filePath.find_last_of("/\\");
+			std::string fileName = (lastSlash != std::string::npos) ? filePath.substr(lastSlash + 1) : filePath;
+
+			// if the button is clicked then load in the file
+			if (ImGui::Button(fileName.c_str(), ImVec2(150, 0))) {
+				std::string extension = filePath.substr(filePath.find_last_of('.'));
+
+				if (extension == ".ora") {
+					canvasManager.loadORA(filePath);
+					// centering the loaded image 
+					resetCanvasPositionCb();
+				}
+				else {
+					canvasManager.loadFromFile(filePath);
+					// centering the loaded image 
+					resetCanvasPositionCb();
+				}
+
+				// if the current UI state is the start menu then change it to the main screen
+				if (curState == UIState::start_menu) {curState = UIState::main_screen;}
+			}
+		}
+	}
 
 	// end step
 	ImGui::End();
-
 }
 
 void UI::drawMainScreen(CanvasManager& canvasManager, FrameRenderer frameRenderer) 
@@ -641,6 +681,8 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 			{
 				canvasManager.saveToFile(filePath);
 			}
+
+			saveToRecentActivityCb(filePath);
 		}
 
 		ImGuiFileDialog::Instance()->Close();
@@ -683,6 +725,9 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 				// centering the loaded image 
 				resetCanvasPositionCb();
 			}
+
+			// save to recent activity list
+			saveToRecentActivityCb(filePath);
 
 			// if the current UI state is the start menu then change it to the main screen
 			if (curState == UIState::start_menu) {curState = UIState::main_screen;}

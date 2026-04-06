@@ -26,12 +26,14 @@ public:
 	using SetActiveBrushCallback = std::function<void(int)>;
 	using GetActiveBrushCallback = std::function<const BrushTool&()>;
 	using LoadBrushCallback = std::function<void(const std::string&)>;
+	using GenerateBrushDabCallback = std::function<std::vector<float>(int)>; 
 	using GetHotkeyLabelCallback = std::function<std::string(InputAction)>;
 	using StartRebindCallback = std::function<void(InputAction)>;
 	using BoolCallback = std::function<bool()>;
 	using ResetCanvasPositionCallback = std::function<void()>;
+	using saveToRecentActivityCallback = std::function<void(const std::string&)>;
+	using getRecentActivityCallback = std::function<const std::vector<std::string>&()>;
 
-	using GenerateBrushDabCallback = std::function<std::vector<float>(int)>; 
 
 	// Lets the controller provide cursor state read/write hooks.
 	// UI emits intent through these callbacks instead of owning app state.
@@ -40,7 +42,8 @@ public:
 		GenerateBrushDabCallback genDabCb);
 	void bindHotkeyCallbacks(GetHotkeyLabelCallback getLabelCb, StartRebindCallback startCb, BoolCallback isWaitingCb, BoolCallback didFailCb);
 	void bindCanvasCallbacks(ResetCanvasPositionCallback resetPositionCb);
-	
+	void bindRecentActivityCallbacks(saveToRecentActivityCallback saveCb, getRecentActivityCallback getCb);
+
 	// ui drawing functions
 	void drawUI(CanvasManager& canvasManager, FrameRenderer frameRenderer);
 
@@ -63,17 +66,21 @@ public:
 private:
 	SetCursorModeCallback setCursorModeCb;
 	GetCursorModeCallback getCursorModeCb;
+
 	GetBrushListCallback getBrushListCb;
 	SetActiveBrushCallback setActiveBrushCb;
 	GetActiveBrushCallback getActiveBrushCb;
 	LoadBrushCallback loadBrushFromFileCb;
+	GenerateBrushDabCallback generateDabCb; 
+
 	GetHotkeyLabelCallback getHotkeyLabelCb;
 	StartRebindCallback startRebindCb;
 	BoolCallback isWaitingForRebindCb;
 	BoolCallback didRebindFailCb;
-	ResetCanvasPositionCallback resetCanvasPositionCb;
 
-	GenerateBrushDabCallback generateDabCb; 
+	ResetCanvasPositionCallback resetCanvasPositionCb;
+	saveToRecentActivityCallback saveToRecentActivityCb;
+	getRecentActivityCallback getRecentActivityCb;
 
 	// main UI drawing functions for each state
 	void drawStartScreen(CanvasManager& canvasManager);
@@ -90,7 +97,7 @@ private:
 	void drawNewCanvasPopup(CanvasManager& canvasManager);
 
 	// keeps track of the UI's current state so we know what stuff to draw
-	UIState curState;
+	UIState curState = UIState::start_menu;
 
 	// tracks the window display size for the ui panel sizing calculations
 	float displayWidth;

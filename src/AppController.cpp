@@ -1,16 +1,6 @@
 
 #include "AppController.h"
 
-#include "Window.h"
-#include "Renderer.h"
-#include "UI.h"
-#include "Globals.h"
-#include "CanvasManager.h"
-#include "BrushManager.h"
-#include "DrawEngine.h"
-#include "FrameRenderer.h"
-
-#include "InputManager.h"
 #include "CanvasManipulation.h"
 
 #include <algorithm>
@@ -79,6 +69,12 @@ bool AppController::init()
 		[this](InputAction action) { startRebind(action); },
 		[this]() { return isWaitingForRebind(); },
 		[this]() { return didRebindFail(); }
+	);
+
+	// Bind recent activity callbacks
+	ui.bindRecentActivityCallbacks(
+		[this](const std::string& filePath) { addFileToRecentActivity(filePath); },
+		[this]() -> const std::vector<std::string>& { return getRecentActivity(); }
 	);
 
 	// Bind raw mouse input streams from InputManager into controller handlers.
@@ -166,15 +162,19 @@ void AppController::run()
 Shuts down the UI, renderer, and the window.
 */
 void AppController::shutdown() {
-	auto& frameRenderer = appState.getFrameRenderer();
-	auto& ui = appState.getUI();
-	auto& renderer = appState.getRenderer();
-	auto& window = appState.getWindow();
+	appState.shutdown();
+}
 
-	frameRenderer.shutdown();
-	ui.shutdown();
-	renderer.shutdown();
-	window.destroy();
+void AppController::addFileToRecentActivity(const std::string& filePath)
+{
+	appState.addFileToRecentActivity(filePath);
+	appState.saveRecentActivity();  // Persist the change immediately
+}
+
+const std::vector<std::string>& AppController::getRecentActivity()
+{
+	std::cout << "AppController::getRecentActivity() - returning vector with size: " << appState.getRecentActivity().size() << std::endl;
+	return appState.getRecentActivity();
 }
 
 void AppController::loadBrush(const std::string& path)
