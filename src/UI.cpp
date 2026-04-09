@@ -27,9 +27,6 @@ int BotSize = 0;
 int LeftSize = 0;
 int RightSize = 0;
 
-// state initial pop up 
-static bool showPopup = false;
-
 // show panels 
 static bool showPanels = true;
 
@@ -315,7 +312,8 @@ void UI::drawUI(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 	if (RightSize == 0) { RightSize = static_cast<int>(0.1 * displayWidth); }
 
 	// ----- Call the various popup draws so they get drawn when needed -----
-	drawNewCanvasPopup(canvasManager); // draw the new canvas pop up
+	drawNewCanvasPopup(canvasManager); 	// draw the new canvas pop up
+	drawSettingsPopup(); 				// draw the settings menu pop up
 
 	// ----- Cursor Customization -----
 	drawCustomCursor(canvasManager);
@@ -350,7 +348,7 @@ void UI::drawStartScreen(CanvasManager& canvasManager)
 
 	if (ImGui::Button("Create File", buttonSize)) 
 	{
-		showPopup = true;
+		showNewCanvasPopup = true;
 	}
 
 	ImGui::Dummy(ImVec2(0, 10)); 			// creates some vertical space
@@ -572,81 +570,7 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 	// add widgets
 	// new canvas pop up
 	if (ImGui::Button("New File")) {
-		showPopup = true;
-	}
-
-	// menu to rebind the various actions that can be done with hotkeys
-	// the getHotkeyString(InputAction::setRotate).c_str() is the funciton 
-	// call to get the string version of the key combos
-	ImGui::SameLine();
-	if (ImGui::Button("Shortcuts")) {
-		ImGui::OpenPopup("Shortcuts Popup");
-	}
-
-	if (ImGui::BeginPopup("Shortcuts Popup"))
-	{
-		// create a lamda to grab the hotkey label for each action
-		auto hotkeyLabel = [this](InputAction action) {
-			if (getHotkeyLabelCb) {
-				return getHotkeyLabelCb(action);
-			}
-			return std::string{};
-			};
-
-		// create a lamda to trigger the rebind callback function for each action
-		auto triggerRebind = [this](InputAction action) {
-			if (startRebindCb) {
-				startRebindCb(action);
-			}
-			// Close to avoid consuming the next key press while rebinding.
-			ImGui::CloseCurrentPopup();
-			};
-
-		if (ImGui::MenuItem("Rotate", hotkeyLabel(InputAction::setRotate).c_str()))
-		{
-			triggerRebind(InputAction::setRotate);
-		}
-		if (ImGui::MenuItem("Pan", hotkeyLabel(InputAction::setPan).c_str()))
-		{
-			triggerRebind(InputAction::setPan);
-		}
-		if (ImGui::MenuItem("Draw", hotkeyLabel(InputAction::setDraw).c_str()))
-		{
-			triggerRebind(InputAction::setDraw);
-		}
-		if (ImGui::MenuItem("Fill", hotkeyLabel(InputAction::setFill).c_str())){
-			triggerRebind(InputAction::setFill);
-		}
-		if (ImGui::MenuItem("Erase", hotkeyLabel(InputAction::setErase).c_str()))
-		{
-			triggerRebind(InputAction::setErase);
-		}
-		if (ImGui::MenuItem("Undo", hotkeyLabel(InputAction::undo).c_str()))
-		{
-			triggerRebind(InputAction::undo);
-		}
-		if (ImGui::MenuItem("Redo", hotkeyLabel(InputAction::redo).c_str()))
-		{
-			triggerRebind(InputAction::redo);
-		}
-		if (ImGui::MenuItem("Zoom In", hotkeyLabel(InputAction::setClickZoomIn).c_str()))
-		{
-			triggerRebind(InputAction::setClickZoomIn);
-		}
-		if (ImGui::MenuItem("Zoom Out", hotkeyLabel(InputAction::setClickZoomOut).c_str()))
-		{
-			triggerRebind(InputAction::setClickZoomOut);
-		}
-		if (ImGui::MenuItem("Center Canvas", hotkeyLabel(InputAction::resetView).c_str()))
-		{
-			triggerRebind(InputAction::resetView);
-		}
-		if (ImGui::MenuItem("Color Picker", hotkeyLabel(InputAction::setColor).c_str()))
-		{
-			triggerRebind(InputAction::setColor);
-		}
-
-		ImGui::EndPopup();
+		showNewCanvasPopup = true;
 	}
 
 	ImGui::SameLine();
@@ -757,6 +681,13 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 		}
 
 		ImGuiFileDialog::Instance()->Close();
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Settings"))
+	{
+		showSettingsPopup = true;
 	}
 
 	// end step
@@ -1053,7 +984,7 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 }
 
 
-// canvas size popup 
+// new canvas popup 
 void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 {
 	static int temp_w = 1920;
@@ -1061,7 +992,7 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 	static std::string temp_n = "Untitled";
 	static bool isAnimation = false;
 
-	if (showPopup) {
+	if (showNewCanvasPopup) {
 		ImGui::OpenPopup("New Canvas");
 	}
 
@@ -1092,7 +1023,7 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 			// centering the newly created canvas 
 			resetCanvasPositionCb();
 
-			showPopup = false;
+			showNewCanvasPopup = false;
 			temp_n = "Untitled";
 
 			// if the current UI state is the start menu then change it to the main screen
@@ -1104,7 +1035,7 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 		ImGui::SameLine();
 
 		if (ImGui::Button("Cancel")) {
-			showPopup = false;
+			showNewCanvasPopup = false;
 			temp_n = "Untitled";
 			ImGui::CloseCurrentPopup();
 		}
@@ -1112,6 +1043,76 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 		ImGui::EndPopup();
 	}
 
+}
+
+void UI::drawSettingsPopup() {
+    static int settingsSection = 0;
+
+    if (showSettingsPopup) {
+        ImGui::OpenPopup("Settings");
+        ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_Always);
+    }
+
+    if (ImGui::BeginPopupModal("Settings", nullptr, ImGuiWindowFlags_NoResize)) {
+        // Create a child region that will take all remaining vertical space
+        float windowHeight = ImGui::GetContentRegionAvail().y - 50; // leave ~50px for Close button
+        ImGui::BeginChild("SettingsContent", ImVec2(0, windowHeight), false);
+
+        ImGui::Columns(2, nullptr, true);
+        ImGui::SetColumnWidth(0, 180);
+
+        // Left column: categories
+        if (ImGui::Button("User Settings##settings_user")) settingsSection = 0;
+        if (ImGui::Button("Shortcuts##settings_shortcuts")) settingsSection = 1;
+
+        ImGui::NextColumn();
+
+        // Right column: content
+        if (settingsSection == 0) {
+            ImGui::Text("User settings will go here");
+			
+        } else if (settingsSection == 1) {
+            auto hotkeyLabel = [this](InputAction action) { 
+                return getHotkeyLabelCb ? getHotkeyLabelCb(action) : std::string{};
+            };
+            auto triggerRebind = [this](InputAction action) { 
+                if (startRebindCb) startRebindCb(action); 
+            };
+            auto ShortcutRow = [&](const char* name, InputAction action) {
+                ImGui::Text("%s", name);
+                ImGui::SameLine(180);
+                if (ImGui::Button(hotkeyLabel(action).c_str()))
+                    triggerRebind(action);
+            };
+
+            ShortcutRow("Rotate", InputAction::setRotate);
+            ShortcutRow("Pan", InputAction::setPan);
+            ShortcutRow("Draw", InputAction::setDraw);
+            ShortcutRow("Fill", InputAction::setFill);
+            ShortcutRow("Erase", InputAction::setErase);
+            ShortcutRow("Undo", InputAction::undo);
+            ShortcutRow("Redo", InputAction::redo);
+            ShortcutRow("Zoom In", InputAction::setClickZoomIn);
+            ShortcutRow("Zoom Out", InputAction::setClickZoomOut);
+            ShortcutRow("Center Canvas", InputAction::resetView);
+            ShortcutRow("Color Picker", InputAction::setColor);
+        }
+
+        ImGui::Columns(1);
+        ImGui::EndChild();
+
+        // Separator and Close button at the bottom
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        if (ImGui::Button("Close", ImVec2(-1, 0))) { // -1 width = full width
+            showSettingsPopup = false;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
 }
 
 

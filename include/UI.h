@@ -98,6 +98,7 @@ private:
 	void drawCanvasTabs(CanvasManager& canvasManager);
 
 	void drawNewCanvasPopup(CanvasManager& canvasManager);
+	void drawSettingsPopup();
 
 	// keeps track of the UI's current state so we know what stuff to draw
 	UIState curState = UIState::start_menu;
@@ -105,4 +106,9 @@ private:
 	// tracks the window display size for the ui panel sizing calculations
 	float displayWidth;
 	float displayHeight;
+
+	// boolean variables for which popups/panels to show
+	bool showPanels = true;
+	bool showNewCanvasPopup = false;
+	bool showSettingsPopup = false;
 };
