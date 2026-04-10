@@ -42,6 +42,8 @@ static GLFWwindow* windowStorage;
 static int canvasWidth = 1920;
 static int canvasHeight = 1080;
 
+// the default starting frame
+static int currentFrame = 1;
 // RBGA values for the color wheel 
 static float color[4] = { .0f, .0f, .0f, 1.0f };
 
@@ -852,6 +854,7 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 			FrameRenderer::toggleOnionSkin();
 			FrameRenderer::updateOnionSkin(canvasManager.getActive());
 		}
+/*
 		ImGui::SameLine();
 		if (ImGui::Button("<-")){
 			FrameRenderer::setNumBefore(FrameRenderer::getNumBefore() + 1);
@@ -863,37 +866,50 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 			FrameRenderer::setNumAfter(FrameRenderer::getNumAfter() + 1);
 			FrameRenderer::updateOnionSkin(canvasManager.getActive());
 		}
-
+*/
+		
 		// --- Timeline ---
-		ImGui::Separator();
+		ImGuiStyle& style = ImGui::GetStyle();
 
-		const float frameWidth  = 28.0f;
-		const float frameHeight = 28.0f;
+		// Temporarily scale slider thickness and padding
+		float old_rounding = style.FrameRounding;
+		ImVec2 old_padding = style.FramePadding;
+		ImVec4 old_bg = style.Colors[ImGuiCol_FrameBg];
+		ImVec4 old_bg_hovered = style.Colors[ImGuiCol_FrameBgHovered];
+		ImVec4 old_bg_active = style.Colors[ImGuiCol_FrameBgActive];
 
-		for (int i = 1; i <= totalFrames; i++) {
-			// highlight selected frame
-			if (i == currentFrame) {
-				ImGui::PushStyleColor(ImGuiCol_Button,     ImVec4(0.7f, 0.7f, 1.0f, 1.0f));
-				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.8f, 0.8f, 1.0f, 1.0f));
-				ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.6f, 0.6f, 0.9f, 1.0f));
-			}
 
-			// frame button
-			char label[16];
-			snprintf(label, sizeof(label), "%d", i);
+		style.Colors[ImGuiCol_FrameBg]        = ImVec4(0, 0, 0, 0);
+		style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0, 0, 0, 0);
+		style.Colors[ImGuiCol_FrameBgActive]  = ImVec4(0, 0, 0, 0);
+		style.FramePadding = ImVec2(6, 12);     // taller
+		style.FrameRounding = 2.0f;
+		ImGui::SetNextItemWidth(400.0f);        // wider
+		// Save old color
+		ImVec4 old_color = style.Colors[ImGuiCol_SliderGrab];
 
-			if (ImGui::Button(label, ImVec2(frameWidth, frameHeight))) {
-				FrameRenderer::selectFrame(canvasManager.getActive(), i - currentFrame);
-			}
+		// Set grab to red
+		style.Colors[ImGuiCol_SliderGrab]      = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+		style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
 
-			if (i == currentFrame)
-				ImGui::PopStyleColor(3);
-
-			ImGui::SameLine();
+		// Draw the slider
+		ImGui::SliderInt("##wide_slider", &currentFrame, 1, FrameRenderer::getNumFrames(), "");
+		if(currentFrame != FrameRenderer::getCurFrame()){
+			FrameRenderer::selectFrame(canvasManager.getActive(), currentFrame - FrameRenderer::getCurFrame());
 		}
 
-		ImGui::NewLine();
-		}
+		// Restore style
+		style.Colors[ImGuiCol_SliderGrab] = old_color;
+		style.Colors[ImGuiCol_SliderGrabActive] = old_color;
+		style.Colors[ImGuiCol_FrameBg]        = old_bg;
+		style.Colors[ImGuiCol_FrameBgHovered] = old_bg_hovered;
+		style.Colors[ImGuiCol_FrameBgActive]  = old_bg_active;
+
+		// Restore frame settings
+		style.FramePadding = old_padding;
+		style.FrameRounding = old_rounding;
+		ImGui::SameLine();
+	}
 
 		// end step
 		if (ImGui::GetWindowHeight() > h - 2 * TopSize)
