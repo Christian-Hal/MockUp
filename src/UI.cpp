@@ -1000,13 +1000,6 @@ void UI::drawPopup(CanvasManager& canvasManager)
 // main menu bar for file, animation, settings, etc...
 // nested menus 
 void UI::drawMainMenu() {
-	/*if (ImGui::BeginPopup("testing popup")) {
-		if (ImGui::MenuItem("Option 1: ")) {
-
-		}
-		ImGui::EndPopup();
-	}*/
-
 	// starting the overall main menu bar
 	if (ImGui::BeginMainMenuBar()) {
 		// file button which causes a drop down of features 
