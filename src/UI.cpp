@@ -604,7 +604,7 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 		}
 
 		ImGuiFileDialog::Instance()->Close();
-	} 
+	}
 
 	// end step
 	ImGui::End();
@@ -948,18 +948,21 @@ void UI::drawPopup(CanvasManager& canvasManager)
 }
 
 
-// dropdown button for file, animation, settings, and more 
+// main menu bar for file, animation, settings, etc...
+// nested menus 
 void UI::drawMainMenu() {
 	/*if (ImGui::BeginPopup("testing popup")) {
 		if (ImGui::MenuItem("Option 1: ")) {
 
 		}
-		ImGui::EndPopup(); 
-	}*/ 
+		ImGui::EndPopup();
+	}*/
 
-
+	// starting the overall main menu bar
 	if (ImGui::BeginMainMenuBar()) {
+		// file button which causes a drop down of features 
 		if (ImGui::BeginMenu("File")) {
+			// drop down elements of file which contain the actual functinoality 
 			if (ImGui::MenuItem("New...			Ctrl+N")) {
 				showCanvasCreationPopup = true;
 			}
