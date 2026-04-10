@@ -7,101 +7,105 @@
 #include <glm/glm.hpp>
 
 struct Color {
-    unsigned char r, g, b, a;
+	unsigned char r, g, b, a;
 };
 
 struct Pixel {
-    int index;
-    Color before;
-    Color after;
+	int index;
+	Color before;
+	Color after;
 };
 
 struct StrokePath {
-    std::vector<Pixel> pixels;
-    int layerNum = -1;
+	std::vector<Pixel> pixels;
+	int layerNum = -1;
 };
 
 class Canvas {
 
-    public:
-        // constructor
-        Canvas();
-        Canvas(int w, int h, std::string name);
+public:
+	// constructor
+	Canvas();
+	Canvas(int w, int h, std::string name, bool isAnimation);
 
-        // getter methods
-        int getWidth() const;
-        int getHeight() const;
-        int getNumLayers() const;
-        int getCurLayer() const;
-        Color getBackgroundColor() const;
-        const Color* getData() const;
-        const std::vector<std::vector<Color>>& getLayerData() const;
+	// getter methods
+	int getWidth() const;
+	int getHeight() const;
+	bool getIsAnimation() const;
+	int getNumLayers() const;
+	int getCurLayer() const;
+	Color getBackgroundColor() const;
+	const Color* getData() const;
+	const std::vector<std::vector<Color>>& getLayerData() const;
 
-        friend bool operator==(const Color& c2, const Color& c1);
-        friend bool operator!=(const Color& c2, const Color& c1);
-        friend Color operator*(const Color& c2, const Color& c1);
+	friend bool operator==(const Color& c2, const Color& c1);
+	friend bool operator!=(const Color& c2, const Color& c1);
+	friend Color operator*(const Color& c2, const Color& c1);
 
-        bool colorEquals(const Color& c2, const Color& c1) ;
-        const Color colorTimes(const Color& c2, const Color& c1);
+	bool colorEquals(const Color& c2, const Color& c1);
+	const Color colorTimes(const Color& c2, const Color& c1);
 
-        const std::string getName() const;
-        void setName(std::string name);
-        
-        // pixel manipulation
-        void setPixel(int x, int y, const Color& color);
-        void blendPixel(int x, int y, const Color& srcColor, float brushAlpha);
-        const Color& getPixel(int x, int y) const;
-        void setPixels(std::vector<Color> newPixels);
-        void setLayerData(std::vector<std::vector<Color>> newLayerData);
+	const std::string getName() const;
+	void setName(std::string name);
 
-        // layer manipulation
-        void createLayer();
-        void removeLayer();
-        void selectLayer(int layerNum);
+	// pixel manipulation
+	void setPixel(int x, int y, const Color& color);
+	void blendPixel(int x, int y, const Color& srcColor, float brushAlpha);
+	const Color& getPixel(int x, int y) const;
+	void setPixels(std::vector<Color> newPixels);
+	void setLayerData(std::vector<std::vector<Color>> newLayerData);
 
-        // rotation, zoom, and offset data for each canvas
-        glm::vec2 offset = { 0.0f, 0.0f };
-        float zoom = 1.0f;
-        float rotation = 0.0f;
+	// layer manipulation
+	void createLayer();
+	void removeLayer();
+	void selectLayer(int layerNum);
 
-        /////// FUNCTIONS FOR THE UNDO AND REDO STUFF
-        void beginStrokeRecord();   // sets up a new StrokePath
-        void recordPixelChange(int index, const Color& before); // records the pixel into the active stroke
-        void endStrokeRecord();     // pushes the activeStroke into the undo stack
+	// rotation, zoom, and offset data for each canvas
+	glm::vec2 offset = { 0.0f, 0.0f };
+	float zoom = 1.0f;
+	float rotation = 0.0f;
 
-        void undo();    // undoes the most recent strokepath and sends it to the redo stack
-        void redo();    // redoes the most recent strokepath and sends it to the undo stack
-        void resetPixel(int index, const Color color);  // resets the pixel to the given color but doesn't record it into the stroke (only for undo/redo)
+	/////// FUNCTIONS FOR THE UNDO AND REDO STUFF
+	void beginStrokeRecord();   // sets up a new StrokePath
+	void recordPixelChange(int index, const Color& before); // records the pixel into the active stroke
+	void endStrokeRecord();     // pushes the activeStroke into the undo stack
 
-        bool canUndo() const;
-        bool canRedo() const;
-        void loadImage(unsigned char* data, int layerIndex);
+	void undo();    // undoes the most recent strokepath and sends it to the redo stack
+	void redo();    // redoes the most recent strokepath and sends it to the undo stack
+	void resetPixel(int index, const Color color);  // resets the pixel to the given color but doesn't record it into the stroke (only for undo/redo)
 
-    private:
-        // canvas settings
-        std::string canvasName;
-        int width, height;
-        int numLayers;
-        int curLayer;
-        Color backgroundColor = {255, 255, 255, 255};
-        Color emptyColor = {0, 0, 0, 0};
+	bool canUndo() const;
+	bool canRedo() const;
+	void loadImage(unsigned char* data, int layerIndex);
 
-        // RGBA pixel data
-        std::vector<Color> pixels;
-        std::vector<std::vector<Color>> layerData;
+private:
+	// canvas settings
+	std::string canvasName;
+	int width, height;
+	bool isAnimation;
+	int numLayers;
+	int curLayer;
+	Color backgroundColor = { 255, 255, 255, 255 };
+	// this color is hard coded, this is what we want to allow users to change 
+	// upon canvas creation
+	Color emptyColor = { 0, 0, 0, 0 };
 
-        /////// VARIABLES FOR THE UNDO AND REDO STUFF
-        // Stacks for undo and redo strokes
-        std::vector<StrokePath> undoStack = {};
-        std::vector<StrokePath> redoStack = {};
+	// RGBA pixel data
+	std::vector<Color> pixels;
+	std::vector<std::vector<Color>> layerData;
 
-        // keeps track of the active stroke to record pixels into
-        StrokePath activeStroke;
+	/////// VARIABLES FOR THE UNDO AND REDO STUFF
+	// Stacks for undo and redo strokes
+	std::vector<StrokePath> undoStack = {};
+	std::vector<StrokePath> redoStack = {};
 
-        // seen pixels is a flat vector the size of the canvas that records if an index was seen during this stroke or not
-        // currentStrokeIndex is just the int value that seenPixels sets the index too if seen
-        // it gets checked for in recordPixelChange
-        std::vector<int> seenPixels;
-        int currentStrokeIndex;
+	// keeps track of the active stroke to record pixels into
+	StrokePath activeStroke;
+
+	// seen pixels is a flat vector the size of the canvas that records if an index was seen during this stroke or not
+	// currentStrokeIndex is just the int value that seenPixels sets the index too if seen
+	// it gets checked for in recordPixelChange
+	std::vector<int> seenPixels;
+	int currentStrokeIndex;
 
 };

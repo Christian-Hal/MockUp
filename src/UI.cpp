@@ -48,6 +48,7 @@ static float color[4] = { .0f, .0f, .0f, 1.0f };
 // storing time for user input 
 static double lastFrame = 0.0;
 
+
 // mouse flags 
 static ImGuiConfigFlags cursorFlags;
 
@@ -839,7 +840,7 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 
 	// add widgets
 	// only display animation settings if there is an active canvas
-	if (canvasManager.hasActive())
+	if (canvasManager.hasActive() && canvasManager.getActive().getIsAnimation())
 	{
 		if (ImGui::Button("Previous Frame")) {
 			FrameRenderer::selectFrame(canvasManager.getActive(), -1);
@@ -906,36 +907,42 @@ void UI::drawPopup(CanvasManager& canvasManager)
 {
 	static int temp_w = 1920;
 	static int temp_h = 1080;
-	static std::string temp_n = "Untitled";
+	// add paper layer color here 
+	static std::string temp_n = "Illustration";
+	static std::string temp_n_a = "Animation"; 
 
 	if (showCanvasCreationPopup) {
-		ImGui::OpenPopup("New Canvas");
+		ImGui::OpenPopup("New");
 	}
 
 	// specifying canvas size 
-	if (ImGui::BeginPopupModal("New Canvas", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+	if (ImGui::BeginPopupModal("New", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
 
-		ImGui::InputInt("Width:", &temp_w);
-		ImGui::InputInt("Height:", &temp_h);
-		ImGui::InputText("File Name:", &temp_n);
-
+		
+		
 		// containing the creation buttons within a tab bar 
 		// different tabs for drawing and for animation
-		ImGuiTabBarFlags tabBarFlags = ImGuiTabBarFlags_None; 
+		ImGuiTabBarFlags tabBarFlags = ImGuiTabBarFlags_None;
 		if (ImGui::BeginTabBar("New", tabBarFlags)) {
 			if (ImGui::BeginTabItem("New Illustraion")) {
 
+				// input params for illustration creation
+				ImGui::InputInt("Width:", &temp_w);
+				ImGui::InputInt("Height:", &temp_h);
+				ImGui::InputText("File Name:", &temp_n);
+
 				// if user creates a canvas, remove the popup 
 				if (ImGui::Button("Create")) {
+					temp_n = "Illustration"; 
 
 					// create the new canvas
-					canvasManager.createCanvas(temp_w, temp_h, temp_n);
+					canvasManager.createCanvas(temp_w, temp_h, temp_n, false);
 
 					// centering the newly created canvas 
 					resetCanvasPositionCb();
 
 					showCanvasCreationPopup = false;
-					temp_n = "Untitled";
+					temp_n = "Illustration";
 
 					ImGui::CloseCurrentPopup();
 				}
@@ -944,7 +951,6 @@ void UI::drawPopup(CanvasManager& canvasManager)
 
 				if (ImGui::Button("Cancel")) {
 					showCanvasCreationPopup = false;
-					temp_n = "Untitled";
 					ImGui::CloseCurrentPopup();
 				}
 				ImGui::EndTabItem();
@@ -952,17 +958,23 @@ void UI::drawPopup(CanvasManager& canvasManager)
 
 			if (ImGui::BeginTabItem("New Animation")) {
 
+				// input params animation creation
+				ImGui::InputInt("Width:", &temp_w);
+				ImGui::InputInt("Height:", &temp_h);
+				ImGui::InputText("File Name:", &temp_n_a);
+
 				// if user creates a canvas, remove the popup 
 				if (ImGui::Button("Create")) {
+					temp_n = "Animation"; 
 
 					// create the new canvas
-					canvasManager.createCanvas(temp_w, temp_h, temp_n);
+					canvasManager.createCanvas(temp_w, temp_h, temp_n_a, true);
 
 					// centering the newly created canvas 
 					resetCanvasPositionCb();
 
 					showCanvasCreationPopup = false;
-					temp_n = "Untitled";
+					temp_n = "Animation";
 
 					ImGui::CloseCurrentPopup();
 				}
@@ -971,10 +983,9 @@ void UI::drawPopup(CanvasManager& canvasManager)
 
 				if (ImGui::Button("Cancel")) {
 					showCanvasCreationPopup = false;
-					temp_n = "Untitled";
 					ImGui::CloseCurrentPopup();
 				}
-				ImGui::EndTabItem(); 
+				ImGui::EndTabItem();
 			}
 			// 
 			ImGui::EndTabBar();
