@@ -919,27 +919,65 @@ void UI::drawPopup(CanvasManager& canvasManager)
 		ImGui::InputInt("Height:", &temp_h);
 		ImGui::InputText("File Name:", &temp_n);
 
-		// if user creates a canvas, remove the popup 
-		if (ImGui::Button("Create")) {
+		// containing the creation buttons within a tab bar 
+		// different tabs for drawing and for animation
+		ImGuiTabBarFlags tabBarFlags = ImGuiTabBarFlags_None; 
+		if (ImGui::BeginTabBar("New", tabBarFlags)) {
+			if (ImGui::BeginTabItem("New Illustraion")) {
 
-			// create the new canvas
-			canvasManager.createCanvas(temp_w, temp_h, temp_n);
+				// if user creates a canvas, remove the popup 
+				if (ImGui::Button("Create")) {
 
-			// centering the newly created canvas 
-			resetCanvasPositionCb();
+					// create the new canvas
+					canvasManager.createCanvas(temp_w, temp_h, temp_n);
 
-			showCanvasCreationPopup = false;
-			temp_n = "Untitled";
+					// centering the newly created canvas 
+					resetCanvasPositionCb();
 
-			ImGui::CloseCurrentPopup();
-		}
+					showCanvasCreationPopup = false;
+					temp_n = "Untitled";
 
-		ImGui::SameLine();
+					ImGui::CloseCurrentPopup();
+				}
 
-		if (ImGui::Button("Cancel")) {
-			showCanvasCreationPopup = false;
-			temp_n = "Untitled";
-			ImGui::CloseCurrentPopup();
+				ImGui::SameLine();
+
+				if (ImGui::Button("Cancel")) {
+					showCanvasCreationPopup = false;
+					temp_n = "Untitled";
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::EndTabItem();
+			}
+
+			if (ImGui::BeginTabItem("New Animation")) {
+
+				// if user creates a canvas, remove the popup 
+				if (ImGui::Button("Create")) {
+
+					// create the new canvas
+					canvasManager.createCanvas(temp_w, temp_h, temp_n);
+
+					// centering the newly created canvas 
+					resetCanvasPositionCb();
+
+					showCanvasCreationPopup = false;
+					temp_n = "Untitled";
+
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::SameLine();
+
+				if (ImGui::Button("Cancel")) {
+					showCanvasCreationPopup = false;
+					temp_n = "Untitled";
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::EndTabItem(); 
+			}
+			// 
+			ImGui::EndTabBar();
 		}
 
 		ImGui::EndPopup();
