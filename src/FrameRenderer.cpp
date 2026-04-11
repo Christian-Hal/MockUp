@@ -1,6 +1,7 @@
 
 // included libraries for functionality
 #include "FrameRenderer.h"
+#include "stb_image_write.h"
 #include "imgui.h"
 
 #include <iostream>
@@ -12,6 +13,7 @@
 #include <chrono>
 
 using namespace std;
+namespace fs = std::filesystem;
 
 // initalize the FrameRenderer variables
 int FrameRenderer::numCanvas = -1;
@@ -282,6 +284,48 @@ void FrameRenderer::removeOnionSkin(Canvas& canvas){
 
 void FrameRenderer::toggleOnionSkin(){
     onionSkinEnabled = !onionSkinEnabled;
+}
+
+void FrameRenderer::saveAnimation(const string& path, Canvas& canvas){
+    writeAllData(&canvas);
+    int width = canvas.getWidth();
+    int height = canvas.getHeight();
+    string prefix = path.substr(0, path.find_last_of('.'));
+    string ext = path.substr(path.find_last_of('.') + 1);
+    size_t slash = path.find_last_of('/');
+    bool isMac = false;
+    // if your on mac
+    if (slash == std::string::npos) {
+        slash = path.find_last_of("\\");
+        isMac = true;
+    }
+    string title = path.substr(slash + 1, path.find_last_of('.') - (slash + 1));
+    fs::create_directory(prefix);
+    for(int i = 0; i < frames.size(); i++){
+        string finalPath;
+        if(!isMac){
+            finalPath = prefix + "/" + title + "-" + to_string(i) + "." + ext;
+        }
+        else{
+            finalPath = prefix + "\\" + title + "-" + to_string(i) + "." + ext;
+        }
+        vector<Color> pixels(width * height);
+        memcpy(pixels.data(), frames[i].data(), width * height * sizeof(Color));
+        for (int y = 0; y < height / 2; y++)
+        {
+            int opposite = height - y - 1;
+            for (int x = 0; x < width; x++)
+            {
+                swap(pixels[y * width + x], pixels[opposite * width + x]);
+            }
+        }
+
+        if (ext == "png")
+            stbi_write_png(finalPath.c_str(), width, height, 4, pixels.data(), width * 4);
+    
+        else if (ext == "jpg")
+            stbi_write_jpg(finalPath.c_str(), width, height, 4, pixels.data(), 100);
+    }
 }
 
 // removes all of the files after shutdown so you dont eat up storage.

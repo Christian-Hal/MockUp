@@ -20,7 +20,7 @@ class FrameRenderer{
         static void updateOnionSkin(Canvas& canvas);
         static void removeOnionSkin(Canvas& canvas);
         static void toggleOnionSkin();
-        static void saveAnimation();
+        static void saveAnimation(const string& path, Canvas& canvas);
         void shutdown();
         static bool inputBlocked;
         static int getCurFrame();

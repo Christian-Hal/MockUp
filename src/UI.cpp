@@ -563,6 +563,46 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 		ImGuiFileDialog::Instance()->Close();
 	}
 
+	ImGui::SameLine();
+
+	//saving animation
+	if (canvasManager.hasActive() && ImGui::Button("Save Animation"))
+	{
+		IGFD::FileDialogConfig config;
+
+		// the  path the file explorer starts in. "." is the current active directory
+		config.path = ".";
+
+		config.fileName = canvasManager.getActive().getName();
+
+		// ImGuiFileDialog has a built in detection for overwriting a file and makes a popup as well.
+		config.flags = ImGuiFileDialogFlags_ConfirmOverwrite;
+
+		ImGuiFileDialog::Instance()->OpenDialog(
+			"SaveImageAnm",
+			"Save Animation",
+			".png,.jpg",
+			config
+		);
+	}
+	if (ImGuiFileDialog::Instance()->Display("SaveImageAnm"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk())
+		{
+			std::string filePath =
+				ImGuiFileDialog::Instance()->GetFilePathName();
+
+			std::string extension =
+				ImGuiFileDialog::Instance()->GetCurrentFilter();
+
+	
+			FrameRenderer::saveAnimation(filePath, canvasManager.getActive());
+			
+		}
+
+		ImGuiFileDialog::Instance()->Close();
+	}
+
 	//loading file
 	ImGui::SameLine();
 	if (ImGui::Button("Load File"))
@@ -871,7 +911,6 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 		// --- Timeline ---
 		ImGuiStyle& style = ImGui::GetStyle();
 
-		// Temporarily scale slider thickness and padding
 		float old_rounding = style.FrameRounding;
 		ImVec2 old_padding = style.FramePadding;
 		ImVec4 old_bg = style.Colors[ImGuiCol_FrameBg];
@@ -901,6 +940,9 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 		curFrame = (int)roundf(curFrame);
 		if(curFrame != FrameRenderer::getCurFrame() && isPressed){
 			FrameRenderer::selectFrame(canvasManager.getActive(), curFrame - FrameRenderer::getCurFrame());
+		}
+		else{
+			curFrame = FrameRenderer::getCurFrame();
 		}
 
 		ImDrawList* draw = ImGui::GetWindowDrawList();
