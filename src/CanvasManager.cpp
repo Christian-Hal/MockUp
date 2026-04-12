@@ -30,6 +30,65 @@ Canvas& CanvasManager::createCanvas(int width, int height, std::string name)
     return *activeCanvas;
 }
 
+void CanvasManager::closeCanvas(int index)
+{
+    if (index < 0 || static_cast<size_t>(index) >= canvases.size())
+        return;
+
+    int activeIndex = getActiveCanvasIndex();
+
+    auto it = canvases.erase(canvases.begin() + index);
+
+    if (canvases.empty())
+    {
+        activeCanvas = nullptr;
+        canvasChange = true;
+        return;
+    }
+
+    int newIndex;
+
+    if (activeIndex == index)
+    {
+        newIndex = (it == canvases.end())
+            ? canvases.size() - 1
+            : it - canvases.begin();
+    }
+    else if (index < activeIndex)
+    {
+        newIndex = activeIndex - 1;
+    }
+    else
+    {
+        newIndex = activeIndex;
+    }
+
+    
+    setActiveCanvas(newIndex);
+
+    canvasChange = true;
+}
+
+
+
+int CanvasManager::getActiveCanvasIndex() const
+{
+    if (!activeCanvas)
+        return -1;
+
+    for (size_t i = 0; i < canvases.size(); i++)
+    {
+        if (&canvases[i] == activeCanvas)
+        {
+            return static_cast<int>(i);
+        }
+    }
+
+    return -1;
+}
+
+
+
 void CanvasManager::undo()
 {
     if (!activeCanvas) {
@@ -89,6 +148,7 @@ const std::vector<Canvas>& CanvasManager::getOpenCanvases() const
 {
     return canvases;
 }
+
 
 void CanvasManager::setActiveCanvas(int index)
 {

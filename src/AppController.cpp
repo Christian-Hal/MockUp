@@ -429,6 +429,12 @@ void AppController::onInputAction(InputAction action)
 			FrameRenderer::play(canvasManager.getActive());
 		}
 		break;
+	case InputAction::closeCanvas:
+		if (canvasManager.hasActive())
+		{
+			canvasManager.closeCanvas(canvasManager.getActiveCanvasIndex());
+		}
+		break;
 	default:
 		break;
 	}

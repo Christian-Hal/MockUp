@@ -535,6 +535,10 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 		{
 			triggerRebind(InputAction::quickPlay);
 		}
+		if (ImGui::MenuItem("Close Canvas", hotkeyLabel(InputAction::closeCanvas).c_str()))
+		{
+			triggerRebind(InputAction::closeCanvas);
+		}
 
 		ImGui::EndPopup();
 	}
@@ -921,6 +925,7 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 	// end step
 	ImGui::End();
 }
+
 
 
 // canvas size popup 

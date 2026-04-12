@@ -12,6 +12,9 @@ class CanvasManager {
         Canvas& getActive();
         bool hasActive();
 
+        void closeCanvas(int index);
+        int getActiveCanvasIndex() const;
+
         int getNumCanvases();
         const std::vector<Canvas>& getOpenCanvases() const;
         void setActiveCanvas(int index);
