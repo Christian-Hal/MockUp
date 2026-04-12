@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 #include <utility>
+#include <map>
+#include <tuple>
 
 #include "ImGuiFileDialog.h"
 
@@ -302,6 +304,7 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 		ImGui::EndMainMenuBar();
 	}
 
+	// changing hard set display size to allow for docking tabs 
 	// grab the window display size
 	ImGuiIO& io = ImGui::GetIO();
 	w = io.DisplaySize.x;
@@ -614,7 +617,7 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 
 void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	// initialize the panel
-	ImGui::SetNextWindowPos(ImVec2(0, TopSize), ImGuiCond_Always);
+	ImGui::SetNextWindowPos(ImVec2(0, TopSize), ImGuiCond_Always); // line that needs to change to make it fit MainMenuBar
 	ImGui::SetNextWindowSize(ImVec2(LeftSize, h), ImGuiCond_Always);
 	ImGui::Begin("Left Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
@@ -909,7 +912,9 @@ void UI::drawPopup(CanvasManager& canvasManager)
 	static int temp_h = 1080;
 	// add paper layer color here 
 	static std::string temp_n = "Illustration";
-	static std::string temp_n_a = "Animation"; 
+	static std::string temp_n_a = "Animation";
+	// want to also add canvas size presets as a map accessed from a combo 
+	//static 
 
 	if (showCanvasCreationPopup) {
 		ImGui::OpenPopup("New");
@@ -917,9 +922,6 @@ void UI::drawPopup(CanvasManager& canvasManager)
 
 	// specifying canvas size 
 	if (ImGui::BeginPopupModal("New", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-
-		
-		
 		// containing the creation buttons within a tab bar 
 		// different tabs for drawing and for animation
 		ImGuiTabBarFlags tabBarFlags = ImGuiTabBarFlags_None;
@@ -931,9 +933,29 @@ void UI::drawPopup(CanvasManager& canvasManager)
 				ImGui::InputInt("Height:", &temp_h);
 				ImGui::InputText("File Name:", &temp_n);
 
+				// setting up combo box for illustration presets 
+				// presets as str and tuple of two ints 
+				const std::map<std::string, std::tuple<int, int>> canvasSizes = {
+				{"A4", {2894, 4093}}
+				};
+				// initally selected combo box value
+				static std::string selectedPreset = canvasSizes.begin()->first; 
+				// have to use begin combo API because of the choice of a map 
+				if (ImGui::BeginCombo("Presets", selectedPreset.c_str())) {
+					for (auto const& [preset, sizes] : canvasSizes) {
+						bool isSelected = (selectedPreset == preset);
+						if (ImGui::Selectable(preset.c_str(), isSelected)){
+							// updating combo box selection 
+							selectedPreset = preset; 
+						}
+						if (isSelected) ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
+				}
+
 				// if user creates a canvas, remove the popup 
 				if (ImGui::Button("Create")) {
-					temp_n = "Illustration"; 
+					temp_n = "Illustration";
 
 					// create the new canvas
 					canvasManager.createCanvas(temp_w, temp_h, temp_n, false);
@@ -965,7 +987,7 @@ void UI::drawPopup(CanvasManager& canvasManager)
 
 				// if user creates a canvas, remove the popup 
 				if (ImGui::Button("Create")) {
-					temp_n = "Animation"; 
+					temp_n = "Animation";
 
 					// create the new canvas
 					canvasManager.createCanvas(temp_w, temp_h, temp_n_a, true);
@@ -1008,7 +1030,13 @@ void UI::drawMainMenu() {
 			if (ImGui::MenuItem("New...			Ctrl+N")) {
 				showCanvasCreationPopup = true;
 			}
+
+			if (ImGui::MenuItem("Save...			Ctrl+S")) {
+				// needs to be greyed out and disabled unless there is an active canvas
+
+			}
 		}
+		ImGui::EndMainMenuBar();
 	}
 
 }
