@@ -971,20 +971,6 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 	// only display animation settings if there is an active canvas
 	if (canvasManager.hasActive() && canvasManager.getActive().getIsAnimation())
 	{
-		if (ImGui::Button("Previous Frame")) {
-			FrameRenderer::selectFrame(canvasManager.getActive(), -1);
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Next Frame")) {
-			FrameRenderer::selectFrame(canvasManager.getActive(), 1);
-		}
-
-		//ImGui::SliderInt()
-		if (ImGui::Button("Create Frame")) {
-			FrameRenderer::createFrame(canvasManager.getActive());
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Remove Frame")) {
 		int currentFrame = FrameRenderer::getCurFrame();
 		int totalFrames = FrameRenderer::getNumFrames();
 		if (ImGui::Button("+")) {
@@ -1104,8 +1090,7 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 			BotSize = h - 2 * TopSize;
 		else
 			BotSize = ImGui::GetWindowHeight();
-	}
-	ImGui::End();
+		ImGui::End();
 }
 
 
