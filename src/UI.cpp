@@ -825,11 +825,6 @@ void UI::drawPopup(CanvasManager& canvasManager)
 		if (ImGui::BeginTabBar("New", tabBarFlags)) {
 			if (ImGui::BeginTabItem("New Illustraion")) {
 
-				// input params for illustration creation
-				ImGui::InputInt("Width:", &temp_w);
-				ImGui::InputInt("Height:", &temp_h);
-				ImGui::InputText("File Name:", &temp_n);
-
 				// setting up combo box for illustration presets 
 				// presets as str and tuple of two ints 
 				const std::map<std::string, std::tuple<int, int>> canvasSizes = {
@@ -840,6 +835,9 @@ void UI::drawPopup(CanvasManager& canvasManager)
 				};
 				// initally selected combo box value
 				static std::string selectedPreset = canvasSizes.begin()->first;
+				if (ImGui::InputInt("Width:", &temp_w)) { selectedPreset = "Custom"; }
+				if (ImGui::InputInt("Height:", &temp_h)) { selectedPreset = "Custom"; }
+				ImGui::InputText("File Name:", &temp_n);
 				// have to use begin combo API because of the choice of a map 
 				if (ImGui::BeginCombo("Presets", selectedPreset.c_str())) {
 					for (auto const& [preset, sizes] : canvasSizes) {
@@ -847,9 +845,11 @@ void UI::drawPopup(CanvasManager& canvasManager)
 						if (ImGui::Selectable(preset.c_str(), isSelected)) {
 							// updating combo box selection 
 							selectedPreset = preset;
-							auto& myTuple = canvasSizes.at(preset.c_str());
-							temp_w = std::get<0>(myTuple);
-							temp_h = std::get<1>(myTuple);
+							if (preset != "Custom") {
+								auto& myTuple = canvasSizes.at(preset.c_str());
+								temp_w = std::get<0>(myTuple);
+								temp_h = std::get<1>(myTuple);
+							}
 						}
 						if (isSelected) ImGui::SetItemDefaultFocus();
 					}
