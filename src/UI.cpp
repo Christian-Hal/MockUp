@@ -340,7 +340,7 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 	h = io.DisplaySize.y;
 
 	// compute the panel sizes
-	if (TopSize == 0) { TopSize = static_cast<int>(0.05 * h); }
+	if (TopSize == 0) { TopSize = 20; }
 	if (BotSize == 0) { BotSize = static_cast<int>(0.05 * h); }
 	if (LeftSize == 0) { LeftSize = static_cast<int>(0.1 * w); }
 	if (RightSize == 0) { RightSize = static_cast<int>(0.1 * w); }
@@ -776,8 +776,8 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 {
 	// initialize the panel
 	ImGui::SetNextWindowPos(ImVec2(LeftSize, TopSize), ImGuiCond_Always);
-	ImGui::SetNextWindowSize(ImVec2(w - LeftSize - RightSize, TopSize), ImGuiCond_Always);
-	ImGui::Begin("Canvas Tabs Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+	ImGui::SetNextWindowSize(ImVec2(w - LeftSize - RightSize, 35), ImGuiCond_Always);
+	ImGui::Begin("Canvas Tabs Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar);
 
 	// add widgets
 
@@ -995,7 +995,7 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 				elementVisibility[UIElement::animationTimeline] = !elementVisibility[UIElement::animationTimeline];
 			}
 			if (ImGui::MenuItem("Layers", nullptr, elementVisibility[UIElement::layers])) {
-				elementVisibility[UIElement::layers] = !elementVisibility[UIElement::animationTimeline];
+				elementVisibility[UIElement::layers] = !elementVisibility[UIElement::layers];
 			}
 
 			ImGui::PopItemFlag();
