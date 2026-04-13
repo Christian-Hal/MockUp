@@ -1234,7 +1234,7 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 	static std::string temp_n = "Illustration";
 	static std::string temp_n_a = "Animation";
 	// want to also add canvas size presets as a map accessed from a combo 
-	//static 
+	static bool animTemplate = false;
 
 	if (showNewCanvasPopup) {
 		ImGui::OpenPopup("New");
@@ -1292,7 +1292,7 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 					temp_n = "Illustration";
 
 					// create the new canvas
-					canvasManager.createCanvas(temp_w, temp_h, temp_n, false);
+					canvasManager.createCanvas(temp_w, temp_h, temp_n, false, false);
 
 					// centering the newly created canvas 
 					resetCanvasPositionCb();
@@ -1316,21 +1316,25 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 			}
 
 			if (ImGui::BeginTabItem("New Animation")) {
-				ImGui::TextWrapped("The animation template currently uses a set size of 2338 x 1653.");
-				temp_w = 2338;
-				temp_h = 1653;
-
 				// input params animation creation
 				ImGui::InputInt("Width:", &temp_w);
 				ImGui::InputInt("Height:", &temp_h);
 				ImGui::InputText("File Name:", &temp_n_a);
+
+				// checkbox for using anim template
+				ImGui::Checkbox("Use Animation Template", &animTemplate);
+				if (animTemplate) {
+					ImGui::TextWrapped("The animation template currently uses a set size of 2338 x 1653.");
+					temp_w = 2338;
+					temp_h = 1653;
+				}
 
 				// if user creates a canvas, remove the popup 
 				if (ImGui::Button("Create")) {
 					temp_n = "Animation";
 
 					// create the new canvas
-					canvasManager.createCanvas(temp_w, temp_h, temp_n_a, true);
+					canvasManager.createCanvas(temp_w, temp_h, temp_n_a, true, animTemplate);
 
 					// centering the newly created canvas 
 					resetCanvasPositionCb();

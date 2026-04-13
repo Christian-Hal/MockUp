@@ -158,7 +158,7 @@ void FrameRenderer::createFrame(Canvas& canvas){
     //band-aid solution. this does not fix removing layers fully
 
     vector<vector<Color>> layDat;
-    if (canvas.isAnimation()) {
+    if (canvas.isUsingAnimTemplate()) {
         // 3 layers: background, template, empty drawing layer
         layDat.resize(3, vector<Color>(meta[0] * meta[1], {0,0,0,0}));
 

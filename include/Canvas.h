@@ -37,7 +37,7 @@ class Canvas {
 public:
 	// constructor
 	Canvas();
-	Canvas(int w, int h, std::string name, bool isAnimation);
+	Canvas(int w, int h, std::string name, bool isAnimation, bool useAnimTemplate);
 
 	// getter methods
 	int getWidth() const;
@@ -90,7 +90,8 @@ public:
     
     void setBackgroundColor(const Color& color); // sets the background color of the canvas
 
-    bool isAnimation() const { return animationTemplate; }
+    bool isAnimation() const { return isAnim; }
+    bool isUsingAnimTemplate() const { return animationTemplate; }
     void loadAnimTemplate();
 
 private:
@@ -123,5 +124,6 @@ private:
 	int currentStrokeIndex;
 
     // variable to state if the canvas should be using the animation template or not
+    bool isAnim = false;
     bool animationTemplate = false;
 };

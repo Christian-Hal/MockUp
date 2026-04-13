@@ -9,7 +9,7 @@
 
 class CanvasManager {
     public:
-        Canvas& createCanvas(int width, int height, std::string name, bool isAnimation);
+        Canvas& createCanvas(int width, int height, std::string name, bool isAnimation, bool useAnimTemplate);
         Canvas& getActive();
         bool hasActive();
 
