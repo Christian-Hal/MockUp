@@ -328,7 +328,7 @@ void UI::init(GLFWwindow* window, Renderer& rendInst, Globals& g_inst) {
 	// set initial visibility of UI elements
 	for (UIElement e : elements) {
 		elementVisibility[e] = true;
-	} 
+	}
 }
 
 
@@ -340,7 +340,7 @@ void UI::drawUI(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
-	drawMainMenu(canvasManager); 
+	drawMainMenu(canvasManager);
 
 	// changing hard set display size to allow for docking tabs 
 	// grab the window display size
@@ -362,8 +362,8 @@ void UI::drawUI(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 	drawCustomCursor(canvasManager);
 
 	// draw ui based on the UI's current state
-	if (curState == UIState::start_menu)		{drawStartScreen(canvasManager);}
-	else if (curState == UIState::main_screen) 	{drawMainScreen(canvasManager, frameRenderer);}
+	if (curState == UIState::start_menu) { drawStartScreen(canvasManager); }
+	else if (curState == UIState::main_screen) { drawMainScreen(canvasManager, frameRenderer); }
 
 	// top panel is drawn regardless of the state 
 	//drawTopPanel(canvasManager);
@@ -389,7 +389,7 @@ void UI::drawStartScreen(CanvasManager& canvasManager)
 	ImGui::Dummy(ImVec2(0, 40)); 			// creates some vertical space
 	ImGui::SetCursorPosX(centerX); 			// center the button
 
-	if (ImGui::Button("Create File", buttonSize)) 
+	if (ImGui::Button("Create File", buttonSize))
 	{
 		showNewCanvasPopup = true;
 	}
@@ -439,8 +439,8 @@ void UI::drawStartScreen(CanvasManager& canvasManager)
 			saveToRecentActivityCb(filePath);
 
 			// if the current UI state is the start menu then change it to the main screen
-			if (curState == UIState::start_menu) {curState = UIState::main_screen;}
-			
+			if (curState == UIState::start_menu) { curState = UIState::main_screen; }
+
 		}
 
 		ImGuiFileDialog::Instance()->Close();
@@ -485,7 +485,7 @@ void UI::drawStartScreen(CanvasManager& canvasManager)
 				}
 
 				// if the current UI state is the start menu then change it to the main screen
-				if (curState == UIState::start_menu) {curState = UIState::main_screen;}
+				if (curState == UIState::start_menu) { curState = UIState::main_screen; }
 			}
 		}
 	}
@@ -494,7 +494,7 @@ void UI::drawStartScreen(CanvasManager& canvasManager)
 	ImGui::End();
 }
 
-void UI::drawMainScreen(CanvasManager& canvasManager, FrameRenderer frameRenderer) 
+void UI::drawMainScreen(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 {
 	// -- user input to hide UI panels --
 	// only allow this if the canvas creation popup is not active 
@@ -533,8 +533,8 @@ void UI::drawMainScreen(CanvasManager& canvasManager, FrameRenderer frameRendere
 
 	// canvas tab panel shown only if more than 1 canvas is open
 	if (canvasManager.getNumCanvases() > 1) { drawCanvasTabs(canvasManager); }
-	
-	if(FrameRenderer::inputBlocked) {
+
+	if (FrameRenderer::inputBlocked) {
 		drawBlockPanel(canvasManager);
 	}
 
@@ -643,7 +643,7 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 	if (ImGui::Button("Save File"))
 	{
 		if (canvasManager.hasActive())
-		{	
+		{
 			IGFD::FileDialogConfig config;
 			config.path = ".";
 
@@ -722,9 +722,9 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 			std::string extension =
 				ImGuiFileDialog::Instance()->GetCurrentFilter();
 
-	
+
 			FrameRenderer::saveAnimation(filePath, canvasManager.getActive());
-			
+
 		}
 
 		ImGuiFileDialog::Instance()->Close();
@@ -776,8 +776,8 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 			saveToRecentActivityCb(filePath);
 
 			// if the current UI state is the start menu then change it to the main screen
-			if (curState == UIState::start_menu) {curState = UIState::main_screen;}
-			
+			if (curState == UIState::start_menu) { curState = UIState::main_screen; }
+
 		}
 
 		ImGuiFileDialog::Instance()->Close();
@@ -912,8 +912,8 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 
 	// color wheel 
 	// storing our two colors 
-	static ImVec4 primary_color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-	static ImVec4 secondary_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+	static ImVec4 primary_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+	static ImVec4 secondary_color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 	// active color 
 	static bool editing_primary = true;
 
@@ -943,6 +943,13 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 		ImGuiColorEditFlags_AlphaPreview |
 		ImGuiColorEditFlags_AlphaBar |
 		ImGuiWindowFlags_AlwaysAutoResize);
+
+	ImVec4* c = active_color;
+
+	color[0] = c->x; // R
+	color[1] = c->y; // G
+	color[2] = c->z; // B
+	color[3] = c->w; // A
 
 	// brush size slider 
 	ImGui::SliderInt("Size", &brushSize, 1, 500, "%d", ImGuiSliderFlags_Logarithmic);
@@ -1069,34 +1076,34 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 			FrameRenderer::createFrame(canvasManager.getActive());
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("-")) {	
+		if (ImGui::Button("-")) {
 			FrameRenderer::removeFrame(canvasManager.getActive());
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("Play animation")){
+		if (ImGui::Button("Play animation")) {
 			FrameRenderer::play(canvasManager.getActive());
 		}
 		ImGui::SameLine();
 		ImGui::Spacing();
-		if (ImGui::Button("Toggle Onion Skins")){
+		if (ImGui::Button("Toggle Onion Skins")) {
 			FrameRenderer::removeOnionSkin(canvasManager.getActive());
 			FrameRenderer::toggleOnionSkin();
 			FrameRenderer::updateOnionSkin(canvasManager.getActive());
 		}
-/*
-		ImGui::SameLine();
-		if (ImGui::Button("<-")){
-			FrameRenderer::setNumBefore(FrameRenderer::getNumBefore() + 1);
-			FrameRenderer::updateOnionSkin(canvasManager.getActive());
+		/*
+				ImGui::SameLine();
+				if (ImGui::Button("<-")){
+					FrameRenderer::setNumBefore(FrameRenderer::getNumBefore() + 1);
+					FrameRenderer::updateOnionSkin(canvasManager.getActive());
 
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("->")){
-			FrameRenderer::setNumAfter(FrameRenderer::getNumAfter() + 1);
-			FrameRenderer::updateOnionSkin(canvasManager.getActive());
-		}
-*/
-		
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("->")){
+					FrameRenderer::setNumAfter(FrameRenderer::getNumAfter() + 1);
+					FrameRenderer::updateOnionSkin(canvasManager.getActive());
+				}
+		*/
+
 		// --- Timeline ---
 		ImGuiStyle& style = ImGui::GetStyle();
 
@@ -1112,25 +1119,25 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 		style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0, 0, 0, 0);
 		style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0, 0, 0, 0);
 		style.FrameBorderSize = 0.0f;
-		style.Colors[ImGuiCol_Border] = ImVec4(0,0,0,0);
+		style.Colors[ImGuiCol_Border] = ImVec4(0, 0, 0, 0);
 
-		style.FramePadding = ImVec2(6, 12); 
+		style.FramePadding = ImVec2(6, 12);
 		style.FrameRounding = 2.0f;
 		ImGui::SetNextItemWidth(displayWidth - (LeftSize + RightSize * 1.1));
 		// Save old color
 		ImVec4 old_color = style.Colors[ImGuiCol_SliderGrab];
 
 		// Set grab to red
-		style.Colors[ImGuiCol_SliderGrab]      = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+		style.Colors[ImGuiCol_SliderGrab] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
 		style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
 		style.GrabMinSize = 4.0f;
 		// Draw the slider
 		bool isPressed = ImGui::SliderFloat("##wide_slider", &curFrame, 1.0f, static_cast<float>(FrameRenderer::getNumFrames()), "");
 		curFrame = (int)roundf(curFrame);
-		if(curFrame != FrameRenderer::getCurFrame() && isPressed){
+		if (curFrame != FrameRenderer::getCurFrame() && isPressed) {
 			FrameRenderer::selectFrame(canvasManager.getActive(), curFrame - FrameRenderer::getCurFrame());
 		}
-		else{
+		else {
 			curFrame = FrameRenderer::getCurFrame();
 		}
 
@@ -1143,10 +1150,10 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 		float width = max.x - min.x;
 
 		draw->AddLine(
-			ImVec2(min.x, (min.y + max.y) / 2), 
-			ImVec2(max.x ,(min.y + max.y) / 2),
+			ImVec2(min.x, (min.y + max.y) / 2),
+			ImVec2(max.x, (min.y + max.y) / 2),
 			IM_COL32(255, 255, 255, 100),
-			1.0f   
+			1.0f
 		);
 		// number of segments = steps - 1
 		for (int i = 0; i < FrameRenderer::getNumFrames(); i++)
@@ -1159,15 +1166,15 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 				ImVec2(x, min.y),
 				ImVec2(x, max.y),
 				IM_COL32(255, 255, 255, 100),
-				1.0f                          
+				1.0f
 			);
 		}
 		// Restore style
 		style.Colors[ImGuiCol_SliderGrab] = old_color;
 		style.Colors[ImGuiCol_SliderGrabActive] = old_color;
-		style.Colors[ImGuiCol_FrameBg]        = old_bg;
+		style.Colors[ImGuiCol_FrameBg] = old_bg;
 		style.Colors[ImGuiCol_FrameBgHovered] = old_bg_hovered;
-		style.Colors[ImGuiCol_FrameBgActive]  = old_bg_active;
+		style.Colors[ImGuiCol_FrameBgActive] = old_bg_active;
 		style.FrameBorderSize = old_border;
 		style.Colors[ImGuiCol_Border] = old_border_color;
 
@@ -1177,22 +1184,22 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 		ImGui::SameLine();
 	}
 
-		// end step
-		if (ImGui::GetWindowHeight() > displayHeight - 2 * TopSize)
-			BotSize = displayHeight - 2 * TopSize;
-		else
-			BotSize = ImGui::GetWindowHeight();
-		ImGui::End();
+	// end step
+	if (ImGui::GetWindowHeight() > displayHeight - 2 * TopSize)
+		BotSize = displayHeight - 2 * TopSize;
+	else
+		BotSize = ImGui::GetWindowHeight();
+	ImGui::End();
 }
 
 
 void UI::drawBlockPanel(CanvasManager& canvasManager) {
 	ImGui::SetNextWindowPos(ImVec2(LeftSize, TopSize));
-    ImGui::SetNextWindowSize(ImVec2(displayWidth - LeftSize - RightSize, displayHeight - TopSize - BotSize));
-    ImGui::Begin("Blocker", nullptr,
-		ImGuiWindowFlags_NoDecoration | 
+	ImGui::SetNextWindowSize(ImVec2(displayWidth - LeftSize - RightSize, displayHeight - TopSize - BotSize));
+	ImGui::Begin("Blocker", nullptr,
+		ImGuiWindowFlags_NoDecoration |
 		ImGuiWindowFlags_NoBackground);
-    ImGui::End();
+	ImGui::End();
 }
 
 void UI::drawCanvasTabs(CanvasManager& canvasManager)
@@ -1301,7 +1308,7 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 					temp_n = "Illustration";
 
 					// if the current UI state is the start menu then change it to the main screen
-					if (curState == UIState::start_menu) {curState = UIState::main_screen;}
+					if (curState == UIState::start_menu) { curState = UIState::main_screen; }
 
 					ImGui::CloseCurrentPopup();
 				}
@@ -1343,7 +1350,7 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 					temp_n = "Animation";
 
 					// if the current UI state is the start menu then change it to the main screen
-					if (curState == UIState::start_menu) {curState = UIState::main_screen;}
+					if (curState == UIState::start_menu) { curState = UIState::main_screen; }
 
 					ImGui::CloseCurrentPopup();
 				}
@@ -1366,31 +1373,31 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 }
 
 void UI::drawSettingsPopup(CanvasManager& canvasManager) {
-    static int settingsSection = 0;
+	static int settingsSection = 0;
 
-    if (showSettingsPopup) {
-        ImGui::OpenPopup("Settings");
-        ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_Always);
-    }
+	if (showSettingsPopup) {
+		ImGui::OpenPopup("Settings");
+		ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_Always);
+	}
 
-    if (ImGui::BeginPopupModal("Settings", nullptr, ImGuiWindowFlags_NoResize)) {
-        // Create a child region that will take all remaining vertical space
-        float windowHeight = ImGui::GetContentRegionAvail().y - 50; // leave ~50px for Close button
-        ImGui::BeginChild("SettingsContent", ImVec2(0, windowHeight), false);
+	if (ImGui::BeginPopupModal("Settings", nullptr, ImGuiWindowFlags_NoResize)) {
+		// Create a child region that will take all remaining vertical space
+		float windowHeight = ImGui::GetContentRegionAvail().y - 50; // leave ~50px for Close button
+		ImGui::BeginChild("SettingsContent", ImVec2(0, windowHeight), false);
 
-        ImGui::Columns(2, nullptr, true);
-        ImGui::SetColumnWidth(0, 150);
+		ImGui::Columns(2, nullptr, true);
+		ImGui::SetColumnWidth(0, 150);
 
-        // Left column: categories
-        if (ImGui::Button("Folder Settings##settings_folders")) settingsSection = 0;
-        if (ImGui::Button("Shortcut Settings##settings_shortcuts")) settingsSection = 1;
+		// Left column: categories
+		if (ImGui::Button("Folder Settings##settings_folders")) settingsSection = 0;
+		if (ImGui::Button("Shortcut Settings##settings_shortcuts")) settingsSection = 1;
 		if (ImGui::Button("Canvas Settings##settings_canvases")) settingsSection = 2;
 
-        ImGui::NextColumn();
+		ImGui::NextColumn();
 
-        // Right column: content
-        if (settingsSection == 0) {
-            ImGui::Text("Folder adjacent settings: Saving / Loading / Imports");
+		// Right column: content
+		if (settingsSection == 0) {
+			ImGui::Text("Folder adjacent settings: Saving / Loading / Imports");
 			// default folder path stuff	
 			ImGui::SeparatorText("Default Folder Path");
 			ImGui::TextWrapped("The default path used for loading and saving files.");
@@ -1409,7 +1416,7 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 				}
 
 				ImGuiFileDialog::Instance()->OpenDialog("ChooseDirDlgKey", "Choose a Directory", nullptr, config);
-	
+
 			}
 
 			if (ImGuiFileDialog::Instance()->Display("ChooseDirDlgKey")) {
@@ -1424,7 +1431,8 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 				ImGuiFileDialog::Instance()->Close();
 			}
 
-        } else if (settingsSection == 1) {
+		}
+		else if (settingsSection == 1) {
 			// text label that displays rebind status
 			ImGui::Text("Click a button, then press a key to rebind.");
 			if (isWaitingForRebindCb && isWaitingForRebindCb()) {
@@ -1434,32 +1442,33 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 				ImGui::SeparatorText("");
 			}
 
-            auto hotkeyLabel = [this](InputAction action) { 
-                return getHotkeyLabelCb ? getHotkeyLabelCb(action) : std::string{};
-            };
-            auto triggerRebind = [this](InputAction action) { 
-                if (startRebindCb) startRebindCb(action); 
-            };
-            auto ShortcutRow = [&](const char* name, InputAction action) {
-                ImGui::Text("%s", name);
-                ImGui::SameLine(180);
-                if (ImGui::Button(hotkeyLabel(action).c_str()))
-                    triggerRebind(action);
-            };
+			auto hotkeyLabel = [this](InputAction action) {
+				return getHotkeyLabelCb ? getHotkeyLabelCb(action) : std::string{};
+				};
+			auto triggerRebind = [this](InputAction action) {
+				if (startRebindCb) startRebindCb(action);
+				};
+			auto ShortcutRow = [&](const char* name, InputAction action) {
+				ImGui::Text("%s", name);
+				ImGui::SameLine(180);
+				if (ImGui::Button(hotkeyLabel(action).c_str()))
+					triggerRebind(action);
+				};
 
-            ShortcutRow("Rotate", InputAction::setRotate);
-            ShortcutRow("Pan", InputAction::setPan);
-            ShortcutRow("Draw", InputAction::setDraw);
-            ShortcutRow("Fill", InputAction::setFill);
-            ShortcutRow("Erase", InputAction::setErase);
-            ShortcutRow("Undo", InputAction::undo);
-            ShortcutRow("Redo", InputAction::redo);
-            ShortcutRow("Zoom In", InputAction::setClickZoomIn);
-            ShortcutRow("Zoom Out", InputAction::setClickZoomOut);
-            ShortcutRow("Center Canvas", InputAction::resetView);
-            ShortcutRow("Color Picker", InputAction::setColor);
+			ShortcutRow("Rotate", InputAction::setRotate);
+			ShortcutRow("Pan", InputAction::setPan);
+			ShortcutRow("Draw", InputAction::setDraw);
+			ShortcutRow("Fill", InputAction::setFill);
+			ShortcutRow("Erase", InputAction::setErase);
+			ShortcutRow("Undo", InputAction::undo);
+			ShortcutRow("Redo", InputAction::redo);
+			ShortcutRow("Zoom In", InputAction::setClickZoomIn);
+			ShortcutRow("Zoom Out", InputAction::setClickZoomOut);
+			ShortcutRow("Center Canvas", InputAction::resetView);
+			ShortcutRow("Color Picker", InputAction::setColor);
 
-        } else if (settingsSection == 2) {
+		}
+		else if (settingsSection == 2) {
 			// only show canvas settings if there is an active canvas
 			if (canvasManager.hasActive()) {
 				ImGui::Text("Canvas related settings: Canvas behavior, animation settings, etc.");
@@ -1477,26 +1486,27 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 						changePaperColor = false;
 					}
 				}
-			} else {
+			}
+			else {
 				ImGui::Text("Canvas settings will appear here when a canvas is open.");
 			}
 		}
 
-        ImGui::Columns(1);
-        ImGui::EndChild();
+		ImGui::Columns(1);
+		ImGui::EndChild();
 
-        // Separator and Close button at the bottom
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
+		// Separator and Close button at the bottom
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
 
-        if (ImGui::Button("Close", ImVec2(-1, 0))) { // -1 width = full width
-            showSettingsPopup = false;
-            ImGui::CloseCurrentPopup();
-        }
+		if (ImGui::Button("Close", ImVec2(-1, 0))) { // -1 width = full width
+			showSettingsPopup = false;
+			ImGui::CloseCurrentPopup();
+		}
 
-        ImGui::EndPopup();
-    }
+		ImGui::EndPopup();
+	}
 }
 
 
@@ -1557,7 +1567,7 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 				// the  path the file explorer starts in. "." is the current active directory
 				if (getDefaultFolderPathCb) config.path = getDefaultFolderPathCb();
 				else config.path = ".";
-				
+
 				ImGuiFileDialog::Instance()->OpenDialog(
 					"LoadFileDlg",
 					"Choose File",
@@ -1568,7 +1578,7 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 		}
 		if (ImGui::BeginMenu("Window")) {
 			ImGui::PushItemFlag(ImGuiItemFlags_AutoClosePopups, false);
-			
+
 			// toggle between default and modular UI modes
 			if (ImGui::MenuItem("Default UI", nullptr, uiMode == UIMode::Default)) {
 				uiMode = UIMode::Default;
@@ -1576,7 +1586,7 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 			if (ImGui::MenuItem("Modular UI", nullptr, uiMode == UIMode::Modular)) {
 				uiMode = UIMode::Modular;
 			}
-			
+
 			// set visibility of individual elements
 			if (ImGui::MenuItem("Color Wheel", nullptr, elementVisibility[UIElement::colorWheel])) {
 				elementVisibility[UIElement::colorWheel] = !elementVisibility[UIElement::colorWheel];
@@ -1611,7 +1621,7 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 
 		ImGui::EndMainMenuBar();
 	}
-	
+
 	// file dialogs need to be placed outside of the main menu bar 
 	if (ImGuiFileDialog::Instance()->Display("SaveImageDlg"))
 	{
@@ -1666,32 +1676,32 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 			}
 
 			// if the current UI state is the start menu then change it to the main screen
-			if (curState == UIState::start_menu) {curState = UIState::main_screen;}
+			if (curState == UIState::start_menu) { curState = UIState::main_screen; }
 
 		}
 
 		ImGuiFileDialog::Instance()->Close();
 	}
 	if (ImGuiFileDialog::Instance()->Display("SaveImageAnm"))
-			{
-				if (ImGuiFileDialog::Instance()->IsOk())
-				{
-					std::string filePath =
-						ImGuiFileDialog::Instance()->GetFilePathName();
+	{
+		if (ImGuiFileDialog::Instance()->IsOk())
+		{
+			std::string filePath =
+				ImGuiFileDialog::Instance()->GetFilePathName();
 
-					std::string extension =
-						ImGuiFileDialog::Instance()->GetCurrentFilter();
+			std::string extension =
+				ImGuiFileDialog::Instance()->GetCurrentFilter();
 
-			
-					FrameRenderer::saveAnimation(filePath, canvasManager.getActive());
-					
-				}
 
-				ImGuiFileDialog::Instance()->Close();
-			}
+			FrameRenderer::saveAnimation(filePath, canvasManager.getActive());
+
+		}
+
+		ImGuiFileDialog::Instance()->Close();
+	}
 
 	// attempting to place a second main menu bar 
-	
+
 }
 
 // drawing individual windows 
@@ -1699,12 +1709,12 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 void UI::drawColorWindow(CanvasManager& canvasManager) {
 	// name our window 
 	ImGui::Begin("Color");
-	ImGui::Text("Color"); 
+	ImGui::Text("Color");
 	// storing our two colors 
-	static ImVec4 primary_color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   
-	static ImVec4 secondary_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f); 
+	static ImVec4 primary_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+	static ImVec4 secondary_color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 	// active color 
-	static bool editing_primary = true; 
+	static bool editing_primary = true;
 
 	// Determine which pointer to pass to the picker
 	ImVec4* active_color = editing_primary ? &primary_color : &secondary_color;
@@ -1732,6 +1742,14 @@ void UI::drawColorWindow(CanvasManager& canvasManager) {
 		ImGuiColorEditFlags_AlphaPreview |
 		ImGuiColorEditFlags_AlphaBar |
 		ImGuiWindowFlags_AlwaysAutoResize);
+
+	ImVec4* c = active_color;
+
+
+	color[0] = c->x; // R
+	color[1] = c->y; // G
+	color[2] = c->z; // B
+	color[3] = c->w; // A
 	ImGui::End();
 }
 
@@ -1778,12 +1796,12 @@ void UI::drawBrushSizeWindow(CanvasManager& canvasManager) {
 	if (ImGui::Button("450")) brushSize = 450;
 	ImGui::SameLine();
 	if (ImGui::Button("500")) brushSize = 500;
-	
+
 	ImGui::End();
 }
 
 void UI::drawLayersWindow(CanvasManager& canvasManager) {
-	
+
 
 	// if there is a canvas then display the layer options
 	if (canvasManager.hasActive())
@@ -1986,34 +2004,34 @@ void UI::drawTimelineWindow(CanvasManager& canvasManager) {
 			FrameRenderer::createFrame(canvasManager.getActive());
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("-")) {	
+		if (ImGui::Button("-")) {
 			FrameRenderer::removeFrame(canvasManager.getActive());
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("Play animation")){
+		if (ImGui::Button("Play animation")) {
 			FrameRenderer::play(canvasManager.getActive());
 		}
 		ImGui::SameLine();
 		ImGui::Spacing();
-		if (ImGui::Button("Toggle Onion Skins")){
+		if (ImGui::Button("Toggle Onion Skins")) {
 			FrameRenderer::removeOnionSkin(canvasManager.getActive());
 			FrameRenderer::toggleOnionSkin();
 			FrameRenderer::updateOnionSkin(canvasManager.getActive());
 		}
-/*
-		ImGui::SameLine();
-		if (ImGui::Button("<-")){
-			FrameRenderer::setNumBefore(FrameRenderer::getNumBefore() + 1);
-			FrameRenderer::updateOnionSkin(canvasManager.getActive());
+		/*
+				ImGui::SameLine();
+				if (ImGui::Button("<-")){
+					FrameRenderer::setNumBefore(FrameRenderer::getNumBefore() + 1);
+					FrameRenderer::updateOnionSkin(canvasManager.getActive());
 
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("->")){
-			FrameRenderer::setNumAfter(FrameRenderer::getNumAfter() + 1);
-			FrameRenderer::updateOnionSkin(canvasManager.getActive());
-		}
-*/
-		
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("->")){
+					FrameRenderer::setNumAfter(FrameRenderer::getNumAfter() + 1);
+					FrameRenderer::updateOnionSkin(canvasManager.getActive());
+				}
+		*/
+
 		// --- Timeline ---
 		ImGuiStyle& style = ImGui::GetStyle();
 
@@ -2029,25 +2047,25 @@ void UI::drawTimelineWindow(CanvasManager& canvasManager) {
 		style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0, 0, 0, 0);
 		style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0, 0, 0, 0);
 		style.FrameBorderSize = 0.0f;
-		style.Colors[ImGuiCol_Border] = ImVec4(0,0,0,0);
+		style.Colors[ImGuiCol_Border] = ImVec4(0, 0, 0, 0);
 
-		style.FramePadding = ImVec2(6, 12); 
+		style.FramePadding = ImVec2(6, 12);
 		style.FrameRounding = 2.0f;
 		ImGui::SetNextItemWidth(displayWidth - (LeftSize + RightSize * 1.1));
 		// Save old color
 		ImVec4 old_color = style.Colors[ImGuiCol_SliderGrab];
 
 		// Set grab to red
-		style.Colors[ImGuiCol_SliderGrab]      = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+		style.Colors[ImGuiCol_SliderGrab] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
 		style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
 		style.GrabMinSize = 4.0f;
 		// Draw the slider
 		bool isPressed = ImGui::SliderFloat("##wide_slider", &curFrame, 1.0f, static_cast<float>(FrameRenderer::getNumFrames()), "");
 		curFrame = (int)roundf(curFrame);
-		if(curFrame != FrameRenderer::getCurFrame() && isPressed){
+		if (curFrame != FrameRenderer::getCurFrame() && isPressed) {
 			FrameRenderer::selectFrame(canvasManager.getActive(), curFrame - FrameRenderer::getCurFrame());
 		}
-		else{
+		else {
 			curFrame = FrameRenderer::getCurFrame();
 		}
 
@@ -2060,10 +2078,10 @@ void UI::drawTimelineWindow(CanvasManager& canvasManager) {
 		float width = max.x - min.x;
 
 		draw->AddLine(
-			ImVec2(min.x, (min.y + max.y) / 2), 
-			ImVec2(max.x ,(min.y + max.y) / 2),
+			ImVec2(min.x, (min.y + max.y) / 2),
+			ImVec2(max.x, (min.y + max.y) / 2),
 			IM_COL32(255, 255, 255, 100),
-			1.0f   
+			1.0f
 		);
 		// number of segments = steps - 1
 		for (int i = 0; i < FrameRenderer::getNumFrames(); i++)
@@ -2076,15 +2094,15 @@ void UI::drawTimelineWindow(CanvasManager& canvasManager) {
 				ImVec2(x, min.y),
 				ImVec2(x, max.y),
 				IM_COL32(255, 255, 255, 100),
-				1.0f                          
+				1.0f
 			);
 		}
 		// Restore style
 		style.Colors[ImGuiCol_SliderGrab] = old_color;
 		style.Colors[ImGuiCol_SliderGrabActive] = old_color;
-		style.Colors[ImGuiCol_FrameBg]        = old_bg;
+		style.Colors[ImGuiCol_FrameBg] = old_bg;
 		style.Colors[ImGuiCol_FrameBgHovered] = old_bg_hovered;
-		style.Colors[ImGuiCol_FrameBgActive]  = old_bg_active;
+		style.Colors[ImGuiCol_FrameBgActive] = old_bg_active;
 		style.FrameBorderSize = old_border;
 		style.Colors[ImGuiCol_Border] = old_border_color;
 
