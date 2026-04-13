@@ -81,5 +81,6 @@ private:
 	void drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRenderer);
 	void drawCanvasTabs(CanvasManager& canvasManager);
 
-
+	bool showCloseConfirm = false;
+	int pendingCloseIndex = -1;
 };

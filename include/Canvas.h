@@ -77,6 +77,8 @@ class Canvas {
         bool canRedo() const;
         void loadImage(unsigned char* data, int layerIndex);
 
+        bool isDirty = false;
+
     private:
         // canvas settings
         std::string canvasName;

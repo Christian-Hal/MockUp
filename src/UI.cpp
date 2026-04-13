@@ -577,14 +577,11 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 				ImGuiFileDialog::Instance()->GetCurrentFilter();
 
 			if (extension == ".ora")
-			{
 				canvasManager.saveORA(filePath);
-			}
-
 			else
-			{
 				canvasManager.saveToFile(filePath);
-			}
+			
+			canvasManager.getActive().isDirty = false;
 		}
 
 		ImGuiFileDialog::Instance()->Close();
@@ -899,34 +896,121 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 
 void UI::drawCanvasTabs(CanvasManager& canvasManager)
 {
-	// initialize the panel
 	ImGui::SetNextWindowPos(ImVec2(LeftSize, TopSize), ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(w - LeftSize - RightSize, TopSize), ImGuiCond_Always);
-	ImGui::Begin("Canvas Tabs Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+	ImGui::Begin("Canvas Tabs Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar);
 
-	// add widgets
+	if (ImGui::BeginTabBar("CanvasTabBar", ImGuiTabBarFlags_None))
+	{
+		const std::vector<Canvas>& canvases = canvasManager.getOpenCanvases();
 
-	// --- Displaying the loaded canvases ---
-	// grabs the list of loaded canvases
+		for (int i = 0; i < canvasManager.getNumCanvases(); i++)
+		{
+			bool open = true;
+
+			ImGuiTabItemFlags flags = ImGuiTabItemFlags_None;
+			if (i == canvasManager.getActiveCanvasIndex() && canvasManager.canvasChange)
+				flags |= ImGuiTabItemFlags_SetSelected;
+
+			// access directly through canvasManager instead of the cached const ref
+			const Canvas& c = canvasManager.getOpenCanvases()[i];
+			std::string label = c.getName()
+				+ (c.isDirty ? " *" : "")
+				+ "##canvas" + std::to_string(i);
+
+			if (ImGui::BeginTabItem(label.c_str(), &open, flags))
+			{
+				if (canvasManager.getActiveCanvasIndex() != i && !ImGui::IsItemActivated() == false)
+					canvasManager.setActiveCanvas(i);
+
+				ImGui::EndTabItem();
+			}
+
+			if (!open)
+			{
+				pendingCloseIndex = i;
+				showCloseConfirm = true;
+			}
+		}
+
+		// acknowledge the change so we stop forcing selection next frame
+		canvasManager.canvasChange = false;
+
+		ImGui::EndTabBar();
+	}
+
+	// --- close confirm modal (same as before) ---
+	if (showCloseConfirm)
+		ImGui::OpenPopup("Close Canvas?");
+
 	const std::vector<Canvas>& canvases = canvasManager.getOpenCanvases();
 
-	// adds a button for each canvas that sets it to the active one
-	for (int i = 0; i < canvasManager.getNumCanvases(); i++)
+	if (ImGui::BeginPopupModal("Close Canvas?", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
-		std::string buttonName = canvases[i].getName();
+		if (pendingCloseIndex >= 0 && pendingCloseIndex < canvasManager.getNumCanvases())
+			ImGui::Text("Close \"%s\"?", canvases[pendingCloseIndex].getName().c_str());
 
-		if (ImGui::Button(buttonName.c_str())) {
-			canvasManager.setActiveCanvas(i);
+		ImGui::Spacing();
+
+		if (ImGui::Button("Save and Close"))
+		{
+			canvasManager.setActiveCanvas(pendingCloseIndex);
+			IGFD::FileDialogConfig config;
+			config.path = ".";
+			config.fileName = canvasManager.getActive().getName();
+			config.flags = ImGuiFileDialogFlags_ConfirmOverwrite;
+			ImGuiFileDialog::Instance()->OpenDialog("SaveBeforeCloseDlg", "Save Image", ".png,.jpg,.ora", config);
+			showCloseConfirm = false;
+			ImGui::CloseCurrentPopup();
 		}
 
 		ImGui::SameLine();
+		if (ImGui::Button("Close Without Saving"))
+		{
+			canvasManager.closeCanvas(pendingCloseIndex);
+			pendingCloseIndex = -1;
+			showCloseConfirm = false;
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			pendingCloseIndex = -1;
+			showCloseConfirm = false;
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
 	}
 
-	// end step
+	if (ImGuiFileDialog::Instance()->Display("SaveBeforeCloseDlg"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk())
+		{
+			canvasManager.setActiveCanvas(pendingCloseIndex);
+			int* meta = FrameRenderer::readMetaData();
+			canvasManager.getActive().setPixels(FrameRenderer::frames[FrameRenderer::curFrame - 1]);
+
+			std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
+			std::string extension = ImGuiFileDialog::Instance()->GetCurrentFilter();
+
+			if (extension == ".ora")
+				canvasManager.saveORA(filePath);
+			else
+				canvasManager.saveToFile(filePath);
+
+			canvasManager.getActive().isDirty = false; 
+			canvasManager.closeCanvas(pendingCloseIndex);
+		}
+
+		pendingCloseIndex = -1;
+		showCloseConfirm = false;
+		ImGuiFileDialog::Instance()->Close();
+	}
+
 	ImGui::End();
 }
-
-
 
 // canvas size popup 
 void UI::drawPopup(CanvasManager& canvasManager)
