@@ -90,6 +90,9 @@ class Canvas {
         bool canRedo() const;
         void loadImage(unsigned char* data, int layerIndex);
 
+        bool isAnimation() const { return animationTemplate; }
+        void loadAnimTemplate();
+
     private:
         // canvas settings
         std::string canvasName;

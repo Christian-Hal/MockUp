@@ -20,19 +20,26 @@ Canvas::Canvas(int w, int h, std::string name, bool isAnimation) : width(w), hei
     
     // if its an animation then load in the animation template image
     if (animationTemplate) {
-        stbi_set_flip_vertically_on_load(true);
-        const std::string templatePath = "assets/Animation_Template_PNG.png";
-        
-        int imgWidth = 0, imgHeight = 0;
-        unsigned char* data = stbi_load(templatePath.c_str(), &imgWidth, &imgHeight, nullptr, 4);
-        if (data) {
-            loadImage(data, 0);
-            stbi_image_free(data);
+        loadAnimTemplate();
 
-        } else {
-            std::cout << "ERROR: Failed to load animation template from: " << templatePath << std::endl;
-            std::cout << "stbi error: " << stbi_failure_reason() << std::endl;
-        }
+        // add another empty layer for the animation template
+        createLayer();
+    }
+}
+
+void Canvas::loadAnimTemplate() {
+    stbi_set_flip_vertically_on_load(true);
+    const std::string templatePath = "assets/Animation_Template_PNG.png";
+    
+    int imgWidth = 0, imgHeight = 0;
+    unsigned char* data = stbi_load(templatePath.c_str(), &imgWidth, &imgHeight, nullptr, 4);
+    if (data) {
+        loadImage(data, 1);
+        stbi_image_free(data);
+
+    } else {
+        std::cout << "ERROR: Failed to load animation template from: " << templatePath << std::endl;
+        std::cout << "stbi error: " << stbi_failure_reason() << std::endl;
     }
 }
 
@@ -282,6 +289,11 @@ const Color Canvas::colorTimes(const Color& c2, const Color& c1){
 */
 void Canvas::setPixel(int x, int y, const Color& color)
 {
+    // do not let the user draw onto the animation template
+    if (isAnimation() && curLayer == 1) {
+        return;
+    }
+
     // making sure (x, y) is within bounds
     if (x < 0 || x >= width || y < 0 || y >= height) {
         return;
@@ -368,6 +380,11 @@ void Canvas::blendPixel(int x, int y, const Color& src, float brushAlpha) {
 
     // idea: 	result = color_s * alpha_s + color_d * (1 - alpha_s)
 
+    // do not let the user draw onto the animation template
+    if (isAnimation() && curLayer == 1) {
+        return;
+    }
+
     // making sure (x, y) is within bounds 
     if (x < 0 || x >= width || y < 0 || y >= height) {
         return;
@@ -448,6 +465,11 @@ void Canvas::createLayer(){
 
 // removes a layer from layerData and removes the pixel values on that layer
 void Canvas::removeLayer(){
+    // do not let the user remove the animation template layer
+    if (isAnimation() && curLayer == 1) {
+        return;
+    }
+
     // do not remove layers if there is only one layer
     if(numLayers > 2){
         // when removing a layer we need to iterate through through every pixel 
