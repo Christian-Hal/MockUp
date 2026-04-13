@@ -17,54 +17,51 @@
 Canvas& CanvasManager::createCanvas(int width, int height, std::string name)
 {
     Canvas oldCanvasCopy;
-    if(this->hasActive()){
-        oldCanvasCopy = *activeCanvas;
+    if (hasActive()) {
+        oldCanvasCopy = getActive();
     }
+
     std::string fixed_name = checkName(name);
     canvases.emplace_back(Canvas(width, height, fixed_name));
-    FrameRenderer::newCanvas(&oldCanvasCopy, &canvases.back());
-    activeCanvas = &canvases.back();
+
+    activeCanvasIndex = canvases.size() - 1;
+
+    FrameRenderer::newCanvas(&oldCanvasCopy, &canvases[activeCanvasIndex]);
 
     canvasChange = true;
 
-    return *activeCanvas;
+    return canvases[activeCanvasIndex];
 }
 
 void CanvasManager::closeCanvas(int index)
 {
-    if (index < 0 || static_cast<size_t>(index) >= canvases.size())
+    if (index < 0 || index >= canvases.size())
         return;
 
-    int activeIndex = getActiveCanvasIndex();
+    // erasing the selected canvas from canvases
+    canvases.erase(canvases.begin() + index);
 
-    auto it = canvases.erase(canvases.begin() + index);
-
+    // if the canvas erased is the only one open
     if (canvases.empty())
     {
-        activeCanvas = nullptr;
+        activeCanvasIndex = -1;
         canvasChange = true;
         return;
     }
 
-    int newIndex;
-
-    if (activeIndex == index)
+    // if there are multiple canvases open
+    if (activeCanvasIndex == index)
     {
-        newIndex = (it == canvases.end())
-            ? canvases.size() - 1
-            : it - canvases.begin();
-    }
-    else if (index < activeIndex)
-    {
-        newIndex = activeIndex - 1;
-    }
-    else
-    {
-        newIndex = activeIndex;
+        // closed active → pick neighbor
+        activeCanvasIndex = std::min(index, (int)canvases.size() - 1);
     }
 
-    
-    setActiveCanvas(newIndex);
+    // if canvas being deleted is not currently active
+    else if (index < activeCanvasIndex)
+    {
+        // shift left
+        activeCanvasIndex--;
+    }
 
     canvasChange = true;
 }
@@ -73,50 +70,39 @@ void CanvasManager::closeCanvas(int index)
 
 int CanvasManager::getActiveCanvasIndex() const
 {
-    if (!activeCanvas)
-        return -1;
-
-    for (size_t i = 0; i < canvases.size(); i++)
-    {
-        if (&canvases[i] == activeCanvas)
-        {
-            return static_cast<int>(i);
-        }
-    }
-
-    return -1;
+    return activeCanvasIndex;
 }
 
 
 
 void CanvasManager::undo()
 {
-    if (!activeCanvas) {
+    if (!hasActive()) {
         return;
     }
-    activeCanvas->undo();
+    getActive().undo();
 }
 
 void CanvasManager::redo()
 {
-    if (!activeCanvas) {
+    if (!hasActive()) {
         return;
     }
-    activeCanvas->redo();
+    getActive().redo();
 }
 
 
 
 Canvas& CanvasManager::getActive()
 {
-    return *activeCanvas;
+    return canvases[activeCanvasIndex];
 }
 
 
 
 bool CanvasManager::hasActive()
 {
-    return activeCanvas != nullptr;
+    return activeCanvasIndex >= 0 && activeCanvasIndex < canvases.size();
 }
 
 
@@ -152,17 +138,19 @@ const std::vector<Canvas>& CanvasManager::getOpenCanvases() const
 
 void CanvasManager::setActiveCanvas(int index)
 {
-    if (index < 0 || static_cast<size_t>(index) >= canvases.size()) {
+    if (index < 0 || index >= canvases.size())
         return;
-    }
-    
+
     Canvas oldCanvasCopy;
-    if(this->hasActive()){
-        oldCanvasCopy = *activeCanvas;
+    if (hasActive()) {
+        oldCanvasCopy = getActive();
     }
-    activeCanvas = &canvases[index];
+
+    activeCanvasIndex = index;
+
     canvasChange = true;
-    FrameRenderer::updateCanvas(&oldCanvasCopy, activeCanvas, index);
+
+    FrameRenderer::updateCanvas(&oldCanvasCopy, &getActive(), index);
 }
 
 
@@ -184,11 +172,11 @@ void savingFlip(int height, int width, std::vector<Color> &pixels)
 // works for png and jpg
 void CanvasManager::saveToFile(const std::string& path)
 {
-    int width = activeCanvas->getWidth();
-    int height = activeCanvas->getHeight();
+    int width = getActive().getWidth();
+    int height = getActive().getHeight();
 
     std::vector<Color> pixels(width * height);
-    std::memcpy(pixels.data(), activeCanvas->getData(), width * height * sizeof(Color));
+    std::memcpy(pixels.data(), getActive().getData(), width * height * sizeof(Color));
 
     // flip image vertically
     savingFlip(height, width, pixels);
@@ -229,10 +217,10 @@ void CanvasManager::loadFromFile(const std::string& filePath)
 // saving for .ora files 
 void CanvasManager::saveORA(const std::string& path)
 {
-    const int width = activeCanvas->getWidth();
-    const int height = activeCanvas->getHeight();
-    const int numLayers = activeCanvas->getNumLayers();
-    const auto& layers = activeCanvas->getLayerData();
+    const int width = getActive().getWidth();
+    const int height = getActive().getHeight();
+    const int numLayers = getActive().getNumLayers();
+    const auto& layers = getActive().getLayerData();
 
     std::filesystem::create_directory("ora_temp");
     std::filesystem::create_directory("ora_temp/data");

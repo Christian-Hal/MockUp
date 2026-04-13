@@ -48,9 +48,8 @@ class CanvasManager {
         // list of active canvases for when we implement the tab system
         std::vector<Canvas> canvases;
 
-        // pointer to the active canvas
-        Canvas* activeCanvas = nullptr;
-        int activeIndex = -1;
+        // index of the active canvas
+        int activeCanvasIndex = -1;
 
         // just a helper function to avoid having the same name in multiple files
         std::string checkName(std::string name);
