@@ -195,9 +195,6 @@ void Canvas::setName(std::string name)
 int Canvas::getWidth() const { return width; }
 int Canvas::getHeight() const { return height; }
 
-// canvas animation getter 
-bool Canvas::getIsAnimation() const { return isAnimation;  }
-
 /*
 	Canvas number of layers and current layer getters.
 */

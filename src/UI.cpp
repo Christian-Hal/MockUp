@@ -889,7 +889,7 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	ImGui::Separator();
 	ImGui::Spacing();
 
-	if (canvasManager.hasActive() && canvasManager.getActive().getIsAnimation()) {
+	if (canvasManager.hasActive() && canvasManager.getActive().isAnimation()) {
 		if (ImGui::Button("Toggle Onion Skins")) {
 			FrameRenderer::removeOnionSkin(canvasManager.getActive());
 			FrameRenderer::toggleOnionSkin();
@@ -1061,7 +1061,7 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 
 	// add widgets
 	// only display animation settings if there is an active canvas
-	if (canvasManager.hasActive() && canvasManager.getActive().getIsAnimation())
+	if (canvasManager.hasActive() && canvasManager.getActive().isAnimation())
 	{
 		int currentFrame = FrameRenderer::getCurFrame();
 		int totalFrames = FrameRenderer::getNumFrames();
@@ -1178,8 +1178,8 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 	}
 
 		// end step
-		if (ImGui::GetWindowHeight() > h - 2 * TopSize)
-			BotSize = h - 2 * TopSize;
+		if (ImGui::GetWindowHeight() > displayHeight - 2 * TopSize)
+			BotSize = displayHeight - 2 * TopSize;
 		else
 			BotSize = ImGui::GetWindowHeight();
 		ImGui::End();
@@ -1188,7 +1188,7 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 
 void UI::drawBlockPanel(CanvasManager& canvasManager) {
 	ImGui::SetNextWindowPos(ImVec2(LeftSize, TopSize));
-    ImGui::SetNextWindowSize(ImVec2(w - LeftSize - RightSize, h - TopSize - BotSize));
+    ImGui::SetNextWindowSize(ImVec2(displayWidth - LeftSize - RightSize, displayHeight - TopSize - BotSize));
     ImGui::Begin("Blocker", nullptr,
 		ImGuiWindowFlags_NoDecoration | 
 		ImGuiWindowFlags_NoBackground);
@@ -1199,7 +1199,7 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 {
 	// initialize the panel
 	ImGui::SetNextWindowPos(ImVec2(LeftSize, TopSize), ImGuiCond_Always);
-	ImGui::SetNextWindowSize(ImVec2(w - LeftSize - RightSize, 35), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(displayWidth - LeftSize - RightSize, 35), ImGuiCond_Always);
 	ImGui::Begin("Canvas Tabs Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar);
 
 	// add widgets
@@ -1238,8 +1238,7 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 
 	if (showNewCanvasPopup) {
 		ImGui::OpenPopup("New");
-	static std::string temp_n = "Untitled";
-	static bool isAnimation = false;
+	}
 
 	// specifying canvas size 
 	if (ImGui::BeginPopupModal("New", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
@@ -1279,20 +1278,6 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 					}
 					ImGui::EndCombo();
 				}
-		ImGui::InputInt("Width:", &temp_w);
-		ImGui::InputInt("Height:", &temp_h);
-		ImGui::InputText("File Name:", &temp_n);
-		ImGui::Checkbox("Use Animation Template", &isAnimation);
-
-		if (isAnimation) {
-			ImGui::TextWrapped("The animation template currently uses a set size of 2338 x 1653.");
-			temp_w = 2338;
-			temp_h = 1653;
-		}
-
-		ImGui::Spacing();
-		ImGui::Separator();
-		ImGui::Spacing();
 
 				// button to swap dimensions 
 				if (ImGui::Button("Swap")) {
@@ -1305,8 +1290,6 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 				// if user creates a canvas, remove the popup 
 				if (ImGui::Button("Create")) {
 					temp_n = "Illustration";
-			// create the new canvas
-			canvasManager.createCanvas(temp_w, temp_h, temp_n, isAnimation);
 
 					// create the new canvas
 					canvasManager.createCanvas(temp_w, temp_h, temp_n, false);
@@ -1314,16 +1297,8 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 					// centering the newly created canvas 
 					resetCanvasPositionCb();
 
-					showCanvasCreationPopup = false;
+					showNewCanvasPopup = false;
 					temp_n = "Illustration";
-			showNewCanvasPopup = false;
-			temp_n = "Untitled";
-
-			// if the current UI state is the start menu then change it to the main screen
-			if (curState == UIState::start_menu) {curState = UIState::main_screen;}
-
-			ImGui::CloseCurrentPopup();
-		}
 
 					ImGui::CloseCurrentPopup();
 				}
@@ -1331,7 +1306,7 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 				ImGui::SameLine();
 
 				if (ImGui::Button("Cancel")) {
-					showCanvasCreationPopup = false;
+					showNewCanvasPopup = false;
 					ImGui::CloseCurrentPopup();
 				}
 				ImGui::EndTabItem();
@@ -1354,7 +1329,7 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 					// centering the newly created canvas 
 					resetCanvasPositionCb();
 
-					showCanvasCreationPopup = false;
+					showNewCanvasPopup = false;
 					temp_n = "Animation";
 
 					ImGui::CloseCurrentPopup();
@@ -1363,17 +1338,13 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 				ImGui::SameLine();
 
 				if (ImGui::Button("Cancel")) {
-					showCanvasCreationPopup = false;
+					showNewCanvasPopup = false;
 					ImGui::CloseCurrentPopup();
 				}
 				ImGui::EndTabItem();
 			}
 			// 
 			ImGui::EndTabBar();
-		if (ImGui::Button("Cancel")) {
-			showNewCanvasPopup = false;
-			temp_n = "Untitled";
-			ImGui::CloseCurrentPopup();
 		}
 
 		ImGui::EndPopup();
@@ -1524,7 +1495,7 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 	if (ImGui::BeginMainMenuBar()) {
 		if (ImGui::BeginMenu("File")) {
 			if (ImGui::MenuItem("New...", "Ctrl+N")) {
-				showCanvasCreationPopup = true;
+				showNewCanvasPopup = true;
 			}
 			if (ImGui::MenuItem("Save...", "Ctrl+S", false, canvasManager.hasActive())) {
 				IGFD::FileDialogConfig config;
@@ -1987,7 +1958,7 @@ void UI::drawCursorModesWindow(CanvasManager& canvasManager) {
 	ImGui::Separator();
 	ImGui::Spacing();
 
-	if (canvasManager.hasActive() && canvasManager.getActive().getIsAnimation()) {
+	if (canvasManager.hasActive() && canvasManager.getActive().isAnimation()) {
 		if (ImGui::Button("Toggle Onion Skins")) {
 			FrameRenderer::removeOnionSkin(canvasManager.getActive());
 			FrameRenderer::toggleOnionSkin();
@@ -1999,7 +1970,7 @@ void UI::drawCursorModesWindow(CanvasManager& canvasManager) {
 
 void UI::drawTimelineWindow(CanvasManager& canvasManager) {
 	// only display animation settings if there is an active canvas
-	if (canvasManager.hasActive() && canvasManager.getActive().getIsAnimation())
+	if (canvasManager.hasActive() && canvasManager.getActive().isAnimation())
 	{
 		int currentFrame = FrameRenderer::getCurFrame();
 		int totalFrames = FrameRenderer::getNumFrames();
@@ -2054,7 +2025,7 @@ void UI::drawTimelineWindow(CanvasManager& canvasManager) {
 
 		style.FramePadding = ImVec2(6, 12); 
 		style.FrameRounding = 2.0f;
-		ImGui::SetNextItemWidth(w - (LeftSize + RightSize * 1.1));
+		ImGui::SetNextItemWidth(displayWidth - (LeftSize + RightSize * 1.1));
 		// Save old color
 		ImVec4 old_color = style.Colors[ImGuiCol_SliderGrab];
 

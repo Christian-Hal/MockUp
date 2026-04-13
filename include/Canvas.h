@@ -42,7 +42,7 @@ public:
 	// getter methods
 	int getWidth() const;
 	int getHeight() const;
-	bool getIsAnimation() const;
+    
 	int getNumLayers() const;
 	int getCurLayer() const;
 	Color getBackgroundColor() const;
@@ -90,31 +90,23 @@ public:
     
     void setBackgroundColor(const Color& color); // sets the background color of the canvas
 
-    bool canUndo() const;
-    bool canRedo() const;
-    void loadImage(unsigned char* data, int layerIndex);
-
     bool isAnimation() const { return animationTemplate; }
     void loadAnimTemplate();
 
-    private:
-        // canvas settings
-        std::string canvasName;
-        int width, height;
-        int numLayers;
-        int curLayer;
-        Color backgroundColor = {255, 255, 255, 255};
-        Color emptyColor = {0, 0, 0, 0};
+private:
+    // canvas settings
+    std::string canvasName;
+    int width, height;
+    int numLayers;
+    int curLayer;
+    Color backgroundColor = {255, 255, 255, 255};
+    Color emptyColor = {0, 0, 0, 0};
 
-        std::vector<bool> editedPixels;
+    std::vector<bool> editedPixels;
 
-        // RGBA pixel data
-        std::vector<Color> pixels;
-        std::vector<std::vector<Color>> layerData;
-
-	// RGBA pixel data
-	std::vector<Color> pixels;
-	std::vector<std::vector<Color>> layerData;
+    // RGBA pixel data
+    std::vector<Color> pixels;
+    std::vector<std::vector<Color>> layerData;
 
 	/////// VARIABLES FOR THE UNDO AND REDO STUFF
 	// Stacks for undo and redo strokes

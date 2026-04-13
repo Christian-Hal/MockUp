@@ -59,9 +59,6 @@ public:
 	using BoolCallback = std::function<bool()>;
 	using ResetCanvasPositionCallback = std::function<void()>;
 
-	using GenerateBrushDabCallback = std::function<std::vector<float>(int)>;
-
-
 	using saveToRecentActivityCallback = std::function<void(const std::string&)>;
 	using getRecentActivityCallback = std::function<const std::vector<std::string>&()>;
 	using getDefaultFolderPathCallback = std::function<std::string()>;
@@ -112,13 +109,11 @@ private:
 	BoolCallback didRebindFailCb;
 
 	ResetCanvasPositionCallback resetCanvasPositionCb;
-	GenerateBrushDabCallback generateDabCb;
 
 	// keeps track of the elements and their visibility
 	std::unordered_map<UIElement, bool> elementVisibility;
 	UIMode uiMode = UIMode::Default;
 
-	void drawCustomCursor(CanvasManager& canvasManager);
 	saveToRecentActivityCallback saveToRecentActivityCb;
 	getRecentActivityCallback getRecentActivityCb;
 

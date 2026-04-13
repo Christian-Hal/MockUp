@@ -176,7 +176,6 @@ void FrameRenderer::createFrame(Canvas& canvas){
     canvas.setLayerData(layDat);
     
     // create function that renames any other frames that come after
-    rename(true);
     writeAllData(&canvas);
     updateOnionSkin(canvas);
 }
