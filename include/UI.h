@@ -53,6 +53,7 @@ public:
 	using SetActiveBrushCallback = std::function<void(int)>;
 	using GetActiveBrushCallback = std::function<const BrushTool& ()>;
 	using LoadBrushCallback = std::function<void(const std::string&)>;
+	using GenerateBrushDabCallback = std::function<std::vector<float>(int)>; 
 	using GetHotkeyLabelCallback = std::function<std::string(InputAction)>;
 	using StartRebindCallback = std::function<void(InputAction)>;
 	using BoolCallback = std::function<bool()>;
@@ -61,6 +62,10 @@ public:
 	using GenerateBrushDabCallback = std::function<std::vector<float>(int)>;
 
 
+	using saveToRecentActivityCallback = std::function<void(const std::string&)>;
+	using getRecentActivityCallback = std::function<const std::vector<std::string>&()>;
+	using getDefaultFolderPathCallback = std::function<std::string()>;
+	using setDefaultFolderPathCallback = std::function<void(const std::string&)>;
 
 	// Lets the controller provide cursor state read/write hooks.
 	// UI emits intent through these callbacks instead of owning app state.
@@ -69,30 +74,43 @@ public:
 	void bindHotkeyCallbacks(GetHotkeyLabelCallback getLabelCb, StartRebindCallback startCb, BoolCallback isWaitingCb, BoolCallback didFailCb);
 	void bindCanvasCallbacks(ResetCanvasPositionCallback resetPositionCb);
 
+	void bindRecentActivityCallbacks(saveToRecentActivityCallback saveCb, getRecentActivityCallback getCb);
+	void bindDefaultFolderPathCallback(getDefaultFolderPathCallback getDefaultFolderPathCb, setDefaultFolderPathCallback setDefaultFolderPathCb);
 
+	// ui drawing functions
+	void drawUI(CanvasManager& canvasManager, FrameRenderer frameRenderer);
 
+	// other functions
 	void init(GLFWwindow* window, Renderer& renderer, Globals& g_inst);
-	void draw(CanvasManager& canvasManager, FrameRenderer frameRenderer);
 	void shutdown();
 	Color getColor();
 	void setColor(Color pixelColor);
-	void drawPopup(CanvasManager& canvasManager);
 	int brushSize = 1; // default brush size
 
 	CursorMode getCursorMode() const;
 	void setCursorMode(CursorMode);
 
+	// ui state stuff
+	enum class UIState {
+		start_menu,
+		main_screen
+	};
+
 private:
 	SetCursorModeCallback setCursorModeCb;
 	GetCursorModeCallback getCursorModeCb;
+
 	GetBrushListCallback getBrushListCb;
 	SetActiveBrushCallback setActiveBrushCb;
 	GetActiveBrushCallback getActiveBrushCb;
 	LoadBrushCallback loadBrushFromFileCb;
+	GenerateBrushDabCallback generateDabCb; 
+
 	GetHotkeyLabelCallback getHotkeyLabelCb;
 	StartRebindCallback startRebindCb;
 	BoolCallback isWaitingForRebindCb;
 	BoolCallback didRebindFailCb;
+
 	ResetCanvasPositionCallback resetCanvasPositionCb;
 	GenerateBrushDabCallback generateDabCb;
 
@@ -101,6 +119,18 @@ private:
 	UIMode uiMode = UIMode::Default;
 
 	void drawCustomCursor(CanvasManager& canvasManager);
+	saveToRecentActivityCallback saveToRecentActivityCb;
+	getRecentActivityCallback getRecentActivityCb;
+
+	getDefaultFolderPathCallback getDefaultFolderPathCb;
+	setDefaultFolderPathCallback setDefaultFolderPathCb;
+
+	// main UI drawing functions for each state
+	void drawStartScreen(CanvasManager& canvasManager);
+	void drawMainScreen(CanvasManager& canvasManager, FrameRenderer frameRenderer);
+
+	// helper functions for drawing different panels / popups
+	void drawCustomCursor(CanvasManager& canvasManager); 
 	void drawLeftPanel(CanvasManager& canvasManager);
 	void drawRightPanel(CanvasManager& canvasManager);
 	void drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRenderer);
@@ -114,6 +144,19 @@ private:
 	void drawCursorModesWindow(CanvasManager& canvasManager);
 	void drawTimelineWindow(CanvasManager& canvasManager);
 
+	void drawNewCanvasPopup(CanvasManager& canvasManager);
+	void drawSettingsPopup(CanvasManager& canvasManager);
 
 	void drawTopPanel(CanvasManager& canvasManager);
+	// keeps track of the UI's current state so we know what stuff to draw
+	UIState curState = UIState::start_menu;
+
+	// tracks the window display size for the ui panel sizing calculations
+	float displayWidth;
+	float displayHeight;
+
+	// boolean variables for which popups/panels to show
+	bool showPanels = true;
+	bool showNewCanvasPopup = false;
+	bool showSettingsPopup = false;
 };

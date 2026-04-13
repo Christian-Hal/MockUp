@@ -27,6 +27,10 @@ public:
     bool isWaitingForRebind();
     bool didRebindFail();
 
+    // recent activity functions
+    void addFileToRecentActivity(const std::string& filePath);
+    const std::vector<std::string>& getRecentActivity();
+
 private:
     // app state instance
     AppState appState; 

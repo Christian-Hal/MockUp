@@ -2,17 +2,61 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include <filesystem>
+
+#include <stb_image.h>
 
 #include "Canvas.h"
 
 // constructor
 Canvas::Canvas() : width(0), height(0), numLayers(0), curLayer(0), pixels(), layerData(), canvasName("") {}
-Canvas::Canvas(int w, int h, std::string name, bool isAnimation) : width(w), height(h),
-numLayers(2), curLayer(1), pixels(w* h, backgroundColor),
-canvasName(name), currentStrokeIndex(-1), seenPixels(w* h, -1), isAnimation(isAnimation)
+Canvas::Canvas(int w, int h, std::string name, bool isAnimation) : width(w), height(h), 
+                    numLayers(2), curLayer(1), pixels(w * h, backgroundColor), 
+                    canvasName(name), currentStrokeIndex(-1), seenPixels(w * h, -1), animationTemplate(isAnimation), editedPixels(w * h, false)
 {
-	layerData.push_back(pixels);
-	layerData.push_back(std::vector<Color>(w * h, emptyColor));
+    // Initialize layerData before loading animation
+    layerData.push_back(std::vector<Color>(w * h, backgroundColor));
+    layerData.push_back(std::vector<Color>(w * h, emptyColor));
+    
+    // if its an animation then load in the animation template image
+    if (animationTemplate) {
+        loadAnimTemplate();
+
+        // add another empty layer for the animation template
+        createLayer();
+    }
+}
+
+void Canvas::loadAnimTemplate() {
+    stbi_set_flip_vertically_on_load(true);
+    const std::string templatePath = "assets/Animation_Template_PNG.png";
+    
+    int imgWidth = 0, imgHeight = 0;
+    unsigned char* data = stbi_load(templatePath.c_str(), &imgWidth, &imgHeight, nullptr, 4);
+    if (data) {
+        loadImage(data, 1);
+        stbi_image_free(data);
+
+    } else {
+        std::cout << "ERROR: Failed to load animation template from: " << templatePath << std::endl;
+        std::cout << "stbi error: " << stbi_failure_reason() << std::endl;
+    }
+}
+
+void Canvas::setBackgroundColor(const Color& color)
+{
+    for (int i = 0; i < width * height; i++)
+    {
+        if (layerData[0][i] == backgroundColor) {
+            layerData[0][i] = color;
+
+            if (editedPixels[i] == false) {
+                pixels[i] = color; 
+            }
+        }
+    }
+
+    backgroundColor = color;
 }
 
 // Undo and Redo stuff
@@ -42,11 +86,12 @@ void Canvas::recordPixelChange(int index, const Color& before)
 
 void Canvas::endStrokeRecord()
 {
-	// set the after color for each pixel to said pixels current color
-	for (Pixel& p : activeStroke.pixels)
-	{
-		p.after = layerData[activeStroke.layerNum][p.index];
-	}
+    // set the after color for each pixel to said pixels current color
+    for (Pixel& p : activeStroke.pixels)
+    {
+        p.after = layerData[activeStroke.layerNum][p.index];
+        p.wasEditedAfter = editedPixels[p.index];
+    }
 
 	// if the active stroke isn't empty then push it to the Undo stack
 	if (!activeStroke.pixels.empty())
@@ -80,11 +125,12 @@ void Canvas::undo()
 	int realLayer = curLayer;
 	curLayer = stroke.layerNum;
 
-	// for each pixel in the stroke, set it back to its before color
-	for (Pixel p : stroke.pixels)
-	{
-		resetPixel(p.index, p.before);
-	}
+    // for each pixel in the stroke, set it back to its before color
+    for (Pixel p : stroke.pixels)
+    {
+        resetPixel(p.index, p.before);
+        editedPixels[p.index] = p.wasEditedBefore;
+    }
 
 	// move back to the real current layer
 	curLayer = realLayer;
@@ -107,11 +153,12 @@ void Canvas::redo()
 	int realLayer = curLayer;
 	curLayer = stroke.layerNum;
 
-	// for each pixel in the stroke, set it back to its after color
-	for (Pixel p : stroke.pixels)
-	{
-		resetPixel(p.index, p.after);
-	}
+    // for each pixel in the stroke, set it back to its after color
+    for (Pixel p : stroke.pixels)
+    {
+        resetPixel(p.index, p.after);
+        editedPixels[p.index] = p.wasEditedAfter;
+    }
 
 	// move back to the real current layer
 	curLayer = realLayer;
@@ -172,18 +219,7 @@ const std::vector<std::vector<Color>>& Canvas::getLayerData() const {
 }
 
 /*
-	Equality operator overload for Color datatype.
-
-	Is true if rgba values are equal for both Colors.
-*/
-bool operator==(const Color& c2, const Color& c1)
-{
-	return (c1.r == c2.r) && (c1.g == c2.g) && (c1.b == c2.b) && (c1.a == c2.a);
-}
-
-
-/*
-	Inequality operator overload for Color datatype.
+    Inequality operator overload for Color datatype.
 
 	Is true if any of the rgba values are not equal for both Colors.
 
@@ -256,10 +292,15 @@ const Color Canvas::colorTimes(const Color& c2, const Color& c1) {
 */
 void Canvas::setPixel(int x, int y, const Color& color)
 {
-	// making sure (x, y) is within bounds
-	if (x < 0 || x >= width || y < 0 || y >= height) {
-		return;
-	}
+    // do not let the user draw onto the animation template
+    if (isAnimation() && curLayer == 1) {
+        return;
+    }
+
+    // making sure (x, y) is within bounds
+    if (x < 0 || x >= width || y < 0 || y >= height) {
+        return;
+    }
 
 	int index = y * width + x;
 
@@ -267,7 +308,8 @@ void Canvas::setPixel(int x, int y, const Color& color)
 	recordPixelChange(index, layerData[curLayer][index]);
 
 	// fit the color into the layerData vector so it can be accessed later
-	layerData[curLayer][index] = color;
+    layerData[curLayer][index] = color;
+    editedPixels[index] = true;
 
 	// initialize the background color for later use in the for loop
 	Color col = layerData[0][index];
@@ -336,10 +378,15 @@ void Canvas::blendPixel(int x, int y, const Color& src, float brushAlpha) {
 
 	// idea: 	result = color_s * alpha_s + color_d * (1 - alpha_s)
 
-	// making sure (x, y) is within bounds 
-	if (x < 0 || x >= width || y < 0 || y >= height) {
-		return;
-	}
+    // do not let the user draw onto the animation template
+    if (isAnimation() && curLayer == 1) {
+        return;
+    }
+
+    // making sure (x, y) is within bounds 
+    if (x < 0 || x >= width || y < 0 || y >= height) {
+        return;
+    }
 
 	// Fully opaque writes and fully transparent writes should be direct sets.
 	// Transparent writes are used by erase mode.
@@ -372,7 +419,8 @@ void Canvas::blendPixel(int x, int y, const Color& src, float brushAlpha) {
 	// this takes the original color and blends the draw color over it
 	Color out = layerColor * srcColor;
 
-	layerData[curLayer][index] = out;
+    layerData[curLayer][index] = out; 
+    editedPixels[index] = true;
 
 	// initialize the background color for later use in the for loop
 	Color col = layerData[0][index];
@@ -414,29 +462,34 @@ void Canvas::createLayer() {
 
 
 // removes a layer from layerData and removes the pixel values on that layer
-void Canvas::removeLayer() {
-	// do not remove layers if there is only one layer
-	if (numLayers > 2) {
-		// when removing a layer we need to iterate through through every pixel 
-		for (int i = 0; i < pixels.size(); i++) {
-			// if the pixel value is not transparent
-			if (pixels[i].a != 0 || layerData[curLayer][i].a) {
-				// place a transparent pixel at i
-				layerData[curLayer][i] = { 0,0,0,0 };
-				// calculate what pixel will be with the new empty value
-				Color col = layerData[0][i];
-				for (int j = 0; j < numLayers; j++) {
-					col = col * layerData[j][i];
-				}
-				pixels[i] = col;
-			}
-		}
-		layerData.erase(layerData.begin() + curLayer);
-		// update the number of layers and the current layer if needed
-		numLayers--;
-		if (layerData.size() == curLayer) {
-			curLayer--;
-		}
+void Canvas::removeLayer(){
+    // do not let the user remove the animation template layer
+    if (isAnimation() && curLayer == 1) {
+        return;
+    }
+
+    // do not remove layers if there is only one layer
+    if(numLayers > 2){
+        // when removing a layer we need to iterate through through every pixel 
+        for(int i = 0; i < pixels.size(); i++){
+            // if the pixel value is not transparent
+            if(pixels[i].a != 0 || layerData[curLayer][i].a ){
+                // place a transparent pixel at i
+                layerData[curLayer][i] = {0,0,0,0};
+                // calculate what pixel will be with the new empty value
+                Color col = layerData[0][i];
+                for(int j = 0; j < numLayers; j++){
+                    col = col * layerData[j][i];
+                }
+                pixels[i] = col;
+            }
+        }
+        layerData.erase(layerData.begin()+curLayer);
+        // update the number of layers and the current layer if needed
+        numLayers--;
+        if(layerData.size() == curLayer){
+            curLayer--;
+        }
 
 		// since this has the unintended effected of ruining the data in
 		// pixel, we need to reiterate through each value for each layer to

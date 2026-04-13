@@ -1,7 +1,7 @@
-
 #include "UI.h"
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <utility>
 #include <map>
@@ -25,16 +25,11 @@
 std::string overwritePath;
 
 // variables to store info for UI declared up here 
-/// display size
-float w, h;
 /// panel sizes
 int TopSize = 0;
 int BotSize = 0;
 int LeftSize = 0;
 int RightSize = 0;
-
-// state initial pop up 
-static bool showCanvasCreationPopup = false;
 
 // show panels 
 static bool showPanels = true;
@@ -82,8 +77,7 @@ void UI::bindCanvasCallbacks(ResetCanvasPositionCallback resetPositionCb)
 }
 
 
-void UI::bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallback setActiveCb, GetActiveBrushCallback getActiveCb, LoadBrushCallback loadBrushCb,
-	GenerateBrushDabCallback genDabCb)
+void UI::bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallback setActiveCb, GetActiveBrushCallback getActiveCb, LoadBrushCallback loadBrushCb, GenerateBrushDabCallback genDabCb)
 {
 	getBrushListCb = std::move(getListCb);
 	setActiveBrushCb = std::move(setActiveCb);
@@ -99,6 +93,18 @@ void UI::bindHotkeyCallbacks(GetHotkeyLabelCallback getLabelCb, StartRebindCallb
 	startRebindCb = std::move(startCb);
 	isWaitingForRebindCb = std::move(isWaitingCb);
 	didRebindFailCb = std::move(didFailCb);
+}
+
+void UI::bindRecentActivityCallbacks(saveToRecentActivityCallback saveCb, getRecentActivityCallback getCb)
+{
+	saveToRecentActivityCb = std::move(saveCb);
+	getRecentActivityCb = std::move(getCb);
+}
+
+void UI::bindDefaultFolderPathCallback(getDefaultFolderPathCallback getPathCb, setDefaultFolderPathCallback setPathCb)
+{
+	getDefaultFolderPathCb = std::move(getPathCb);
+	setDefaultFolderPathCb = std::move(setPathCb);
 }
 
 
@@ -220,7 +226,8 @@ void UI::setCursorMode(CursorMode temp) {
 // UI initialization 
 void UI::init(GLFWwindow* window, Renderer& rendInst, Globals& g_inst) {
 
-	//global = g_inst;
+	// set the initial ui state
+	curState = UIState::start_menu;
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -326,7 +333,7 @@ void UI::init(GLFWwindow* window, Renderer& rendInst, Globals& g_inst) {
 
 
 // NOTE: called in render loop 
-void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
+void UI::drawUI(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 {
 	// start ImGui frame before adding widgets 
 	ImGui_ImplOpenGL3_NewFrame();
@@ -338,8 +345,8 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 	// changing hard set display size to allow for docking tabs 
 	// grab the window display size
 	ImGuiIO& io = ImGui::GetIO();
-	w = io.DisplaySize.x;
-	h = io.DisplaySize.y;
+	displayWidth = io.DisplaySize.x;
+	displayHeight = io.DisplaySize.y;
 
 	// compute the panel sizes
 	if (TopSize == 0) { TopSize = 20; }
@@ -347,9 +354,148 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 	if (LeftSize == 0) { LeftSize = static_cast<int>(0.1 * w); }
 	if (RightSize == 0) { RightSize = static_cast<int>(0.1 * w); }
 
-	// initial popup
-	drawPopup(canvasManager);
+	// ----- Call the various popup draws so they get drawn when needed -----
+	drawNewCanvasPopup(canvasManager); 	// draw the new canvas pop up
+	drawSettingsPopup(canvasManager); 	// draw the settings menu pop up
 
+	// ----- Cursor Customization -----
+	drawCustomCursor(canvasManager);
+
+	// draw ui based on the UI's current state
+	if (curState == UIState::start_menu)		{drawStartScreen(canvasManager);}
+	else if (curState == UIState::main_screen) 	{drawMainScreen(canvasManager, frameRenderer);}
+
+	// top panel is drawn regardless of the state 
+	drawTopPanel(canvasManager);
+
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void UI::drawStartScreen(CanvasManager& canvasManager)
+{
+	// panel sizes for start screen
+	int start_left = static_cast<int>(0.25 * displayWidth);
+	int start_right = static_cast<int>(0.75 * displayWidth);
+
+	// draw the left part of the start screen (save and load buttons)
+	ImGui::SetNextWindowPos(ImVec2(0, TopSize), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(start_left, displayHeight), ImGuiCond_Always);
+	ImGui::Begin("Left Start Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+
+	ImVec2 buttonSize = ImVec2(160, 42); 	// makes the buttons bigger
+	float centerX = (start_left - 160) * 0.5f;
+
+	ImGui::Dummy(ImVec2(0, 40)); 			// creates some vertical space
+	ImGui::SetCursorPosX(centerX); 			// center the button
+
+	if (ImGui::Button("Create File", buttonSize)) 
+	{
+		showNewCanvasPopup = true;
+	}
+
+	ImGui::Dummy(ImVec2(0, 10)); 			// creates some vertical space
+	ImGui::SetCursorPosX(centerX); 			// center the button
+
+	if (ImGui::Button("Open File", buttonSize))
+	{
+		IGFD::FileDialogConfig config;
+		config.path = ".";
+
+		if (getDefaultFolderPathCb) {
+			config.path = getDefaultFolderPathCb();
+		}
+
+		ImGuiFileDialog::Instance()->OpenDialog(
+			"LoadFileDlg",
+			"Choose File",
+			".png,.jpg,.ora",
+			config
+		);
+	}
+
+	if (ImGuiFileDialog::Instance()->Display("LoadFileDlg"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk())
+		{
+			std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
+
+			std::string extension = ImGuiFileDialog::Instance()->GetCurrentFilter();
+
+			if (extension == ".ora")
+			{
+				canvasManager.loadORA(filePath);
+				// centering the loaded image 
+				resetCanvasPositionCb();
+			}
+			else
+			{
+				canvasManager.loadFromFile(filePath);
+				// centering the loaded image 
+				resetCanvasPositionCb();
+			}
+
+			// save to recent activity list
+			saveToRecentActivityCb(filePath);
+
+			// if the current UI state is the start menu then change it to the main screen
+			if (curState == UIState::start_menu) {curState = UIState::main_screen;}
+			
+		}
+
+		ImGuiFileDialog::Instance()->Close();
+	}
+
+	// end step
+	ImGui::End();
+
+	// draw the right part of the start screen (recent activity)
+	ImGui::SetNextWindowPos(ImVec2(start_left, TopSize), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(start_right, displayHeight), ImGuiCond_Always);
+	ImGui::Begin("Right Start Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+
+	ImGui::Text("Recent Actvity: ");
+
+	// adds a little visual split between sections
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	// display recent activity list
+	if (getRecentActivityCb) {
+		const std::vector<std::string>& recentActivity = getRecentActivityCb();
+		for (const std::string& filePath : recentActivity) {
+			// grab the filename from the file path for display
+			size_t lastSlash = filePath.find_last_of("/\\");
+			std::string fileName = (lastSlash != std::string::npos) ? filePath.substr(lastSlash + 1) : filePath;
+
+			// if the button is clicked then load in the file
+			if (ImGui::Button(fileName.c_str(), ImVec2(150, 0))) {
+				std::string extension = filePath.substr(filePath.find_last_of('.'));
+
+				if (extension == ".ora") {
+					canvasManager.loadORA(filePath);
+					// centering the loaded image 
+					resetCanvasPositionCb();
+				}
+				else {
+					canvasManager.loadFromFile(filePath);
+					// centering the loaded image 
+					resetCanvasPositionCb();
+				}
+
+				// if the current UI state is the start menu then change it to the main screen
+				if (curState == UIState::start_menu) {curState = UIState::main_screen;}
+			}
+		}
+	}
+
+	// end step
+	ImGui::End();
+}
+
+void UI::drawMainScreen(CanvasManager& canvasManager, FrameRenderer frameRenderer) 
+{
 	// -- user input to hide UI panels --
 	// only allow this if the canvas creation popup is not active 
 	if (!ImGui::IsPopupOpen("New")) {
@@ -363,6 +509,7 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 	drawCustomCursor(canvasManager);
 
 	// draw the UI elements only if showPanels is true
+	// draw the three main screen panels
 	if (showPanels) {
 		// if in default mode draw only the default panels
 		if (uiMode == UIMode::Default) {
@@ -381,7 +528,6 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 		}
 	}
 
-
 	// top panel drawn regardless of input 
 	//drawTopPanel(canvasManager);
 
@@ -395,7 +541,6 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
-
 
 void UI::drawCustomCursor(CanvasManager& canvasManager) {
 	// only use custom cursor if a canvas is open, we are hovering over it, and we are drawing/erasing
@@ -482,111 +627,42 @@ void UI::drawCustomCursor(CanvasManager& canvasManager) {
 void UI::drawTopPanel(CanvasManager& canvasManager) {
 	// initialize the panel
 	ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
-	ImGui::SetNextWindowSize(ImVec2(w, TopSize), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(displayWidth, TopSize), ImGuiCond_Always);
 	ImGui::Begin("Top Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar);
 
 	// add widgets
 	// new canvas pop up
 	if (ImGui::Button("New File")) {
-		//showPopup = true;
-	}
-
-	// menu to rebind the various actions that can be done with hotkeys
-	// the getHotkeyString(InputAction::setRotate).c_str() is the funciton 
-	// call to get the string version of the key combos
-	ImGui::SameLine();
-	if (ImGui::Button("Shortcuts")) {
-		ImGui::OpenPopup("Shortcuts Popup");
-	}
-
-	if (ImGui::BeginPopup("Shortcuts Popup"))
-	{
-		// create a lamda to grab the hotkey label for each action
-		auto hotkeyLabel = [this](InputAction action) {
-			if (getHotkeyLabelCb) {
-				return getHotkeyLabelCb(action);
-			}
-			return std::string{};
-			};
-
-		// create a lamda to trigger the rebind callback function for each action
-		auto triggerRebind = [this](InputAction action) {
-			if (startRebindCb) {
-				startRebindCb(action);
-			}
-			// Close to avoid consuming the next key press while rebinding.
-			ImGui::CloseCurrentPopup();
-			};
-
-		if (ImGui::MenuItem("Rotate", hotkeyLabel(InputAction::setRotate).c_str()))
-		{
-			triggerRebind(InputAction::setRotate);
-		}
-		if (ImGui::MenuItem("Pan", hotkeyLabel(InputAction::setPan).c_str()))
-		{
-			triggerRebind(InputAction::setPan);
-		}
-		if (ImGui::MenuItem("Draw", hotkeyLabel(InputAction::setDraw).c_str()))
-		{
-			triggerRebind(InputAction::setDraw);
-		}
-		if (ImGui::MenuItem("Fill", hotkeyLabel(InputAction::setFill).c_str())){
-			triggerRebind(InputAction::setFill);
-		}
-		if (ImGui::MenuItem("Erase", hotkeyLabel(InputAction::setErase).c_str()))
-		{
-			triggerRebind(InputAction::setErase);
-		}
-		if (ImGui::MenuItem("Undo", hotkeyLabel(InputAction::undo).c_str()))
-		{
-			triggerRebind(InputAction::undo);
-		}
-		if (ImGui::MenuItem("Redo", hotkeyLabel(InputAction::redo).c_str()))
-		{
-			triggerRebind(InputAction::redo);
-		}
-		if (ImGui::MenuItem("Zoom In", hotkeyLabel(InputAction::setClickZoomIn).c_str()))
-		{
-			triggerRebind(InputAction::setClickZoomIn);
-		}
-		if (ImGui::MenuItem("Zoom Out", hotkeyLabel(InputAction::setClickZoomOut).c_str()))
-		{
-			triggerRebind(InputAction::setClickZoomOut);
-		}
-		if (ImGui::MenuItem("Center Canvas", hotkeyLabel(InputAction::resetView).c_str()))
-		{
-			triggerRebind(InputAction::resetView);
-		}
-		if (ImGui::MenuItem("Color Picker", hotkeyLabel(InputAction::setColor).c_str()))
-		{
-			triggerRebind(InputAction::setColor);
-		}
-
-		ImGui::EndPopup();
+		showNewCanvasPopup = true;
 	}
 
 	ImGui::SameLine();
 	// Save button
 
 	// only appears if there is a canvas
-	if (canvasManager.hasActive() && ImGui::Button("Save File"))
+	if (ImGui::Button("Save File"))
 	{
-		IGFD::FileDialogConfig config;
+		if (canvasManager.hasActive())
+		{	
+			IGFD::FileDialogConfig config;
+			config.path = ".";
 
-		// the  path the file explorer starts in. "." is the current active directory
-		config.path = ".";
+			if (getDefaultFolderPathCb) {
+				config.path = getDefaultFolderPathCb();
+			}
 
-		config.fileName = canvasManager.getActive().getName();
+			config.fileName = canvasManager.getActive().getName();
 
-		// ImGuiFileDialog has a built in detection for overwriting a file and makes a popup as well.
-		config.flags = ImGuiFileDialogFlags_ConfirmOverwrite;
+			// ImGuiFileDialog has a built in detection for overwriting a file and makes a popup as well.
+			config.flags = ImGuiFileDialogFlags_ConfirmOverwrite;
 
-		ImGuiFileDialog::Instance()->OpenDialog(
-			"SaveImageDlg",
-			"Save Image",
-			".png,.jpg,.ora",
-			config
-		);
+			ImGuiFileDialog::Instance()->OpenDialog(
+				"SaveImageDlg",
+				"Save Image",
+				".png,.jpg,.ora",
+				config
+			);
+		}
 	}
 	if (ImGuiFileDialog::Instance()->Display("SaveImageDlg"))
 	{
@@ -607,6 +683,8 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 			{
 				canvasManager.saveToFile(filePath);
 			}
+
+			saveToRecentActivityCb(filePath);
 		}
 
 		ImGuiFileDialog::Instance()->Close();
@@ -656,10 +734,18 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 	ImGui::SameLine();
 	if (ImGui::Button("Load File"))
 	{
+		IGFD::FileDialogConfig config;
+		config.path = ".";
+
+		if (getDefaultFolderPathCb) {
+			config.path = getDefaultFolderPathCb();
+		}
+
 		ImGuiFileDialog::Instance()->OpenDialog(
 			"LoadFileDlg",
 			"Choose File",
-			".png,.jpg,.ora"
+			".png,.jpg,.ora",
+			config
 		);
 	}
 
@@ -670,12 +756,8 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 			std::string filePath =
 				ImGuiFileDialog::Instance()->GetFilePathName();
 
-			std::cout << "filepath" << std::endl;
-
 			std::string extension =
 				ImGuiFileDialog::Instance()->GetCurrentFilter();
-
-			std::cout << "extension" << std::endl;
 
 			if (extension == ".ora")
 			{
@@ -689,10 +771,23 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 				// centering the loaded image 
 				resetCanvasPositionCb();
 			}
+
+			// save to recent activity list
+			saveToRecentActivityCb(filePath);
+
+			// if the current UI state is the start menu then change it to the main screen
+			if (curState == UIState::start_menu) {curState = UIState::main_screen;}
 			
 		}
 
 		ImGuiFileDialog::Instance()->Close();
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Settings"))
+	{
+		showSettingsPopup = true;
 	}
 
 	// end step
@@ -738,17 +833,6 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 
 	else if (getCursorMode() == CursorMode::ColorPick) {
 		ImGui::Text("State: Color Pick");
-	}
-
-	// text label that displays rebind status
-	if (isWaitingForRebindCb && isWaitingForRebindCb())
-	{
-		ImGui::Text("Press any key...");
-	}
-
-	if (didRebindFailCb && didRebindFailCb())
-	{
-		ImGui::TextColored(ImVec4(1, 0, 0, 1), "Key already bound!");
 	}
 
 	// buttons that change the current cursor mode
@@ -815,15 +899,15 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	// end step
 	LeftSize = ImGui::GetWindowWidth();
 	ImVec2 size = ImGui::GetWindowSize();
-	ImGui::SetWindowSize(ImVec2(size.x, h)); // keeps its Y-value the same
+	ImGui::SetWindowSize(ImVec2(size.x, displayHeight)); // keeps its Y-value the same
 	ImGui::End();
 }
 
 
 void UI::drawRightPanel(CanvasManager& canvasManager) {
 	// initialize the panel
-	ImGui::SetNextWindowPos(ImVec2(w - RightSize, TopSize), ImGuiCond_Always);
-	ImGui::SetNextWindowSize(ImVec2(RightSize, h - TopSize), ImGuiCond_Always);
+	ImGui::SetNextWindowPos(ImVec2(displayWidth - RightSize, TopSize), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(RightSize, displayHeight - TopSize), ImGuiCond_Always);
 	ImGui::Begin("Right Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
 	// color wheel 
@@ -915,10 +999,18 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 	// brush import system, will probably get moved when I eventually do a UI overhaul
 	if (ImGui::Button("Import Brush"))
 	{
+		IGFD::FileDialogConfig config;
+		config.path = ".";
+
+		if (getDefaultFolderPathCb) {
+			config.path = getDefaultFolderPathCb();
+		}
+
 		ImGuiFileDialog::Instance()->OpenDialog(
 			"ChooseFileDlgKey",
 			"Choose File",
-			".gbr,.png,.kpp,.jbr"
+			".gbr,.png,.kpp,.jbr",
+			config
 		);
 	}
 
@@ -955,7 +1047,7 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 	// end step
 	RightSize = ImGui::GetWindowWidth();
 	ImVec2 size = ImGui::GetWindowSize();
-	ImGui::SetWindowSize(ImVec2(size.x, h)); // keeps its Y-value the same
+	ImGui::SetWindowSize(ImVec2(size.x, displayHeight)); // keeps its Y-value the same
 	ImGui::End();
 }
 
@@ -963,8 +1055,8 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 // is tagged with being an animation canvas 
 void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRenderer) {
 	// initialize the panel
-	ImGui::SetNextWindowPos(ImVec2(LeftSize, h - BotSize), ImGuiCond_Always);
-	ImGui::SetNextWindowSize(ImVec2(w - LeftSize - RightSize, BotSize), ImGuiCond_Always);
+	ImGui::SetNextWindowPos(ImVec2(LeftSize, displayHeight - BotSize), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(displayWidth - LeftSize - RightSize, BotSize), ImGuiCond_Always);
 	ImGui::Begin("Bottom Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
 	// add widgets
@@ -1133,8 +1225,8 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 }
 
 
-// canvas size popup 
-void UI::drawPopup(CanvasManager& canvasManager)
+// new canvas popup 
+void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 {
 	static int temp_w = 1920;
 	static int temp_h = 1080;
@@ -1146,6 +1238,11 @@ void UI::drawPopup(CanvasManager& canvasManager)
 
 	if (showCanvasCreationPopup) {
 		ImGui::OpenPopup("New");
+	static std::string temp_n = "Untitled";
+	static bool isAnimation = false;
+
+	if (showNewCanvasPopup) {
+		ImGui::OpenPopup("New Canvas");
 	}
 
 	// specifying canvas size 
@@ -1186,6 +1283,20 @@ void UI::drawPopup(CanvasManager& canvasManager)
 					}
 					ImGui::EndCombo();
 				}
+		ImGui::InputInt("Width:", &temp_w);
+		ImGui::InputInt("Height:", &temp_h);
+		ImGui::InputText("File Name:", &temp_n);
+		ImGui::Checkbox("Use Animation Template", &isAnimation);
+
+		if (isAnimation) {
+			ImGui::TextWrapped("The animation template currently uses a set size of 2338 x 1653.");
+			temp_w = 2338;
+			temp_h = 1653;
+		}
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
 
 				// button to swap dimensions 
 				if (ImGui::Button("Swap")) {
@@ -1198,6 +1309,8 @@ void UI::drawPopup(CanvasManager& canvasManager)
 				// if user creates a canvas, remove the popup 
 				if (ImGui::Button("Create")) {
 					temp_n = "Illustration";
+			// create the new canvas
+			canvasManager.createCanvas(temp_w, temp_h, temp_n, isAnimation);
 
 					// create the new canvas
 					canvasManager.createCanvas(temp_w, temp_h, temp_n, false);
@@ -1207,6 +1320,14 @@ void UI::drawPopup(CanvasManager& canvasManager)
 
 					showCanvasCreationPopup = false;
 					temp_n = "Illustration";
+			showNewCanvasPopup = false;
+			temp_n = "Untitled";
+
+			// if the current UI state is the start menu then change it to the main screen
+			if (curState == UIState::start_menu) {curState = UIState::main_screen;}
+
+			ImGui::CloseCurrentPopup();
+		}
 
 					ImGui::CloseCurrentPopup();
 				}
@@ -1253,11 +1374,149 @@ void UI::drawPopup(CanvasManager& canvasManager)
 			}
 			// 
 			ImGui::EndTabBar();
+		if (ImGui::Button("Cancel")) {
+			showNewCanvasPopup = false;
+			temp_n = "Untitled";
+			ImGui::CloseCurrentPopup();
 		}
 
 		ImGui::EndPopup();
 	}
 
+}
+
+void UI::drawSettingsPopup(CanvasManager& canvasManager) {
+    static int settingsSection = 0;
+
+    if (showSettingsPopup) {
+        ImGui::OpenPopup("Settings");
+        ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_Always);
+    }
+
+    if (ImGui::BeginPopupModal("Settings", nullptr, ImGuiWindowFlags_NoResize)) {
+        // Create a child region that will take all remaining vertical space
+        float windowHeight = ImGui::GetContentRegionAvail().y - 50; // leave ~50px for Close button
+        ImGui::BeginChild("SettingsContent", ImVec2(0, windowHeight), false);
+
+        ImGui::Columns(2, nullptr, true);
+        ImGui::SetColumnWidth(0, 150);
+
+        // Left column: categories
+        if (ImGui::Button("Folder Settings##settings_folders")) settingsSection = 0;
+        if (ImGui::Button("Shortcut Settings##settings_shortcuts")) settingsSection = 1;
+		if (ImGui::Button("Canvas Settings##settings_canvases")) settingsSection = 2;
+
+        ImGui::NextColumn();
+
+        // Right column: content
+        if (settingsSection == 0) {
+            ImGui::Text("Folder adjacent settings: Saving / Loading / Imports");
+			// default folder path stuff	
+			ImGui::SeparatorText("Default Folder Path");
+			ImGui::TextWrapped("The default path used for loading and saving files.");
+			ImGui::Spacing();
+
+			std::string currentPath = getDefaultFolderPathCb ? getDefaultFolderPathCb() : std::string("Not Set");
+			ImGui::TextWrapped("Current Default Path: %s", currentPath.c_str());
+			ImGui::Spacing();
+
+			if (ImGui::Button("Set Default Folder Path")) {
+				IGFD::FileDialogConfig config;
+				config.path = ".";
+
+				if (getDefaultFolderPathCb) {
+					config.path = getDefaultFolderPathCb();
+				}
+
+				ImGuiFileDialog::Instance()->OpenDialog("ChooseDirDlgKey", "Choose a Directory", nullptr, config);
+	
+			}
+
+			if (ImGuiFileDialog::Instance()->Display("ChooseDirDlgKey")) {
+				if (ImGuiFileDialog::Instance()->IsOk()) {
+					// Get the relative path or folder name
+					std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+
+					// Action to perform after selection
+					std::cout << filePath << std::endl;
+					setDefaultFolderPathCb(filePath);
+				}
+				ImGuiFileDialog::Instance()->Close();
+			}
+
+        } else if (settingsSection == 1) {
+			// text label that displays rebind status
+			ImGui::Text("Click a button, then press a key to rebind.");
+			if (isWaitingForRebindCb && isWaitingForRebindCb()) {
+				ImGui::SeparatorText("Press any key...");
+			}
+			else {
+				ImGui::SeparatorText("");
+			}
+
+            auto hotkeyLabel = [this](InputAction action) { 
+                return getHotkeyLabelCb ? getHotkeyLabelCb(action) : std::string{};
+            };
+            auto triggerRebind = [this](InputAction action) { 
+                if (startRebindCb) startRebindCb(action); 
+            };
+            auto ShortcutRow = [&](const char* name, InputAction action) {
+                ImGui::Text("%s", name);
+                ImGui::SameLine(180);
+                if (ImGui::Button(hotkeyLabel(action).c_str()))
+                    triggerRebind(action);
+            };
+
+            ShortcutRow("Rotate", InputAction::setRotate);
+            ShortcutRow("Pan", InputAction::setPan);
+            ShortcutRow("Draw", InputAction::setDraw);
+            ShortcutRow("Fill", InputAction::setFill);
+            ShortcutRow("Erase", InputAction::setErase);
+            ShortcutRow("Undo", InputAction::undo);
+            ShortcutRow("Redo", InputAction::redo);
+            ShortcutRow("Zoom In", InputAction::setClickZoomIn);
+            ShortcutRow("Zoom Out", InputAction::setClickZoomOut);
+            ShortcutRow("Center Canvas", InputAction::resetView);
+            ShortcutRow("Color Picker", InputAction::setColor);
+
+        } else if (settingsSection == 2) {
+			// only show canvas settings if there is an active canvas
+			if (canvasManager.hasActive()) {
+				ImGui::Text("Canvas related settings: Canvas behavior, animation settings, etc.");
+				static bool changePaperColor = false;
+				if (ImGui::Button("Change Paper Color")) {
+					changePaperColor = true;
+				}
+				if (changePaperColor) {
+					ImGuiColorEditFlags flags = ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoInputs;
+					static ImVec4 paperColor = { 1.0f, 1.0f, 1.0f, 1.0f }; // default white
+					ImGui::SetNextItemWidth(180.0f);
+					ImGui::ColorPicker4("##papercolorpicker", (float*)&paperColor, flags);
+					if (ImGui::Button("Apply")) {
+						canvasManager.setPaperColor(paperColor);
+						changePaperColor = false;
+					}
+				}
+			} else {
+				ImGui::Text("Canvas settings will appear here when a canvas is open.");
+			}
+		}
+
+        ImGui::Columns(1);
+        ImGui::EndChild();
+
+        // Separator and Close button at the bottom
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        if (ImGui::Button("Close", ImVec2(-1, 0))) { // -1 width = full width
+            showSettingsPopup = false;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
 }
 
 

@@ -1,16 +1,6 @@
 
 #include "AppController.h"
 
-#include "Window.h"
-#include "Renderer.h"
-#include "UI.h"
-#include "Globals.h"
-#include "CanvasManager.h"
-#include "BrushManager.h"
-#include "DrawEngine.h"
-#include "FrameRenderer.h"
-
-#include "InputManager.h"
 #include "CanvasManipulation.h"
 
 #include <algorithm>
@@ -79,6 +69,17 @@ bool AppController::init()
 		[this](InputAction action) { startRebind(action); },
 		[this]() { return isWaitingForRebind(); },
 		[this]() { return didRebindFail(); }
+	);
+
+	// Bind recent activity callbacks
+	ui.bindRecentActivityCallbacks(
+		[this](const std::string& filePath) { addFileToRecentActivity(filePath); },
+		[this]() -> const std::vector<std::string>& { return getRecentActivity(); }
+	);
+
+	ui.bindDefaultFolderPathCallback(
+		[this]() { return appState.getDefaultFolderPath().string(); },
+		[this](const std::string& filePath) { appState.setDefaultFolderPath(std::filesystem::path(filePath)); }
 	);
 
 	// Bind raw mouse input streams from InputManager into controller handlers.
@@ -152,7 +153,7 @@ void AppController::run()
 		// Render the canvas, the UI, and then clear stuff and swap buffers.
 		// The order of these next four methods must not change
 		renderer.beginFrame(canvasManager);
-		ui.draw(canvasManager, frameRenderer);
+		ui.drawUI(canvasManager, frameRenderer);
 		renderer.endFrame();
 		inputManager.update();
 
@@ -166,15 +167,18 @@ void AppController::run()
 Shuts down the UI, renderer, and the window.
 */
 void AppController::shutdown() {
-	auto& frameRenderer = appState.getFrameRenderer();
-	auto& ui = appState.getUI();
-	auto& renderer = appState.getRenderer();
-	auto& window = appState.getWindow();
+	appState.shutdown();
+}
 
-	frameRenderer.shutdown();
-	ui.shutdown();
-	renderer.shutdown();
-	window.destroy();
+void AppController::addFileToRecentActivity(const std::string& filePath)
+{
+	appState.addFileToRecentActivity(filePath);
+	appState.saveRecentActivity();  // Persist the change immediately
+}
+
+const std::vector<std::string>& AppController::getRecentActivity()
+{
+	return appState.getRecentActivity();
 }
 
 void AppController::loadBrush(const std::string& path)

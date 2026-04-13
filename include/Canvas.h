@@ -7,13 +7,24 @@
 #include <glm/glm.hpp>
 
 struct Color {
-	unsigned char r, g, b, a;
+    unsigned char r, g, b, a;
+
+    /*
+    Equality operator overload for Color datatype. 
+
+    Is true if rgba values are equal for both Colors. 
+    */
+    bool operator==(const Color& other) const {
+        return (r == other.r) && (g == other.g) && (b == other.b)  && (a == other.a);
+    }
 };
 
 struct Pixel {
-	int index;
-	Color before;
-	Color after;
+    int index;
+    Color before;
+    Color after;
+    bool wasEditedBefore;
+    bool wasEditedAfter;
 };
 
 struct StrokePath {
@@ -38,9 +49,8 @@ public:
 	const Color* getData() const;
 	const std::vector<std::vector<Color>>& getLayerData() const;
 
-	friend bool operator==(const Color& c2, const Color& c1);
-	friend bool operator!=(const Color& c2, const Color& c1);
-	friend Color operator*(const Color& c2, const Color& c1);
+    friend bool operator!=(const Color& c2, const Color& c1);
+    friend Color operator*(const Color& c2, const Color& c1);
 
 	bool colorEquals(const Color& c2, const Color& c1);
 	const Color colorTimes(const Color& c2, const Color& c1);
@@ -77,18 +87,30 @@ public:
 	bool canUndo() const;
 	bool canRedo() const;
 	void loadImage(unsigned char* data, int layerIndex);
+    
+    void setBackgroundColor(const Color& color); // sets the background color of the canvas
 
-private:
-	// canvas settings
-	std::string canvasName;
-	int width, height;
-	bool isAnimation;
-	int numLayers;
-	int curLayer;
-	Color backgroundColor = { 255, 255, 255, 255 };
-	// this color is hard coded, this is what we want to allow users to change 
-	// upon canvas creation
-	Color emptyColor = { 0, 0, 0, 0 };
+    bool canUndo() const;
+    bool canRedo() const;
+    void loadImage(unsigned char* data, int layerIndex);
+
+    bool isAnimation() const { return animationTemplate; }
+    void loadAnimTemplate();
+
+    private:
+        // canvas settings
+        std::string canvasName;
+        int width, height;
+        int numLayers;
+        int curLayer;
+        Color backgroundColor = {255, 255, 255, 255};
+        Color emptyColor = {0, 0, 0, 0};
+
+        std::vector<bool> editedPixels;
+
+        // RGBA pixel data
+        std::vector<Color> pixels;
+        std::vector<std::vector<Color>> layerData;
 
 	// RGBA pixel data
 	std::vector<Color> pixels;
@@ -108,4 +130,6 @@ private:
 	std::vector<int> seenPixels;
 	int currentStrokeIndex;
 
+    // variable to state if the canvas should be using the animation template or not
+    bool animationTemplate = false;
 };
