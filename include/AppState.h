@@ -44,6 +44,8 @@ public:
 
     const std::filesystem::path& getDefaultFolderPath() const { return defaultFolderPath; }
     void setDefaultFolderPath(const std::filesystem::path& path) { defaultFolderPath = path; }
+    void saveDefaultFolderPath();
+    void loadDefaultFolderPath();
 
     void addFileToRecentActivity(const std::string& filePath);
     const std::vector<std::string>& getRecentActivity();

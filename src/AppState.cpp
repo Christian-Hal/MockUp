@@ -34,6 +34,8 @@ void AppState::init()
     // initialize and load recent activity list
     recentActivity = std::vector<std::string>();
     loadRecentActivity();
+
+    loadDefaultFolderPath();
 }
 
 void AppState::shutdown()
@@ -45,8 +47,10 @@ void AppState::shutdown()
 	inputManager.shutdown();
 	window.destroy();
 
-    // save recent activity to file
+    // save information to files
+    saveDefaultFolderPath();
     saveRecentActivity();
+
 }
 
 Window& AppState::getWindow() { return window; }
@@ -130,6 +134,44 @@ void AppState::saveRecentActivity()
         for (const std::string& filePath : recentActivity) {
             file << filePath << std::endl;
         }
+        file.close();
+    }
+    else {
+        std::cout << "Unable to open recent activity file for writing" << std::endl;
+    }
+}
+
+void AppState::loadDefaultFolderPath()
+{
+    // path to the file containing the default folder path in assets folder
+    std::filesystem::path filePath = "assets/default_folder_path.txt";
+
+    // if the file exists
+    if (std::filesystem::exists(filePath)) 
+    { 
+        std::ifstream file(filePath);
+        if (file.is_open()) {
+            std::string line;
+            if (std::getline(file, line)) {
+                setDefaultFolderPath(line);
+            }
+            file.close();
+        }
+        else {
+            std::cout << "Unable to open default folder path file" << std::endl;
+        }
+    } 
+}
+
+void AppState::saveDefaultFolderPath()
+{
+    // path to the file containing the default folder path in assets folder
+    std::filesystem::path filePath = "assets/default_folder_path.txt";
+
+    // open the file and write the default folder path to it
+    std::ofstream file(filePath);
+    if (file.is_open()) {
+        file << defaultFolderPath.string() << std::endl;
         file.close();
     }
     else {
