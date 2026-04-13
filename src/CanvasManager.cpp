@@ -66,12 +66,12 @@ void CanvasManager::closeCanvas(int index)
     if (activeCanvasIndex == index)
         activeCanvasIndex = std::min(index, (int)canvases.size() - 1);
 
-    // 
+    // for the instance that he canvas being closed was one earlier down the vector with a lower index
+    // we dont need an if the index was higher since the activeCanvasIndex would not change
     else if (index < activeCanvasIndex)
         activeCanvasIndex--;
 
-    // 5. Sync FrameRenderer to the new active canvas
-    //    Manually set curCanvas to match the (now reindexed) folder
+  
     FrameRenderer::curCanvas = activeCanvasIndex + 1;
     FrameRenderer::curFrame = 1;
 
@@ -327,9 +327,14 @@ void CanvasManager::saveORA(const std::string& path)
 
     
     mz_zip_archive zip{};
-    mz_zip_writer_init_file(&zip, path.c_str(), 0);
+    if (!mz_zip_writer_init_file(&zip, path.c_str(), 0))
+    {
+        std::cout << "Failed to create ORA file\n";
+        std::filesystem::remove_all("ora_temp");
+        return;
+    }
 
-    mz_zip_writer_add_file(&zip, "mimetype", "ora_temp/mimetype", NULL, 0, 0);
+    mz_zip_writer_add_file(&zip, "mimetype", "ora_temp/mimetype", NULL, 0, MZ_NO_COMPRESSION);
     mz_zip_writer_add_file(&zip, "stack.xml", "ora_temp/stack.xml", NULL, 0, 0);
     mz_zip_writer_add_file(&zip, "mergedimage.png", "ora_temp/mergedimage.png", NULL, 0, 0);
 
@@ -347,6 +352,8 @@ void CanvasManager::saveORA(const std::string& path)
     std::filesystem::remove_all("ora_temp");
 }
 
+
+
 void CanvasManager::loadORA(const std::string& path)
 {
     mz_zip_archive zip{};
@@ -357,12 +364,9 @@ void CanvasManager::loadORA(const std::string& path)
         return;
     }
 
-    // creating temporary folder for files
     std::filesystem::create_directory("ora_load");
 
-    // extracing the files from the zip
     int fileNum = mz_zip_reader_get_num_files(&zip);
-
     for (int i = 0; i < fileNum; i++)
     {
         mz_zip_archive_file_stat file_stat;
@@ -371,9 +375,7 @@ void CanvasManager::loadORA(const std::string& path)
         std::string outPath = "ora_load/" + std::string(file_stat.m_filename);
 
         if (mz_zip_reader_is_file_a_directory(&zip, i))
-        {
             std::filesystem::create_directories(outPath);
-        }
         else
         {
             std::filesystem::create_directories(std::filesystem::path(outPath).parent_path());
@@ -383,72 +385,134 @@ void CanvasManager::loadORA(const std::string& path)
 
     mz_zip_reader_end(&zip);
 
-    // reading stack.xml file
     std::ifstream xml("ora_load/stack.xml");
-
     std::string line;
     int width = 0, height = 0;
-    std::vector<std::string> layerPaths;
+
+    // store src path + x/y offset per layer
+    struct LayerEntry {
+        std::string path;
+        std::string name;
+        int x = 0;
+        int y = 0;
+    };
+    std::vector<LayerEntry> layers;
+
+    auto readAttr = [](const std::string& line, const std::string& attr) -> std::string {
+        std::string search = " " + attr + "=\"";
+        size_t pos = line.find(search);
+        if (pos == std::string::npos) return "";
+        pos += search.size();
+        size_t end = line.find("\"", pos);
+        if (end == std::string::npos) return "";
+        return line.substr(pos, end - pos);
+        };
 
     while (std::getline(xml, line))
     {
         if (line.find("<image") != std::string::npos)
         {
-            size_t wPos = line.find("w=\"");
-            size_t hPos = line.find("h=\"");
-
-            if (wPos != std::string::npos && hPos != std::string::npos)
-            {
-                width = std::stoi(line.substr(wPos + 3, line.find("\"", wPos + 3) - (wPos + 3)));
-                height = std::stoi(line.substr(hPos + 3, line.find("\"", hPos + 3) - (hPos + 3)));
-            }
+            std::string w = readAttr(line, "w");
+            std::string h = readAttr(line, "h");
+            if (!w.empty()) width = std::stoi(w);
+            if (!h.empty()) height = std::stoi(h);
         }
 
         if (line.find("<layer") != std::string::npos)
         {
-            size_t pos = line.find("src=\"");
-            if (pos != std::string::npos)
+            std::string src = readAttr(line, "src");
+            std::string x = readAttr(line, "x");
+            std::string y = readAttr(line, "y");
+            std::string name = readAttr(line, "name");
+
+            if (!src.empty())
             {
-                pos += 5;
-                size_t end = line.find("\"", pos);
-                layerPaths.push_back(line.substr(pos, end - pos));
+                LayerEntry entry;
+                entry.path = "ora_load/" + src;
+                entry.name = name;
+                entry.x = x.empty() ? 0 : std::stoi(x);
+                entry.y = y.empty() ? 0 : std::stoi(y);
+                layers.push_back(entry);
             }
         }
     }
 
     xml.close();
 
-    if (width == 0 || height == 0 || layerPaths.empty())
+    if (width == 0 || height == 0 || layers.empty())
     {
         std::cout << "Invalid ORA file\n";
+        std::filesystem::remove_all("ora_load");
         return;
     }
 
     std::string name = std::filesystem::path(path).stem().string();
     Canvas& canvas = createCanvas(width, height, name);
 
-    // creating correct number of layers
-    while (canvas.getNumLayers() < layerPaths.size())
-    {
+    std::cout << "Layer count after createCanvas: " << canvas.getNumLayers() << "\n";
+    std::cout << "Layers in ORA file: " << layers.size() << "\n";
+
+    while (canvas.getNumLayers() < (int)layers.size())
         canvas.createLayer();
+
+    for (int i = 0; i < (int)layers.size(); i++)
+    {
+        const LayerEntry& entry = layers[i];
+
+        int targetLayer;
+        if (entry.name == "Background")
+            targetLayer = 0;
+        else
+            targetLayer = (int)layers.size() - 1 - i;
     }
 
-    stbi_set_flip_vertically_on_load(true);
+    
 
-    // loading the layer images into the layers
-    for (int i = 0; i < layerPaths.size(); i++)
+    for (int i = 0; i < (int)layers.size(); i++)
     {
-        int targetLayer = layerPaths.size() - 1 - i;
-        std::string fullPath = "ora_load/" + layerPaths[i];
+        int targetLayer = (int)layers.size() - 1 - i;
+        const LayerEntry& entry = layers[i];
 
         int w, h, ch;
-        unsigned char* data = stbi_load(fullPath.c_str(), &w, &h, &ch, 4);
+        unsigned char* data = stbi_load(entry.path.c_str(), &w, &h, &ch, 4);
+        if (!data)
+        {
+            std::cout << "Warning: failed to load layer: " << entry.path << "\n";
+            continue;
+        }
 
-        canvas.loadImage(data, targetLayer);
+        // load into a full-canvas-sized buffer, placing the image at x/y offset
+        // ORA y is from top, canvas y is from bottom so we flip it
+        std::vector<unsigned char> fullCanvas(width * height * 4, 0);
+
+        for (int row = 0; row < h; row++)
+        {
+            for (int col = 0; col < w; col++)
+            {
+                int srcX = col;
+                int srcY = row;
+
+                int dstX = entry.x + col;
+                // flip y: ORA counts from top, our canvas from bottom
+                int dstY = height - 1 - (entry.y + row);
+
+                if (dstX < 0 || dstX >= width || dstY < 0 || dstY >= height)
+                    continue;
+
+                int srcIdx = (srcY * w + srcX) * 4;
+                int dstIdx = (dstY * width + dstX) * 4;
+
+                fullCanvas[dstIdx + 0] = data[srcIdx + 0];
+                fullCanvas[dstIdx + 1] = data[srcIdx + 1];
+                fullCanvas[dstIdx + 2] = data[srcIdx + 2];
+                fullCanvas[dstIdx + 3] = data[srcIdx + 3];
+            }
+        }
+
         stbi_image_free(data);
+        canvas.loadImage(fullCanvas.data(), targetLayer);
     }
 
     stbi_set_flip_vertically_on_load(false);
-
     std::filesystem::remove_all("ora_load");
 }
