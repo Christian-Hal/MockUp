@@ -350,9 +350,9 @@ void UI::drawUI(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 
 	// compute the panel sizes
 	if (TopSize == 0) { TopSize = 20; }
-	if (BotSize == 0) { BotSize = static_cast<int>(0.05 * h); }
-	if (LeftSize == 0) { LeftSize = static_cast<int>(0.1 * w); }
-	if (RightSize == 0) { RightSize = static_cast<int>(0.1 * w); }
+	if (BotSize == 0) { BotSize = static_cast<int>(0.05 * displayHeight); }
+	if (LeftSize == 0) { LeftSize = static_cast<int>(0.1 * displayWidth); }
+	if (RightSize == 0) { RightSize = static_cast<int>(0.1 * displayWidth); }
 
 	// ----- Call the various popup draws so they get drawn when needed -----
 	drawNewCanvasPopup(canvasManager); 	// draw the new canvas pop up
@@ -798,7 +798,7 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	// initialize the panel
 	ImGui::SetNextWindowPos(ImVec2(0, TopSize), ImGuiCond_Always); // line that needs to change to make it fit MainMenuBar
-	ImGui::SetNextWindowSize(ImVec2(LeftSize, h), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(LeftSize, displayHeight - TopSize), ImGuiCond_Always);
 	ImGui::Begin("Left Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
 	/////// add widgets here ///////
@@ -1116,7 +1116,7 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 
 		style.FramePadding = ImVec2(6, 12); 
 		style.FrameRounding = 2.0f;
-		ImGui::SetNextItemWidth(w - (LeftSize + RightSize * 1.1));
+		ImGui::SetNextItemWidth(displayWidth - (LeftSize + RightSize * 1.1));
 		// Save old color
 		ImVec4 old_color = style.Colors[ImGuiCol_SliderGrab];
 
@@ -1236,14 +1236,10 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 	// want to also add canvas size presets as a map accessed from a combo 
 	//static 
 
-	if (showCanvasCreationPopup) {
+	if (showNewCanvasPopup) {
 		ImGui::OpenPopup("New");
 	static std::string temp_n = "Untitled";
 	static bool isAnimation = false;
-
-	if (showNewCanvasPopup) {
-		ImGui::OpenPopup("New Canvas");
-	}
 
 	// specifying canvas size 
 	if (ImGui::BeginPopupModal("New", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
