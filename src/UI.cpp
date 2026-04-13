@@ -282,6 +282,11 @@ void UI::init(GLFWwindow* window, Renderer& rendInst, Globals& g_inst) {
 
 	// storing window for user input 
 	windowStorage = window;
+
+	// set initial visibility of UI elements
+	for (UIElement e : elements) {
+		elementVisibility[e] = true;
+	} 
 }
 
 
@@ -322,14 +327,23 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 	// ----- Cursor Customization -----
 	drawCustomCursor(canvasManager);
 
-	// draw the four main menu panels
+	// draw the UI elements only if showPanels is true
 	if (showPanels) {
-		drawLeftPanel(canvasManager);
-		drawRightPanel(canvasManager);
-		drawBottomPanel(canvasManager, frameRenderer);
+		// if in default mode draw only the default panels
+		if (uiMode == UIMode::Default) {
+			drawLeftPanel(canvasManager);
+			drawRightPanel(canvasManager);
+			drawBottomPanel(canvasManager, frameRenderer);
+		}
+		// if in modular mode then draw the individual elements based on their visibility
+		else if (uiMode == UIMode::Modular) {
+			if (elementVisibility[UIElement::colorWheel]) { drawColorWindow(canvasManager); }
+			if (elementVisibility[UIElement::brushSizeSlider]) { drawBrushSizeWindow(canvasManager); }
+			if (elementVisibility[UIElement::brushSelection]) { }
+			if (elementVisibility[UIElement::cursorModeButtons]) { }
+			if (elementVisibility[UIElement::animationTimeline]) { }
+		}
 	}
-
-	drawColorWindow(canvasManager); 
 
 	// top panel drawn regardless of input 
 	//drawTopPanel(canvasManager);
@@ -875,6 +889,37 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 					".png, .jpg, .ora"
 				);
 			}
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Window")) {
+			ImGui::PushItemFlag(ImGuiItemFlags_AutoClosePopups, false);
+			
+			// toggle between default and modular UI modes
+			if (ImGui::MenuItem("Default UI", nullptr, uiMode == UIMode::Default)) {
+				uiMode = UIMode::Default;
+			}
+			if (ImGui::MenuItem("Modular UI", nullptr, uiMode == UIMode::Modular)) {
+				uiMode = UIMode::Modular;
+			}
+			
+			// set visibility of individual elements
+			if (ImGui::MenuItem("Color Wheel", nullptr, elementVisibility[UIElement::colorWheel])) {
+				elementVisibility[UIElement::colorWheel] = !elementVisibility[UIElement::colorWheel];
+			}
+			if (ImGui::MenuItem("Brush Size", nullptr, elementVisibility[UIElement::brushSizeSlider])) {
+				elementVisibility[UIElement::brushSizeSlider] = !elementVisibility[UIElement::brushSizeSlider];
+			}
+			if (ImGui::MenuItem("Brush Selection", nullptr, elementVisibility[UIElement::brushSelection])) {
+				elementVisibility[UIElement::brushSelection] = !elementVisibility[UIElement::brushSelection];
+			}
+			if (ImGui::MenuItem("Cursor Mode Buttons", nullptr, elementVisibility[UIElement::cursorModeButtons])) {
+				elementVisibility[UIElement::cursorModeButtons] = !elementVisibility[UIElement::cursorModeButtons];
+			}
+			if (ImGui::MenuItem("Animation Timeline", nullptr, elementVisibility[UIElement::animationTimeline])) {
+				elementVisibility[UIElement::animationTimeline] = !elementVisibility[UIElement::animationTimeline];
+			}
+
+			ImGui::PopItemFlag();
 			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Shortcuts")) {

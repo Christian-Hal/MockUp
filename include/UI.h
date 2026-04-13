@@ -17,6 +17,31 @@
 
 #include "CursorMode.h"
 
+// enum for keeping track of default / modular UI state
+enum class UIMode {
+	Default,
+	Modular
+};
+
+// enum for all of the different UI elements
+enum class UIElement
+{
+    colorWheel,
+    brushSizeSlider,
+	brushSelection,
+	cursorModeButtons,
+	animationTimeline,
+};
+
+// this creates a list of the elements that we can interate through
+constexpr UIElement elements[] = {
+    UIElement::colorWheel,
+    UIElement::brushSizeSlider,
+    UIElement::brushSelection,
+    UIElement::cursorModeButtons,
+    UIElement::animationTimeline,
+};
+
 class UI {
 
 public:
@@ -68,9 +93,11 @@ private:
 	BoolCallback isWaitingForRebindCb;
 	BoolCallback didRebindFailCb;
 	ResetCanvasPositionCallback resetCanvasPositionCb;
-
 	GenerateBrushDabCallback generateDabCb;
 
+	// keeps track of the elements and their visibility
+	std::unordered_map<UIElement, bool> elementVisibility;
+	UIMode uiMode = UIMode::Default;
 
 	void drawCustomCursor(CanvasManager& canvasManager);
 	void drawLeftPanel(CanvasManager& canvasManager);
