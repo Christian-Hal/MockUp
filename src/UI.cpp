@@ -19,6 +19,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include "IconsFontAwesome6.h"
+
 
 std::string overwritePath;
 
@@ -280,6 +282,37 @@ void UI::init(GLFWwindow* window, Renderer& rendInst, Globals& g_inst) {
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 330 core");
 
+	// ---- premade stuff to load fonts ----
+	ImGuiIO& io = ImGui::GetIO();
+
+	// Load default font
+	io.Fonts->AddFontDefault();
+
+	// Setup icon merge
+	ImFontConfig config;
+	config.MergeMode = true;
+	config.PixelSnapH = true;
+
+	// Define icon range
+	static const ImWchar ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+
+	// loading font and setting size 
+	ImFont* font = io.Fonts->AddFontFromFileTTF(
+		"fa-solid-900.ttf", // possible pain point for Gavin
+		16.0f,
+		&config,
+		ranges
+	);
+
+	if (!font) {
+		printf("Font load failed!\n");
+	}
+
+	// Build atlas ONCE
+	io.Fonts->Build();
+
+
+
 	// storing window for user input 
 	windowStorage = window;
 
@@ -491,35 +524,35 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	}
 
 	// buttons that change the current cursor mode
-	if (ImGui::Button("Draw")) {
+	if (ImGui::Button(ICON_FA_PEN)) {
 		setCursorMode(CursorMode::Draw);
 	}
 
-	if (ImGui::Button("Fill")) {
+	if (ImGui::Button(ICON_FA_FILL_DRIP)) {
 		setCursorMode(CursorMode::Fill);
 	}
 
-	if (ImGui::Button("Erase")) {
+	if (ImGui::Button(ICON_FA_ERASER)) {
 		setCursorMode(CursorMode::Erase);
 	}
 
-	if (ImGui::Button("Pan")) {
+	if (ImGui::Button(ICON_FA_HAND)) {
 		setCursorMode(CursorMode::Pan);
 	}
 
-	if (ImGui::Button("Rotate")) {
+	if (ImGui::Button(ICON_FA_ARROWS_ROTATE)) {
 		setCursorMode(CursorMode::Rotate);
 	}
 
-	if (ImGui::Button("Zoom In")) {
+	if (ImGui::Button(ICON_FA_MAGNIFYING_GLASS_PLUS)) {
 		setCursorMode(CursorMode::ZoomIn);
 	}
 
-	if (ImGui::Button("Zoom Out")) {
+	if (ImGui::Button(ICON_FA_MAGNIFYING_GLASS_MINUS)) {
 		setCursorMode(CursorMode::ZoomOut);
 	}
 
-	if (ImGui::Button("Color Picker")) {
+	if (ImGui::Button(ICON_FA_EYE_DROPPER)) {
 		setCursorMode(CursorMode::ColorPick);
 	}
 
@@ -1299,35 +1332,35 @@ void UI::drawCursorModesWindow(CanvasManager& canvasManager) {
 	}
 
 	// buttons that change the current cursor mode
-	if (ImGui::Button("Draw")) {
+	if (ImGui::Button(ICON_FA_PEN)) {
 		setCursorMode(CursorMode::Draw);
 	}
 
-	if (ImGui::Button("Fill")) {
+	if (ImGui::Button(ICON_FA_FILL_DRIP)) {
 		setCursorMode(CursorMode::Fill);
 	}
 
-	if (ImGui::Button("Erase")) {
+	if (ImGui::Button(ICON_FA_ERASER)) {
 		setCursorMode(CursorMode::Erase);
 	}
 
-	if (ImGui::Button("Pan")) {
+	if (ImGui::Button(ICON_FA_HAND)) {
 		setCursorMode(CursorMode::Pan);
 	}
 
-	if (ImGui::Button("Rotate")) {
+	if (ImGui::Button(ICON_FA_ARROWS_ROTATE)) {
 		setCursorMode(CursorMode::Rotate);
 	}
 
-	if (ImGui::Button("Zoom In")) {
+	if (ImGui::Button(ICON_FA_MAGNIFYING_GLASS_PLUS)) {
 		setCursorMode(CursorMode::ZoomIn);
 	}
 
-	if (ImGui::Button("Zoom Out")) {
+	if (ImGui::Button(ICON_FA_MAGNIFYING_GLASS_MINUS)) {
 		setCursorMode(CursorMode::ZoomOut);
 	}
 
-	if (ImGui::Button("Color Picker")) {
+	if (ImGui::Button(ICON_FA_EYE_DROPPER)) {
 		setCursorMode(CursorMode::ColorPick);
 	}
 
