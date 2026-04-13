@@ -109,4 +109,5 @@ private:
 	void drawBrushSizeWindow(CanvasManager& canvasManager); 
 	void drawLayersWindow(CanvasManager& canvasManager);
 	void drawBrushesWindow(CanvasManager& canvasManager);
+	void drawCursorModesWindow(CanvasManager& canvasManager);
 };

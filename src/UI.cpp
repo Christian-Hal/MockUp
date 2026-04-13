@@ -340,7 +340,7 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 			if (elementVisibility[UIElement::colorWheel]) { drawColorWindow(canvasManager); }
 			if (elementVisibility[UIElement::brushSizeSlider]) { drawBrushSizeWindow(canvasManager); }
 			if (elementVisibility[UIElement::brushSelection]) { drawBrushesWindow(canvasManager); }
-			if (elementVisibility[UIElement::cursorModeButtons]) { }
+			if (elementVisibility[UIElement::cursorModeButtons]) { drawCursorModesWindow(canvasManager); }
 			if (elementVisibility[UIElement::animationTimeline]) { }
 		}
 	}
@@ -527,7 +527,7 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	ImGui::Separator();
 	ImGui::Spacing();
 
-	if (canvasManager.hasActive()) {
+	if (canvasManager.hasActive() && canvasManager.getActive().getIsAnimation()) {
 		if (ImGui::Button("Toggle Onion Skins")) {
 			FrameRenderer::removeOnionSkin(canvasManager.getActive());
 			FrameRenderer::toggleOnionSkin();
@@ -1060,7 +1060,7 @@ void UI::drawColorWindow(CanvasManager& canvasManager) {
 		ImGuiWindowFlags_AlwaysAutoResize;
 
 	ImGui::Text("Color"); 
-	ImGui::Separator(); 
+	//ImGui::Separator(); 
 
 	ImGui::ColorPicker4("##ColorPicker", color, flags); 
 
@@ -1192,6 +1192,101 @@ void UI::drawBrushesWindow(CanvasManager& canvasManager) {
 			if (setActiveBrushCb) {
 				setActiveBrushCb(i);
 			}
+		}
+	}
+	ImGui::End();
+}
+
+void UI::drawCursorModesWindow(CanvasManager& canvasManager) {
+	ImGui::Begin("CursorModes");
+	/////// add widgets here ///////
+	// text label that displays current cursor mode
+	if (getCursorMode() == CursorMode::Draw) {
+		ImGui::Text("State: Draw");
+	}
+
+	else if (getCursorMode() == CursorMode::Fill) {
+		ImGui::Text("State: Fill");
+	}
+
+	else if (getCursorMode() == CursorMode::Erase) {
+		ImGui::Text("State: Erase");
+	}
+
+	else if (getCursorMode() == CursorMode::ZoomIn) {
+		ImGui::Text("State: Zoom In");
+	}
+
+	else if (getCursorMode() == CursorMode::ZoomOut) {
+		ImGui::Text("State: Zoom Out");
+	}
+
+	else if (getCursorMode() == CursorMode::Rotate) {
+		ImGui::Text("State: Rotate");
+	}
+
+	else if (getCursorMode() == CursorMode::Pan) {
+		ImGui::Text("State: Pan");
+	}
+
+	else if (getCursorMode() == CursorMode::ColorPick) {
+		ImGui::Text("State: Color Pick");
+	}
+
+	// text label that displays rebind status
+	if (isWaitingForRebindCb && isWaitingForRebindCb())
+	{
+		ImGui::Text("Press any key...");
+	}
+
+	if (didRebindFailCb && didRebindFailCb())
+	{
+		ImGui::TextColored(ImVec4(1, 0, 0, 1), "Key already bound!");
+	}
+
+	// buttons that change the current cursor mode
+	if (ImGui::Button("Draw")) {
+		setCursorMode(CursorMode::Draw);
+	}
+
+	if (ImGui::Button("Fill")) {
+		setCursorMode(CursorMode::Fill);
+	}
+
+	if (ImGui::Button("Erase")) {
+		setCursorMode(CursorMode::Erase);
+	}
+
+	if (ImGui::Button("Pan")) {
+		setCursorMode(CursorMode::Pan);
+	}
+
+	if (ImGui::Button("Rotate")) {
+		setCursorMode(CursorMode::Rotate);
+	}
+
+	if (ImGui::Button("Zoom In")) {
+		setCursorMode(CursorMode::ZoomIn);
+	}
+
+	if (ImGui::Button("Zoom Out")) {
+		setCursorMode(CursorMode::ZoomOut);
+	}
+
+	if (ImGui::Button("Color Picker")) {
+		setCursorMode(CursorMode::ColorPick);
+	}
+
+	// adds a little visual split between sections
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	if (canvasManager.hasActive() && canvasManager.getActive().getIsAnimation()) {
+		if (ImGui::Button("Toggle Onion Skins")) {
+			FrameRenderer::removeOnionSkin(canvasManager.getActive());
+			FrameRenderer::toggleOnionSkin();
+			FrameRenderer::updateOnionSkin(canvasManager.getActive());
 		}
 	}
 	ImGui::End();
