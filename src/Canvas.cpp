@@ -12,7 +12,7 @@
 Canvas::Canvas() : width(0), height(0), numLayers(0), curLayer(0), pixels(), layerData(), canvasName("") {}
 Canvas::Canvas(int w, int h, std::string name, bool isAnimation) : width(w), height(h), 
                     numLayers(2), curLayer(1), pixels(w * h, backgroundColor), 
-                    canvasName(name), currentStrokeIndex(-1), seenPixels(w * h, -1), animationTemplate(isAnimation)
+                    canvasName(name), currentStrokeIndex(-1), seenPixels(w * h, -1), animationTemplate(isAnimation), editedPixels(w * h, false)
 {
     // Initialize layerData before loading animation
     layerData.push_back(std::vector<Color>(w * h, backgroundColor));
@@ -34,6 +34,22 @@ Canvas::Canvas(int w, int h, std::string name, bool isAnimation) : width(w), hei
             std::cout << "stbi error: " << stbi_failure_reason() << std::endl;
         }
     }
+}
+
+void Canvas::setBackgroundColor(const Color& color)
+{
+    for (int i = 0; i < width * height; i++)
+    {
+        if (layerData[0][i] == backgroundColor) {
+            layerData[0][i] = color;
+
+            if (editedPixels[i] == false) {
+                pixels[i] = color; 
+            }
+        }
+    }
+
+    backgroundColor = color;
 }
 
 // Undo and Redo stuff
@@ -67,6 +83,7 @@ void Canvas::endStrokeRecord()
     for (Pixel& p : activeStroke.pixels)
     {
         p.after = layerData[activeStroke.layerNum][p.index];
+        p.wasEditedAfter = editedPixels[p.index];
     }
 
     // if the active stroke isn't empty then push it to the Undo stack
@@ -105,6 +122,7 @@ void Canvas::undo()
     for (Pixel p : stroke.pixels)
     {
         resetPixel(p.index, p.before);
+        editedPixels[p.index] = p.wasEditedBefore;
     }
 
     // move back to the real current layer
@@ -132,6 +150,7 @@ void Canvas::redo()
     for (Pixel p : stroke.pixels)
     {
         resetPixel(p.index, p.after);
+        editedPixels[p.index] = p.wasEditedAfter;
     }
 
     // move back to the real current layer
@@ -188,17 +207,6 @@ const Color* Canvas::getData() const {
 const std::vector<std::vector<Color>>& Canvas::getLayerData() const {
     return layerData;
 }
-
-/*
-    Equality operator overload for Color datatype. 
-
-    Is true if rgba values are equal for both Colors. 
-*/
-bool operator==(const Color& c2, const Color& c1)
-{
-    return (c1.r == c2.r) && (c1.g == c2.g) && (c1.b == c2.b)  && (c1.a == c2.a);
-}
-
 
 /*
     Inequality operator overload for Color datatype.
@@ -286,6 +294,7 @@ void Canvas::setPixel(int x, int y, const Color& color)
 
     // fit the color into the layerData vector so it can be accessed later
     layerData[curLayer][index] = color;
+    editedPixels[index] = true;
 
     // initialize the background color for later use in the for loop
     Color col = layerData[0][index];
@@ -396,6 +405,7 @@ void Canvas::blendPixel(int x, int y, const Color& src, float brushAlpha) {
     Color out = layerColor * srcColor;
 
     layerData[curLayer][index] = out; 
+    editedPixels[index] = true;
 
     // initialize the background color for later use in the for loop
     Color col = layerData[0][index];

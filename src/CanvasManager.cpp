@@ -30,6 +30,31 @@ Canvas& CanvasManager::createCanvas(int width, int height, std::string name, boo
     return *activeCanvas;
 }
 
+ImVec4 CanvasManager::getPaperColor()
+{
+    if (!activeCanvas) {
+        return ImVec4(1.0f, 1.0f, 1.0f, 1.0f); // default white
+    }
+    Color bgColor = activeCanvas->getBackgroundColor();
+    return ImVec4(bgColor.r / 255.0f, bgColor.g / 255.0f, bgColor.b / 255.0f, bgColor.a / 255.0f);
+}
+
+void CanvasManager::setPaperColor(const ImVec4& color)
+{
+    if (!activeCanvas) {
+        return;
+    }
+
+    Color bgColor = {
+        static_cast<unsigned char>(color.x * 255.0f),
+        static_cast<unsigned char>(color.y * 255.0f),
+        static_cast<unsigned char>(color.z * 255.0f),
+        static_cast<unsigned char>(color.w * 255.0f)
+    };
+
+    activeCanvas->setBackgroundColor(bgColor);
+}
+
 void CanvasManager::undo()
 {
     if (!activeCanvas) {

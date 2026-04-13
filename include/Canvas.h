@@ -8,12 +8,23 @@
 
 struct Color {
     unsigned char r, g, b, a;
+
+    /*
+    Equality operator overload for Color datatype. 
+
+    Is true if rgba values are equal for both Colors. 
+    */
+    bool operator==(const Color& other) const {
+        return (r == other.r) && (g == other.g) && (b == other.b)  && (a == other.a);
+    }
 };
 
 struct Pixel {
     int index;
     Color before;
     Color after;
+    bool wasEditedBefore;
+    bool wasEditedAfter;
 };
 
 struct StrokePath {
@@ -73,6 +84,8 @@ class Canvas {
         void redo();    // redoes the most recent strokepath and sends it to the undo stack
         void resetPixel(int index, const Color color);  // resets the pixel to the given color but doesn't record it into the stroke (only for undo/redo)
 
+        void setBackgroundColor(const Color& color); // sets the background color of the canvas
+
         bool canUndo() const;
         bool canRedo() const;
         void loadImage(unsigned char* data, int layerIndex);
@@ -85,6 +98,8 @@ class Canvas {
         int curLayer;
         Color backgroundColor = {255, 255, 255, 255};
         Color emptyColor = {0, 0, 0, 0};
+
+        std::vector<bool> editedPixels;
 
         // RGBA pixel data
         std::vector<Color> pixels;

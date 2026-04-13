@@ -100,7 +100,7 @@ private:
 	void drawCanvasTabs(CanvasManager& canvasManager);
 
 	void drawNewCanvasPopup(CanvasManager& canvasManager);
-	void drawSettingsPopup();
+	void drawSettingsPopup(CanvasManager& canvasManager);
 
 	// keeps track of the UI's current state so we know what stuff to draw
 	UIState curState = UIState::start_menu;

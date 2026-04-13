@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Canvas.h"
+#include "imgui.h"
 
 #include <vector>
 #include <string>
@@ -34,7 +35,9 @@ class CanvasManager {
         void undo();
         void redo();
 
-
+        // commands for grabbing and edditing canvas info
+        ImVec4 getPaperColor();
+        void setPaperColor(const ImVec4& color);
 
         void saveToFile(const std::string& path);
         void loadFromFile(const std::string& filepath);

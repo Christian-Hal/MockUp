@@ -314,7 +314,7 @@ void UI::drawUI(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 
 	// ----- Call the various popup draws so they get drawn when needed -----
 	drawNewCanvasPopup(canvasManager); 	// draw the new canvas pop up
-	drawSettingsPopup(); 				// draw the settings menu pop up
+	drawSettingsPopup(canvasManager); 	// draw the settings menu pop up
 
 	// ----- Cursor Customization -----
 	drawCustomCursor(canvasManager);
@@ -1034,25 +1034,26 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 
 }
 
-void UI::drawSettingsPopup() {
+void UI::drawSettingsPopup(CanvasManager& canvasManager) {
     static int settingsSection = 0;
 
     if (showSettingsPopup) {
-        ImGui::OpenPopup("UserSettings");
+        ImGui::OpenPopup("Settings");
         ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_Always);
     }
 
-    if (ImGui::BeginPopupModal("UserSettings", nullptr, ImGuiWindowFlags_NoResize)) {
+    if (ImGui::BeginPopupModal("Settings", nullptr, ImGuiWindowFlags_NoResize)) {
         // Create a child region that will take all remaining vertical space
         float windowHeight = ImGui::GetContentRegionAvail().y - 50; // leave ~50px for Close button
-        ImGui::BeginChild("Settings", ImVec2(0, windowHeight), false);
+        ImGui::BeginChild("SettingsContent", ImVec2(0, windowHeight), false);
 
         ImGui::Columns(2, nullptr, true);
-        ImGui::SetColumnWidth(0, 180);
+        ImGui::SetColumnWidth(0, 150);
 
         // Left column: categories
         if (ImGui::Button("Folder Settings##settings_folders")) settingsSection = 0;
         if (ImGui::Button("Shortcut Settings##settings_shortcuts")) settingsSection = 1;
+		if (ImGui::Button("Canvas Settings##settings_canvases")) settingsSection = 2;
 
         ImGui::NextColumn();
 
@@ -1089,7 +1090,7 @@ void UI::drawSettingsPopup() {
 				}
 				ImGuiFileDialog::Instance()->Close();
 			}
-			
+
         } else if (settingsSection == 1) {
 			// text label that displays rebind status
 			ImGui::Text("Click a button, then press a key to rebind.");
@@ -1124,7 +1125,29 @@ void UI::drawSettingsPopup() {
             ShortcutRow("Zoom Out", InputAction::setClickZoomOut);
             ShortcutRow("Center Canvas", InputAction::resetView);
             ShortcutRow("Color Picker", InputAction::setColor);
-        }
+
+        } else if (settingsSection == 2) {
+			// only show canvas settings if there is an active canvas
+			if (canvasManager.hasActive()) {
+				ImGui::Text("Canvas related settings: Canvas behavior, animation settings, etc.");
+				static bool changePaperColor = false;
+				if (ImGui::Button("Change Paper Color")) {
+					changePaperColor = true;
+				}
+				if (changePaperColor) {
+					ImGuiColorEditFlags flags = ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoInputs;
+					static ImVec4 paperColor = { 1.0f, 1.0f, 1.0f, 1.0f }; // default white
+					ImGui::SetNextItemWidth(180.0f);
+					ImGui::ColorPicker4("##papercolorpicker", (float*)&paperColor, flags);
+					if (ImGui::Button("Apply")) {
+						canvasManager.setPaperColor(paperColor);
+						changePaperColor = false;
+					}
+				}
+			} else {
+				ImGui::Text("Canvas settings will appear here when a canvas is open.");
+			}
+		}
 
         ImGui::Columns(1);
         ImGui::EndChild();
