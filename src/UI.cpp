@@ -321,7 +321,7 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 
 	// -- user input to hide UI panels --
 	// only allow this if the canvas creation popup is not active 
-	if (!ImGui::IsPopupOpen("New Canvas")) {
+	if (!ImGui::IsPopupOpen("New")) {
 		if (glfwGetKey(windowStorage, GLFW_KEY_TAB) == GLFW_PRESS && glfwGetTime() - lastFrame >= 0.2) {
 			showPanels = !showPanels;
 			lastFrame = glfwGetTime();
@@ -936,12 +936,13 @@ void UI::drawPopup(CanvasManager& canvasManager)
 				// setting up combo box for illustration presets 
 				// presets as str and tuple of two ints 
 				const std::map<std::string, std::tuple<int, int>> canvasSizes = {
-				{"A4", {2894, 4093}}, {"A5", {2039, 2894}}, {"A6", {1447, 2039}},
+					{"Custom", {temp_w, temp_h}},
+					{"A4", {2894, 4093}}, {"A5", {2039, 2894}}, {"A6", {1447, 2039}},
 					{"B4", {3541, 5016}}, {"B5", {3541, 5016}}, {"B6", {1764, 2508}},
 					{"Postcard", {1378, 2039}}
 				};
 				// initally selected combo box value
-				static std::string selectedPreset = canvasSizes.begin()->first; 
+				static std::string selectedPreset = canvasSizes.begin()->first;
 				// have to use begin combo API because of the choice of a map 
 				if (ImGui::BeginCombo("Presets", selectedPreset.c_str())) {
 					for (auto const& [preset, sizes] : canvasSizes) {
@@ -960,9 +961,9 @@ void UI::drawPopup(CanvasManager& canvasManager)
 
 				// button to swap dimensions 
 				if (ImGui::Button("Swap")) {
-					static int swapTemp; 
-					swapTemp = temp_w; 
-					temp_w = temp_h; 
+					static int swapTemp;
+					swapTemp = temp_w;
+					temp_w = temp_h;
 					temp_h = swapTemp;
 				}
 
