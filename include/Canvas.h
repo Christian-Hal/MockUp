@@ -77,7 +77,7 @@ class Canvas {
         bool canRedo() const;
         void loadImage(unsigned char* data, int layerIndex);
 
-        bool isDirty = false;
+        bool isDirty = false; // bool to determine if the canvas has been modifiyed without saving
 
     private:
         // canvas settings

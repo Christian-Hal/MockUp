@@ -333,7 +333,7 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 	drawTopPanel(canvasManager);
 
 	// canvas tab panel shown only if more than 1 canvas is open
-	if (canvasManager.getNumCanvases() > 1) { drawCanvasTabs(canvasManager); }
+	if (canvasManager.getNumCanvases() > 0) { drawCanvasTabs(canvasManager); }
 
 
 
@@ -896,6 +896,9 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 
 void UI::drawCanvasTabs(CanvasManager& canvasManager)
 {
+	if (canvasManager.getNumCanvases() <= 0)
+		return;
+
 	ImGui::SetNextWindowPos(ImVec2(LeftSize, TopSize), ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(w - LeftSize - RightSize, TopSize), ImGuiCond_Always);
 	ImGui::Begin("Canvas Tabs Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar);
@@ -912,7 +915,6 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 			if (i == canvasManager.getActiveCanvasIndex() && canvasManager.canvasChange)
 				flags |= ImGuiTabItemFlags_SetSelected;
 
-			// access directly through canvasManager instead of the cached const ref
 			const Canvas& c = canvasManager.getOpenCanvases()[i];
 			std::string label = c.getName()
 				+ (c.isDirty ? " *" : "")
@@ -928,18 +930,19 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 
 			if (!open)
 			{
-				pendingCloseIndex = i;
-				showCloseConfirm = true;
+				if (canvasManager.getOpenCanvases()[i].isDirty)
+				{
+					pendingCloseIndex = i;
+					showCloseConfirm = true;
+				}
+				else
+					canvasManager.closeCanvas(i);
 			}
 		}
-
-		// acknowledge the change so we stop forcing selection next frame
-		canvasManager.canvasChange = false;
 
 		ImGui::EndTabBar();
 	}
 
-	// --- close confirm modal (same as before) ---
 	if (showCloseConfirm)
 		ImGui::OpenPopup("Close Canvas?");
 
@@ -1064,4 +1067,16 @@ void UI::shutdown() {
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
+}
+
+// function for closing hotkey
+void UI::requestCloseCanvas(int index, CanvasManager& canvasManager)
+{
+	if (canvasManager.getOpenCanvases()[index].isDirty)
+	{
+		pendingCloseIndex = index;
+		showCloseConfirm = true;
+	}
+	else
+		canvasManager.closeCanvas(index);
 }

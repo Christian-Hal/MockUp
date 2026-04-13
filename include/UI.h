@@ -58,6 +58,9 @@ public:
 
 	static bool showPopup;
 
+	void closeCanvasPopup(int index);
+	void requestCloseCanvas(int index, CanvasManager& canvasManager);
+
 private:
 	SetCursorModeCallback setCursorModeCb;
 	GetCursorModeCallback getCursorModeCb;

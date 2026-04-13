@@ -432,7 +432,7 @@ void AppController::onInputAction(InputAction action)
 	case InputAction::closeCanvas:
 		if (canvasManager.hasActive())
 		{
-			canvasManager.closeCanvas(canvasManager.getActiveCanvasIndex());
+			appState.getUI().requestCloseCanvas(canvasManager.getActiveCanvasIndex(), canvasManager);
 		}
 		break;
 	default:
