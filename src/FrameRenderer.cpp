@@ -347,10 +347,6 @@ void FrameRenderer::saveAnimation(const string& path, Canvas& canvas){
     }
 }
 
-// removes all of the files after shutdown so you dont eat up storage.
-void FrameRenderer::shutdown(){
-
-}
 
 // gets the current frame (which is a number from 1-NumFrames)
 int FrameRenderer::getCurFrame(){
@@ -422,46 +418,13 @@ vector<vector<Color>> FrameRenderer::readPixelData(int* arr) {
 }
     
 vector<vector<Color>> FrameRenderer::readLayerData(int* arr){
-    int width = arr[0];
-    int height = arr[1];
-    int numLay = arr[2];
-
-    vector<vector<Color>> returnData(numLay, vector<Color>(width*height));
-
-    string path = "./frameDatas/canvas" + to_string(curCanvas) + "/layerData" + to_string(curFrame) +  ".dat";
-    ifstream File(path, ios::binary);
-    if (!File){
-        return returnData;
-    }
-    bool firstCalled = false;
-    for(int i = 0; i < numLay; i++){
-        File.read(reinterpret_cast<char*>(returnData[i].data()), width * height * sizeof(Color));
-    }
-    return returnData;
-}
-
-void FrameRenderer::rename(bool isAdding){
-    if(isAdding){
-        for(int i = numFrames - 1; i >= curFrame; i--){
-            fs::rename(
-                "./frameDatas/canvas" + to_string(curCanvas) + "/layerData" + to_string(i) + ".dat",
-                "./frameDatas/canvas" + to_string(curCanvas) + "/layerData" + to_string(i+1) + ".dat");
-        }
-    }
-    else{
-        for(int i = curFrame + 1; i <= numFrames; i++){
-            fs::rename(
-                "./frameDatas/canvas" + to_string(curCanvas) + "/layerData" + to_string(i) + ".dat",
-                "./frameDatas/canvas" + to_string(curCanvas) + "/layerData" + to_string(i-1) + ".dat");
-            }
-        
-    }
+    return frLayerData[curCanvas-1][curFrame-1];
 }
 
 void FrameRenderer::reset()
 {
     frames.clear();
-    curFrame = 1;
+    curFrame = -1;
     numFrames = 0;
     curCanvas = -1;
     numCanvas = 0;

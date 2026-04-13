@@ -21,7 +21,6 @@ class FrameRenderer{
         static void removeOnionSkin(Canvas& canvas);
         static void toggleOnionSkin();
         static void saveAnimation(const string& path, Canvas& canvas);
-        void shutdown();
         static bool inputBlocked;
         static int getCurFrame();
         static int getNumFrames();
@@ -29,7 +28,6 @@ class FrameRenderer{
         static void setNumAfter(int newNumAfter);
         static int getNumBefore();
         static void setNumBefore(int newNumBefore);
-        static void shutdown();
 
         // frame number, pixel data for that frame
         static vector<vector<Color>> frames;
