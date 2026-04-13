@@ -31,6 +31,7 @@ enum class UIElement
 	brushSelection,
 	cursorModeButtons,
 	animationTimeline,
+	layers,
 };
 
 // this creates a list of the elements that we can interate through
@@ -40,6 +41,7 @@ constexpr UIElement elements[] = {
     UIElement::brushSelection,
     UIElement::cursorModeButtons,
     UIElement::animationTimeline,
+	UIElement::layers,
 };
 
 class UI {
@@ -110,4 +112,5 @@ private:
 	void drawLayersWindow(CanvasManager& canvasManager);
 	void drawBrushesWindow(CanvasManager& canvasManager);
 	void drawCursorModesWindow(CanvasManager& canvasManager);
+	void drawTimelineWindow(CanvasManager& canvasManager);
 };

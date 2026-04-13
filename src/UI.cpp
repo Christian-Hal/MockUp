@@ -341,7 +341,8 @@ void UI::draw(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 			if (elementVisibility[UIElement::brushSizeSlider]) { drawBrushSizeWindow(canvasManager); }
 			if (elementVisibility[UIElement::brushSelection]) { drawBrushesWindow(canvasManager); }
 			if (elementVisibility[UIElement::cursorModeButtons]) { drawCursorModesWindow(canvasManager); }
-			if (elementVisibility[UIElement::animationTimeline]) { }
+			if (elementVisibility[UIElement::animationTimeline]) { drawTimelineWindow(canvasManager); }
+			if (elementVisibility[UIElement::layers]) { drawLayersWindow(canvasManager); }
 		}
 	}
 
@@ -919,6 +920,9 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 			if (ImGui::MenuItem("Animation Timeline", nullptr, elementVisibility[UIElement::animationTimeline])) {
 				elementVisibility[UIElement::animationTimeline] = !elementVisibility[UIElement::animationTimeline];
 			}
+			if (ImGui::MenuItem("Layers", nullptr, elementVisibility[UIElement::layers])) {
+				elementVisibility[UIElement::layers] = !elementVisibility[UIElement::animationTimeline];
+			}
 
 			ImGui::PopItemFlag();
 			ImGui::EndMenu();
@@ -1287,6 +1291,34 @@ void UI::drawCursorModesWindow(CanvasManager& canvasManager) {
 			FrameRenderer::removeOnionSkin(canvasManager.getActive());
 			FrameRenderer::toggleOnionSkin();
 			FrameRenderer::updateOnionSkin(canvasManager.getActive());
+		}
+	}
+	ImGui::End();
+}
+
+void UI::drawTimelineWindow(CanvasManager& canvasManager) {
+	ImGui::Begin("Timeline"); 
+	// only display animation settings if there is an active canvas
+	if (canvasManager.hasActive() && canvasManager.getActive().getIsAnimation())
+	{
+		if (ImGui::Button("Previous Frame")) {
+			FrameRenderer::selectFrame(canvasManager.getActive(), -1);
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Next Frame")) {
+			FrameRenderer::selectFrame(canvasManager.getActive(), 1);
+		}
+
+		//ImGui::SliderInt()
+		if (ImGui::Button("Create Frame")) {
+			FrameRenderer::createFrame(canvasManager.getActive());
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Remove Frame")) {
+			FrameRenderer::removeFrame(canvasManager.getActive());
+		}
+		if (ImGui::Button("Play")) {
+			FrameRenderer::play(canvasManager.getActive());
 		}
 	}
 	ImGui::End();
