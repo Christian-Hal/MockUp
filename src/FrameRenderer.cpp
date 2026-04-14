@@ -259,17 +259,18 @@ void FrameRenderer::updateOnionSkin(Canvas& canvas){
     if(onionSkinEnabled){
         int width = canvas.getWidth();
         int pixelCount = width * canvas.getHeight();
-        Color green = {0,255,0,128};
-        Color red = {255, 0, 128};
+        Color green = {0, 255, 0, 128};
+        Color red = {255, 0, 0, 128};
         Color bg = canvas.getBackgroundColor();
-        Color blendedColor = canvas.colorTimes(canvas.getBackgroundColor(), green);
+        Color blendedColor = canvas.colorTimes(bg, green);
+        cout << int(blendedColor.r) << ":r\n" << int(blendedColor.g) << ":g\n" << int(blendedColor.b) << ":b" << endl;
 
         int oldLayer = canvas.getCurLayer();
         canvas.selectLayer(0);
         for(int i = 0; i < numBefore; i++){
             if(curFrame > 1 + i){
                 for(int j = 0; j < pixelCount; j++){
-                    if (*(uint32_t*)&frames[curFrame - i - 2][j] == *(uint32_t*)&bg) continue;
+                    if (*(uint32_t*)&frames[curFrame - 2 - i][j] == *(uint32_t*)&bg) continue;
                     int x = j % width;
                     int y = j / width;
                     canvas.blendPixel(x, y, blendedColor, blendedColor.a / 255.0f);
@@ -277,14 +278,14 @@ void FrameRenderer::updateOnionSkin(Canvas& canvas){
             }
         }
 
-        blendedColor = canvas.colorTimes(canvas.getBackgroundColor(), red);
+        Color blendedColor2 = canvas.colorTimes(bg, red);
         for(int i = 0; i < numAfter; i++){
             if(curFrame < numFrames - i){ 
                 for(int j = 0; j < pixelCount; j++){
-                    if (*(uint32_t*)&frames[curFrame + i][j] == *(uint32_t*)&bg) continue;
+                    if (*(uint32_t*)&frames[curFrame + i][j] == *(uint32_t*)&bg ) continue;
                     int x = j % width;
                     int y = j / width;
-                    canvas.blendPixel(x, y, blendedColor, blendedColor.a / 255.0f);
+                    canvas.blendPixel(x, y, blendedColor2, blendedColor2.a / 255.0f);
 
                 }
             }
