@@ -28,6 +28,7 @@ class FrameRenderer{
         static void setNumAfter(int newNumAfter);
         static int getNumBefore();
         static void setNumBefore(int newNumBefore);
+        static long long timeFunction(const string& name, const function<void()>& fn);
 
         // frame number, pixel data for that frame
         static vector<vector<Color>> frames;

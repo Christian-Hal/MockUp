@@ -133,9 +133,9 @@ void FrameRenderer::updateCanvas(Canvas* oldCanvas, Canvas* newCanvas, int newCa
 // loads new frame with blank canvas
 void FrameRenderer::createFrame(Canvas& canvas){
     // Save the old frame
-    removeOnionSkin(canvas);
+    timeFunction("removeOnionSkin", [&] { removeOnionSkin(canvas); });
     frames[curFrame - 1] =  vector<Color>(canvas.getData(), canvas.getData() + (canvas.getWidth() * canvas.getHeight()));
-    writeAllData(&canvas);
+    timeFunction("writeAllData", [&] { writeAllData(&canvas);; });
     numFrames++;
     curFrame++;
     // insert new frame
@@ -177,7 +177,7 @@ void FrameRenderer::createFrame(Canvas& canvas){
     
     // create function that renames any other frames that come after
     writeAllData(&canvas);
-    updateOnionSkin(canvas);
+    timeFunction("updateOnionSkins", [&] { updateOnionSkin(canvas); });
 }
 
 // remove current frame and update file names accordingly
@@ -257,32 +257,35 @@ void FrameRenderer::play(Canvas& canvas){
 
 void FrameRenderer::updateOnionSkin(Canvas& canvas){
     if(onionSkinEnabled){
+        int width = canvas.getWidth();
+        int pixelCount = width * canvas.getHeight();
         Color green = {0,255,0,128};
+        Color red = {255, 0, 128};
+        Color bg = canvas.getBackgroundColor();
         Color blendedColor = canvas.colorTimes(canvas.getBackgroundColor(), green);
+
         int oldLayer = canvas.getCurLayer();
         canvas.selectLayer(0);
-        vector<vector<Color>> layDat = canvas.getLayerData();
         for(int i = 0; i < numBefore; i++){
             if(curFrame > 1 + i){
-                for(int j = 0; j < layDat[0].size(); j++){
-                    if(!canvas.colorEquals(frames[curFrame - 2 - i][j], canvas.getBackgroundColor())){
-                        int x = j % canvas.getWidth();
-                        int y = j / canvas.getWidth();
-                        canvas.blendPixel(x, y, blendedColor, blendedColor.a / 255.0f);
-                    }
+                for(int j = 0; j < pixelCount; j++){
+                    if (*(uint32_t*)&frames[curFrame - i - 2][j] == *(uint32_t*)&bg) continue;
+                    int x = j % width;
+                    int y = j / width;
+                    canvas.blendPixel(x, y, blendedColor, blendedColor.a / 255.0f);
                 }
             }
         }
-        green = {255, 0, 0, 128};
-        blendedColor = canvas.colorTimes(canvas.getBackgroundColor(), green);
+
+        blendedColor = canvas.colorTimes(canvas.getBackgroundColor(), red);
         for(int i = 0; i < numAfter; i++){
-            if(curFrame < numFrames - i){ // This line needs fixing
-                for(int j = 0; j < layDat[0].size(); j++){
-                    if(!canvas.colorEquals(frames[curFrame + i][j], canvas.getBackgroundColor())){
-                        int x = j % canvas.getWidth();
-                        int y = j / canvas.getWidth();
-                        canvas.blendPixel(x, y, blendedColor, blendedColor.a / 255.0f);
-                    }
+            if(curFrame < numFrames - i){ 
+                for(int j = 0; j < pixelCount; j++){
+                    if (*(uint32_t*)&frames[curFrame + i][j] == *(uint32_t*)&bg) continue;
+                    int x = j % width;
+                    int y = j / width;
+                    canvas.blendPixel(x, y, blendedColor, blendedColor.a / 255.0f);
+
                 }
             }
         }
@@ -291,14 +294,18 @@ void FrameRenderer::updateOnionSkin(Canvas& canvas){
 }
 
 void FrameRenderer::removeOnionSkin(Canvas& canvas){
-    int oldLayer = canvas.getCurLayer();
-    canvas.selectLayer(0);
-    int wid = canvas.getWidth();
-    int hei = canvas.getHeight();
-    for(int i = 0; i < hei * wid; i++){
-        canvas.setPixel(i % wid, i / wid, canvas.getBackgroundColor());
+    if(onionSkinEnabled){
+        int oldLayer = canvas.getCurLayer();
+        canvas.selectLayer(0);
+        int wid = canvas.getWidth();
+        int hei = canvas.getHeight();
+        Color bg = canvas.getBackgroundColor();
+        for(int i = 0; i < hei * wid; i++){
+            if (*(uint32_t*)&frames[curFrame-1][i] == *(uint32_t*)&bg) continue;
+            canvas.setPixel(i % wid, i / wid, bg);
+        }
+        canvas.selectLayer(oldLayer);
     }
-    canvas.selectLayer(oldLayer);
 }
 
 void FrameRenderer::toggleOnionSkin(){
@@ -375,6 +382,18 @@ void FrameRenderer::setNumBefore(int newNumBefore){
     if(newNumBefore <= numFrames && newNumBefore >= 0){
         numBefore = newNumBefore;
     }
+}
+
+long long FrameRenderer::timeFunction(const string& name, const function<void()>& fn) {
+    using namespace std::chrono;
+
+    auto start = high_resolution_clock::now();
+    fn();
+    auto end = high_resolution_clock::now();
+    long long us = duration_cast<microseconds>(end - start).count();
+    cout << name << " took " << us << " µs" << endl;
+    return us;
+
 }
 // --------------------- Private functions ------------------------------ 
 void FrameRenderer::writeAllData(Canvas* canvas){

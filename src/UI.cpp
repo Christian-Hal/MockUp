@@ -1089,19 +1089,6 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 			FrameRenderer::toggleOnionSkin();
 			FrameRenderer::updateOnionSkin(canvasManager.getActive());
 		}
-/*
-		ImGui::SameLine();
-		if (ImGui::Button("<-")){
-			FrameRenderer::setNumBefore(FrameRenderer::getNumBefore() + 1);
-			FrameRenderer::updateOnionSkin(canvasManager.getActive());
-
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("->")){
-			FrameRenderer::setNumAfter(FrameRenderer::getNumAfter() + 1);
-			FrameRenderer::updateOnionSkin(canvasManager.getActive());
-		}
-*/
 		
 		// --- Timeline ---
 		ImGuiStyle& style = ImGui::GetStyle();
