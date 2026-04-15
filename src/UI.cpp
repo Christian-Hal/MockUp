@@ -32,7 +32,7 @@ int LeftSize = 0;
 int RightSize = 0;
 
 // state initial pop up 
-bool UI::showPopup = false;
+bool UI::showNewCanvasPopup = false;
 
 // show panels 
 static bool showPanels = true;
@@ -394,7 +394,7 @@ void UI::drawStartScreen(CanvasManager& canvasManager)
 
 	if (ImGui::Button("Create File", buttonSize)) 
 	{
-		showNewCanvasPopup = true;
+		UI::showNewCanvasPopup = true;
 	}
 
 	ImGui::Dummy(ImVec2(0, 10)); 			// creates some vertical space
@@ -636,8 +636,7 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 	// add widgets
 	// new canvas pop up
 	if (ImGui::Button("New File")) {
-		showNewCanvasPopup = true;
-		UI::showPopup = true;
+		UI::showNewCanvasPopup = true;
 	}
 
 	// menu to rebind the various actions that can be done with hotkeys
@@ -1333,7 +1332,7 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 	// want to also add canvas size presets as a map accessed from a combo 
 	//static 
 
-	if (showNewCanvasPopup) {
+	if (UI::showNewCanvasPopup) {
 		ImGui::OpenPopup("New");
 	}
 
@@ -1394,7 +1393,7 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 					// centering the newly created canvas 
 					resetCanvasPositionCb();
 
-					showNewCanvasPopup = false;
+					UI::showNewCanvasPopup = false;
 					temp_n = "Illustration";
 
 					// if the current UI state is the start menu then change it to the main screen
@@ -1406,7 +1405,7 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 				ImGui::SameLine();
 
 				if (ImGui::Button("Cancel")) {
-					showNewCanvasPopup = false;
+					UI::showNewCanvasPopup = false;
 					ImGui::CloseCurrentPopup();
 				}
 				ImGui::EndTabItem();
@@ -1432,7 +1431,7 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 					// centering the newly created canvas 
 					resetCanvasPositionCb();
 
-					showNewCanvasPopup = false;
+					UI::showNewCanvasPopup = false;
 					temp_n = "Animation";
 
 					// if the current UI state is the start menu then change it to the main screen
@@ -1444,7 +1443,7 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 				ImGui::SameLine();
 
 				if (ImGui::Button("Cancel")) {
-					showNewCanvasPopup = false;
+					UI::showNewCanvasPopup = false;
 					ImGui::CloseCurrentPopup();
 				}
 				ImGui::EndTabItem();
@@ -1601,7 +1600,7 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 	if (ImGui::BeginMainMenuBar()) {
 		if (ImGui::BeginMenu("File")) {
 			if (ImGui::MenuItem("New...", "Ctrl+N")) {
-				showNewCanvasPopup = true;
+				UI::showNewCanvasPopup = true;
 			}
 			if (ImGui::MenuItem("Save...", "Ctrl+S", false, canvasManager.hasActive())) {
 				IGFD::FileDialogConfig config;

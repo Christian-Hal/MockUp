@@ -413,7 +413,7 @@ void AppController::onInputAction(InputAction action)
 		}
 		break;
 	case InputAction::newFile:
-		UI::showPopup = true;
+		UI::showNewCanvasPopup = true;
 		break;
 	case InputAction::newFrame:
 		if (canvasManager.hasActive())

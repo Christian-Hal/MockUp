@@ -420,5 +420,4 @@ void InputManager::bindDefaultKeybinds()
 	bindAction(InputAction::newFile, GLFW_KEY_N, GLFW_MOD_CONTROL);
 	bindAction(InputAction::newFrame, GLFW_KEY_3, 0);
 	bindAction(InputAction::closeCanvas, GLFW_KEY_W, GLFW_MOD_CONTROL);
-	//bindAction(InputAction::setZoomDragging, GLFW_KEY_SPACE, GLFW_MOD_CONTROL);
 }

@@ -92,7 +92,7 @@ public:
 		start_menu,
 		main_screen
 	};
-	static bool showPopup;
+	static bool showNewCanvasPopup;
 
 	void closeCanvasPopup(int index);
 	void requestCloseCanvas(int index, CanvasManager& canvasManager);
@@ -156,7 +156,6 @@ private:
 
 	// boolean variables for which popups/panels to show
 	bool showPanels = true;
-	bool showNewCanvasPopup = false;
 	bool showSettingsPopup = false;
 	bool showCloseConfirm = false;
 	int pendingCloseIndex = -1;
