@@ -14,7 +14,7 @@
 
 
 
-Canvas& CanvasManager::createCanvas(int width, int height, std::string name, bool isAnimation)
+Canvas& CanvasManager::createCanvas(int width, int height, std::string name, bool isAnimation, bool useAnimTemplate)
 {
     Canvas oldCanvasCopy;
     if (hasActive()) {
@@ -22,7 +22,7 @@ Canvas& CanvasManager::createCanvas(int width, int height, std::string name, boo
     }
 
     std::string fixed_name = checkName(name);
-    canvases.emplace_back(Canvas(width, height, fixed_name, isAnimation));
+    canvases.emplace_back(Canvas(width, height, fixed_name, isAnimation, useAnimTemplate));
 
     activeCanvasIndex = canvases.size() - 1;
 
@@ -234,7 +234,7 @@ void CanvasManager::loadFromFile(const std::string& filePath)
     std::string fileName = pathObj.stem().string();
 
     // creating new canvas
-    Canvas& canvas = createCanvas(width, height, fileName, false);
+    Canvas& canvas = createCanvas(width, height, fileName, false, false);
 
     // converts data into pixels onto the canvas
     canvas.loadImage(data,1);
@@ -417,12 +417,11 @@ void CanvasManager::loadORA(const std::string& path)
     }
 
     std::string name = std::filesystem::path(path).stem().string();
-    Canvas& canvas = createCanvas(width, height, name, false);
+    Canvas& canvas = createCanvas(width, height, name, false, false);
 
-    std::cout << "Layer count after createCanvas: " << canvas.getNumLayers() << "\n";
-    std::cout << "Layers in ORA file: " << layers.size() << "\n";
-
-    while (canvas.getNumLayers() < (int)layers.size())
+    // creating correct number of layers
+    while (canvas.getNumLayers() < layerPaths.size())
+    {
         canvas.createLayer();
 
     for (int i = 0; i < (int)layers.size(); i++)

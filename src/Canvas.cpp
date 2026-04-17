@@ -10,9 +10,9 @@
 
 // constructor
 Canvas::Canvas() : width(0), height(0), numLayers(0), curLayer(0), pixels(), layerData(), canvasName("") {}
-Canvas::Canvas(int w, int h, std::string name, bool isAnimation) : width(w), height(h), 
+Canvas::Canvas(int w, int h, std::string name, bool isAnimation, bool useAnimTemplate) : width(w), height(h), 
                     numLayers(2), curLayer(1), pixels(w * h, backgroundColor), 
-                    canvasName(name), currentStrokeIndex(-1), seenPixels(w * h, -1), animationTemplate(isAnimation), editedPixels(w * h, false)
+                    canvasName(name), currentStrokeIndex(-1), seenPixels(w * h, -1), isAnim(isAnimation), animationTemplate(useAnimTemplate), editedPixels(w * h, false)
 {
     // Initialize layerData before loading animation
     layerData.push_back(std::vector<Color>(w * h, backgroundColor));
@@ -290,7 +290,7 @@ const Color Canvas::colorTimes(const Color& c2, const Color& c1) {
 void Canvas::setPixel(int x, int y, const Color& color)
 {
     // do not let the user draw onto the animation template
-    if (isAnimation() && curLayer == 1) {
+    if (isUsingAnimTemplate() && curLayer == 1) {
         return;
     }
 
@@ -376,7 +376,7 @@ void Canvas::blendPixel(int x, int y, const Color& src, float brushAlpha) {
 	// idea: 	result = color_s * alpha_s + color_d * (1 - alpha_s)
 
     // do not let the user draw onto the animation template
-    if (isAnimation() && curLayer == 1) {
+    if (isUsingAnimTemplate() && curLayer == 1) {
         return;
     }
 
@@ -461,7 +461,7 @@ void Canvas::createLayer() {
 // removes a layer from layerData and removes the pixel values on that layer
 void Canvas::removeLayer(){
     // do not let the user remove the animation template layer
-    if (isAnimation() && curLayer == 1) {
+    if (isUsingAnimTemplate() && curLayer == 1) {
         return;
     }
 
