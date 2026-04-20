@@ -420,21 +420,10 @@ void CanvasManager::loadORA(const std::string& path)
     Canvas& canvas = createCanvas(width, height, name, false, false);
 
     // creating correct number of layers
-    while (canvas.getNumLayers() < layerPaths.size())
-    {
+    while (canvas.getNumLayers() < (int)layers.size())
         canvas.createLayer();
 
-    for (int i = 0; i < (int)layers.size(); i++)
-    {
-        const LayerEntry& entry = layers[i];
-
-        int targetLayer;
-        if (entry.name == "Background")
-            targetLayer = 0;
-        else
-            targetLayer = (int)layers.size() - 1 - i;
-    }
-
+    // Second pass: load all layer images
     for (int i = 0; i < (int)layers.size(); i++)
     {
         int targetLayer = (int)layers.size() - 1 - i;
@@ -448,25 +437,19 @@ void CanvasManager::loadORA(const std::string& path)
             continue;
         }
 
-        // load into a full-canvas-sized buffer, placing the image at x/y offset
-        // ORA y is from top, canvas y is from bottom so we flip it
         std::vector<unsigned char> fullCanvas(width * height * 4, 0);
 
         for (int row = 0; row < h; row++)
         {
             for (int col = 0; col < w; col++)
             {
-                int srcX = col;
-                int srcY = row;
-
                 int dstX = entry.x + col;
-                // flip y: ORA counts from top, our canvas from bottom
                 int dstY = height - 1 - (entry.y + row);
 
                 if (dstX < 0 || dstX >= width || dstY < 0 || dstY >= height)
                     continue;
 
-                int srcIdx = (srcY * w + srcX) * 4;
+                int srcIdx = (row * w + col) * 4;
                 int dstIdx = (dstY * width + dstX) * 4;
 
                 fullCanvas[dstIdx + 0] = data[srcIdx + 0];

@@ -209,6 +209,16 @@ void FrameRenderer::removeCanvas(int index, Canvas* newActiveCanvas)
     if (index < 0 || index >= numCanvas)
         return;
 
+    if (newActiveCanvas && index != curCanvas - 1)
+    {
+        removeOnionSkin(*newActiveCanvas);
+        frames[curFrame - 1] = vector<Color>(
+            newActiveCanvas->getData(),
+            newActiveCanvas->getData() + newActiveCanvas->getWidth() * newActiveCanvas->getHeight()
+        );
+        writeAllData(newActiveCanvas);
+    }
+
     frameData.erase(frameData.begin() + index);
     frLayerData.erase(frLayerData.begin() + index);
     metaData.erase(metaData.begin() + index);
@@ -236,7 +246,7 @@ void FrameRenderer::removeCanvas(int index, Canvas* newActiveCanvas)
 
     if (newActiveCanvas)
     {
-        newActiveCanvas->setPixels(frames[0]);
+        newActiveCanvas->setPixels(frames[curFrame - 1]);
         newActiveCanvas->setLayerData(readLayerData(meta));
         updateOnionSkin(*newActiveCanvas);
     }
