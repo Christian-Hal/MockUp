@@ -2185,8 +2185,8 @@ void UI::drawTimelineWindow(CanvasManager& canvasManager) {
 		style.FramePadding = old_padding;
 		style.FrameRounding = old_rounding;
 		ImGui::SameLine();
-		ImGui::End();
 	}
+	ImGui::End();
 }
 
 // ending and cleanup 
