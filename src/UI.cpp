@@ -1517,10 +1517,7 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 			// text label that displays rebind status
 			ImGui::Text("Click a button, then press a key to rebind.");
 			if (isWaitingForRebindCb && isWaitingForRebindCb()) {
-				ImGui::SeparatorText("Press any key...");
-			}
-			else {
-				ImGui::SeparatorText("");
+				ImGui::Text("Press any key...");
 			}
 
 			auto hotkeyLabel = [this](InputAction action) {
@@ -1536,23 +1533,36 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 					triggerRebind(action);
 				};
 
-			ShortcutRow("Rotate", InputAction::setRotate);
-			ShortcutRow("Pan", InputAction::setPan);
+			ImGui::SeparatorText("Document Shortcuts:");
+			ShortcutRow("New File", InputAction::newFile);
+			ShortcutRow("Close Canvas", InputAction::closeCanvas);
+			ShortcutRow("Undo", InputAction::undo);
+			ShortcutRow("Redo", InputAction::redo);
+
+			ImGui::SeparatorText("Drawing Shortcuts:");
 			ShortcutRow("Draw", InputAction::setDraw);
 			ShortcutRow("Fill", InputAction::setFill);
 			ShortcutRow("Erase", InputAction::setErase);
-			ShortcutRow("Undo", InputAction::undo);
-			ShortcutRow("Redo", InputAction::redo);
+			ShortcutRow("Color Picker", InputAction::setColor);
+
+			ImGui::SeparatorText("Navigation Shortcuts:");
+			ShortcutRow("Rotate", InputAction::setRotate);
+			ShortcutRow("Pan", InputAction::setPan);
 			ShortcutRow("Zoom In", InputAction::setClickZoomIn);
 			ShortcutRow("Zoom Out", InputAction::setClickZoomOut);
 			ShortcutRow("Center Canvas", InputAction::resetView);
-			ShortcutRow("Color Picker", InputAction::setColor);
 
+			ImGui::SeparatorText("Animation Shortcuts:");
+			ShortcutRow("New Frame", InputAction::newFrame);
+			ShortcutRow("Onion Skin Toggle", InputAction::onionSkinToggle);
+			ShortcutRow("Next Frame", InputAction::nextFrame);
+			ShortcutRow("Previous Frame", InputAction::prevFrame);
 		}
+
 		else if (settingsSection == 2) {
 			// only show canvas settings if there is an active canvas
 			if (canvasManager.hasActive()) {
-				ImGui::Text("Canvas related settings: Canvas behavior, animation settings, etc.");
+				ImGui::Text("Canvas settings: Canvas behavior, animation settings, etc.");
 				static bool changePaperColor = false;
 				if (ImGui::Button("Change Paper Color")) {
 					changePaperColor = true;
