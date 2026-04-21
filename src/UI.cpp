@@ -859,6 +859,12 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	ImGui::SetItemTooltip("Erase");
 
 
+	if (ImGui::Button(ICON_FA_EYE_DROPPER)) {
+		setCursorMode(CursorMode::ColorPick);
+	}
+	ImGui::SetItemTooltip("ColorPick");
+
+
 	if (ImGui::Button(ICON_FA_HAND)) {
 		setCursorMode(CursorMode::Pan);
 	}
@@ -881,12 +887,6 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 		setCursorMode(CursorMode::ZoomOut);
 	}
 	ImGui::SetItemTooltip("ZoomOut");
-
-
-	if (ImGui::Button(ICON_FA_EYE_DROPPER)) {
-		setCursorMode(CursorMode::ColorPick);
-	}
-	ImGui::SetItemTooltip("ColorPick");
 
 
 	// adds a little visual split between sections
@@ -2017,48 +2017,50 @@ void UI::drawCursorModesWindow(CanvasManager& canvasManager) {
 	}
 	ImGui::SetItemTooltip("Pen");
 
+	ImGui::SameLine();
 
 	if (ImGui::Button(ICON_FA_FILL_DRIP)) {
 		setCursorMode(CursorMode::Fill);
 	}
 	ImGui::SetItemTooltip("Fill");
 
+	ImGui::SameLine();
 
 	if (ImGui::Button(ICON_FA_ERASER)) {
 		setCursorMode(CursorMode::Erase);
 	}
 	ImGui::SetItemTooltip("Erase");
 
+	if (ImGui::Button(ICON_FA_EYE_DROPPER)) {
+		setCursorMode(CursorMode::ColorPick);
+	}
+	ImGui::SetItemTooltip("ColorPick");
+
+	ImGui::SameLine();
 
 	if (ImGui::Button(ICON_FA_HAND)) {
 		setCursorMode(CursorMode::Pan);
 	}
 	ImGui::SetItemTooltip("Grab");
 
+	ImGui::SameLine();
 
 	if (ImGui::Button(ICON_FA_ARROWS_ROTATE)) {
 		setCursorMode(CursorMode::Rotate);
 	}
 	ImGui::SetItemTooltip("Rotate");
 
-
 	if (ImGui::Button(ICON_FA_MAGNIFYING_GLASS_PLUS)) {
 		setCursorMode(CursorMode::ZoomIn);
 	}
 	ImGui::SetItemTooltip("ZoomIn");
 
+	ImGui::SameLine();
 
 	if (ImGui::Button(ICON_FA_MAGNIFYING_GLASS_MINUS)) {
 		setCursorMode(CursorMode::ZoomOut);
 	}
 	ImGui::SetItemTooltip("ZoomOut");
-
-
-	if (ImGui::Button(ICON_FA_EYE_DROPPER)) {
-		setCursorMode(CursorMode::ColorPick);
-	}
-	ImGui::SetItemTooltip("ColorPick");
-
 
 	// adds a little visual split between sections
 	ImGui::Spacing();
