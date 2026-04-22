@@ -1534,10 +1534,10 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 			auto ShortcutRow = [&](const char* name, InputAction action) {
 				ImGui::Text("%s", name);
 				ImGui::SameLine(180);
-				if (ImGui::Button(hotkeyLabel(action).c_str()))
+				if (ImGui::Button((hotkeyLabel(action) + "##" + name).c_str()))
 					triggerRebind(action);
 				};
-
+			
 			ShortcutRow("Draw", InputAction::setDraw);
 			ShortcutRow("Erase", InputAction::setErase);
 			ShortcutRow("Fill", InputAction::setFill);
