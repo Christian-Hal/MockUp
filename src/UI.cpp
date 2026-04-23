@@ -210,6 +210,7 @@ void UI::setColor(Color currentPixelColor) {
 	// picking which one to update 
 	ImVec4* active_color = editing_primary ? &primary_color : &secondary_color;
 
+	// having to set the color through active_color to account for color swatch implementation
 	active_color->x = static_cast<float>(currentPixelColor.r) / 255.0f;  
 	active_color->y = static_cast<float>(currentPixelColor.g) / 255.0f; 
 	active_color->z = static_cast<float>(currentPixelColor.b) / 255.0f;
@@ -662,6 +663,10 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 		ImGui::Text("State: Erase");
 	}
 
+	else if (getCursorMode() == CursorMode::SoftErase) {
+		ImGui::Text("State: SoftErase");
+	}
+
 	else if (getCursorMode() == CursorMode::ZoomIn) {
 		ImGui::Text("State: Zoom In");
 	}
@@ -804,8 +809,8 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 	if (canvasManager.hasActive())
 	{
 		// save the active canvas for later use
-		ImGui::Text("file is open");
-		ImGui::Text("file size is: ");
+		//ImGui::Text("File is open");
+		ImGui::Text("Canvas size is: ");
 		ImGui::Text("%dx%d", canvasManager.getActive().getWidth(), canvasManager.getActive().getHeight());
 
 		// Create the layer buttons
@@ -1170,6 +1175,23 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 		ImGuiTabBarFlags tabBarFlags = ImGuiTabBarFlags_None;
 		if (ImGui::BeginTabBar("New", tabBarFlags)) {
 			if (ImGui::BeginTabItem("New Illustration")) {
+
+				// trying to implement changing paper color upon canvas creation
+				static bool changePaperColor = false;
+				if (ImGui::Button("Set Paper Color")) {
+					changePaperColor = true;
+				}
+				if (changePaperColor) {
+					ImGuiColorEditFlags flags = ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoInputs;
+					static ImVec4 paperColor = { 1.0f, 1.0f, 1.0f, 1.0f }; // default white
+					ImGui::SetNextItemWidth(180.0f);
+					ImGui::ColorPicker4("##papercolorpicker", (float*)&paperColor, flags);
+					if (ImGui::Button("Apply")) {
+						canvasManager.setPaperColor(paperColor);
+						changePaperColor = false;
+					}
+				}
+
 
 				// setting up combo box for illustration presets 
 				// presets as str and tuple of two ints 

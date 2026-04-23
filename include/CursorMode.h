@@ -5,6 +5,7 @@ enum class CursorMode {
     Draw,
     Fill,
     Erase,
+    SoftErase,
     ZoomIn,
     ZoomOut,
     Rotate,
