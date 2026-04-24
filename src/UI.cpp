@@ -536,6 +536,9 @@ void UI::drawMainScreen(CanvasManager& canvasManager, FrameRenderer frameRendere
 			drawLeftPanel(canvasManager);
 			drawRightPanel(canvasManager);
 			drawBottomPanel(canvasManager, frameRenderer);
+			// canvas tab panel shown only if more than 1 canvas is open
+			if (canvasManager.getNumCanvases() > 0) { drawCanvasTabs(canvasManager); }
+
 		}
 		// if in modular mode then draw the individual elements based on their visibility
 		else if (uiMode == UIMode::Modular) {
@@ -550,9 +553,6 @@ void UI::drawMainScreen(CanvasManager& canvasManager, FrameRenderer frameRendere
 
 	// top panel drawn regardless of input 
 	//drawTopPanel(canvasManager);
-
-	// canvas tab panel shown only if more than 1 canvas is open
-	if (canvasManager.getNumCanvases() > 0) { drawCanvasTabs(canvasManager); }
 
 	if (FrameRenderer::inputBlocked) {
 		drawBlockPanel(canvasManager);
