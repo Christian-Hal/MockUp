@@ -328,7 +328,7 @@ void UI::init(GLFWwindow* window, Renderer& rendInst, Globals& g_inst) {
 	// loading font and setting size 
 	ImFont* font = io.Fonts->AddFontFromFileTTF(
 		"assets/fa-solid-900.ttf", // possible pain point for Gavin
-		16.0f,
+		14.0f,
 		&config,
 		ranges
 	);
@@ -409,7 +409,7 @@ void UI::drawStartScreen(CanvasManager& canvasManager)
 	ImGui::Dummy(ImVec2(0, 40)); 			// creates some vertical space
 	ImGui::SetCursorPosX(centerX); 			// center the button
 
-	if (ImGui::Button("Create File", buttonSize))
+	if (ImGui::Button("Create File" " " ICON_FA_FILE "" ICON_FA_PLUS, buttonSize))
 	{
 		UI::showNewCanvasPopup = true;
 	}
@@ -417,7 +417,7 @@ void UI::drawStartScreen(CanvasManager& canvasManager)
 	ImGui::Dummy(ImVec2(0, 10)); 			// creates some vertical space
 	ImGui::SetCursorPosX(centerX); 			// center the button
 
-	if (ImGui::Button("Open File", buttonSize))
+	if (ImGui::Button("Open File" " " ICON_FA_FOLDER, buttonSize))
 	{
 		IGFD::FileDialogConfig config;
 		config.path = ".";
@@ -816,7 +816,7 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 	{
 		// save the active canvas for later use
 		//ImGui::Text("File is open");
-		ImGui::Text("Canvas size is: ");
+		ImGui::Text("Canvas size: ");
 		ImGui::Text("%dx%d", canvasManager.getActive().getWidth(), canvasManager.getActive().getHeight());
 
 		// Create the layer buttons
@@ -827,16 +827,20 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 		ImGui::SetItemTooltip("New Layer");
 		// remove a layer button 
 
-		if (ImGui::Button(ICON_FA_LAYER_GROUP "" ICON_FA_MINUS)) {
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 100, 100, 255));
+
+		if (ImGui::Button(ICON_FA_LAYER_GROUP)) {
 			if (canvasManager.getActive().getNumLayers() > 2) {
 				// decrease the number of layers by 1
 				canvasManager.getActive().removeLayer();
 			}
 		}
+		
+		ImGui::PopStyleColor();
 		ImGui::SetItemTooltip("Remove Layer");
 
 		for (int i = 1; i < canvasManager.getActive().getNumLayers(); i++) {
-			std::string buttonName = "Canvas Layer " + std::to_string(i);
+			std::string buttonName = ICON_FA_LAYER_GROUP + std::to_string(i);
 			if (ImGui::Button(buttonName.c_str())) {
 				canvasManager.getActive().selectLayer(i);
 			}
@@ -850,7 +854,7 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 	}
 
 	// brush import system, will probably get moved when I eventually do a UI overhaul
-	if (ImGui::Button("Import Brush"))
+	if (ImGui::Button(ICON_FA_PAINTBRUSH))
 	{
 		IGFD::FileDialogConfig config;
 		config.path = ".";
@@ -866,6 +870,8 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 			config
 		);
 	}
+
+	ImGui::SetItemTooltip("Import Brush");
 
 	if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
 	{
