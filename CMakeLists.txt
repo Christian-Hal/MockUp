@@ -37,6 +37,18 @@ target_include_directories(imgui PUBLIC
 
 target_link_libraries(imgui PUBLIC glfw)
 
+# ImSequencer 
+add_library(imsequencer STATIC
+    external/imsequencer/ImSequencer.h 
+    external/imsequencer/ImSequencer.cpp
+)
+
+target_include_directories(imsequencer PUBLIC external/imsequencer)
+
+target_link_libraries(imsequencer PUBLIC imgui) 
+
+
+
 # Executable
 file(GLOB_RECURSE PROJECT_SOURCES
      CONFIGURE_DEPENDS
@@ -61,6 +73,7 @@ if(WIN32)
         glfw
         glad
         imgui
+        imsequencer
         opengl32
 	tinyxml2
 	miniz
