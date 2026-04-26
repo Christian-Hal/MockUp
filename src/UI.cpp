@@ -188,7 +188,7 @@ PreviewImage* getPreview(const std::string& path) {
 	auto imageThumbnail = previewCache.find(path);
 	if (imageThumbnail != previewCache.end())
 		// reusing stored image
-		return &imageThumbnail->second; 
+		return &imageThumbnail->second;
 
 	// if we haven't used it before, load it from file
 	PreviewImage preview;
@@ -199,7 +199,7 @@ PreviewImage* getPreview(const std::string& path) {
 		// fuckin explode if it didn't work
 		return nullptr;
 	}
-	
+
 	// store in cache to prevent reloading constantly	
 	previewCache[path] = preview;
 	return &previewCache[path];
@@ -1402,6 +1402,7 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 		if (ImGui::Button("Folder Settings##settings_folders")) settingsSection = 0;
 		if (ImGui::Button("Shortcut Settings##settings_shortcuts")) settingsSection = 1;
 		if (ImGui::Button("Canvas Settings##settings_canvases")) settingsSection = 2;
+		if (ImGui::Button("MockUp Settings##settings_mockup")) settingsSection = 3;
 
 		ImGui::NextColumn();
 
@@ -1507,11 +1508,20 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 					}
 				}
 			}
-			else {
+			else 
 				ImGui::Text("Canvas settings will appear here when a canvas is open.");
-			}
+			
 		}
 
+		else if (settingsSection == 3) {
+			if (curState != UIState::start_menu) {
+				if (ImGui::Button("Return to Main Menu")) {
+					curState = UIState::start_menu;
+				}
+			}
+			else
+				ImGui::Text("Already on Main Menu");
+		}
 		ImGui::Columns(1);
 		ImGui::EndChild();
 
