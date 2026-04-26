@@ -1790,9 +1790,7 @@ void UI::drawColorWindow(CanvasManager& canvasManager) {
 	// name our window 
 	ImGui::Begin("Color");
 	ImGui::Text("Color");
-	// active color 
-	static bool editing_primary = true;
-
+	// ----- Color wheel ------
 	// Determine which pointer to pass to the picker
 	ImVec4* active_color = editing_primary ? &primary_color : &secondary_color;
 
@@ -1822,7 +1820,65 @@ void UI::drawColorWindow(CanvasManager& canvasManager) {
 
 	ImVec4* c = active_color;
 
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
 
+	// for modular UI, checkbox to decide if palette is rendered 
+	static bool showPalette = true; 
+	ImGui::Checkbox("Show Color Set", &showPalette);
+	if (showPalette) {
+		// color palette section 
+		// comment that says Mori Calliope 
+		ImGui::Text("Color Set:");
+		static ImVec4 palette[32] = {
+			// Basics & Brights
+			ImVec4(1.00f, 1.00f, 1.00f, 1.00f), ImVec4(1.00f, 0.00f, 0.00f, 1.00f),
+			ImVec4(0.00f, 1.00f, 0.00f, 1.00f), ImVec4(0.00f, 0.00f, 1.00f, 1.00f),
+			ImVec4(1.00f, 1.00f, 0.00f, 1.00f), ImVec4(1.00f, 0.00f, 1.00f, 1.00f),
+			ImVec4(0.00f, 1.00f, 1.00f, 1.00f), ImVec4(0.00f, 0.00f, 0.00f, 1.00f),
+
+			// Deep / Natural Tones
+			ImVec4(0.50f, 0.00f, 0.00f, 1.00f), ImVec4(0.00f, 0.50f, 0.00f, 1.00f),
+			ImVec4(0.00f, 0.00f, 0.50f, 1.00f), ImVec4(0.50f, 0.50f, 0.00f, 1.00f),
+			ImVec4(0.40f, 0.20f, 0.00f, 1.00f), ImVec4(1.00f, 0.50f, 0.00f, 1.00f),
+			ImVec4(0.00f, 0.25f, 0.50f, 1.00f), ImVec4(0.20f, 0.20f, 0.20f, 1.00f),
+
+			// Pastels
+			ImVec4(1.00f, 0.70f, 0.70f, 1.00f), ImVec4(0.70f, 1.00f, 0.70f, 1.00f),
+			ImVec4(0.70f, 0.70f, 1.00f, 1.00f), ImVec4(1.00f, 1.00f, 0.70f, 1.00f),
+			ImVec4(1.00f, 0.70f, 1.00f, 1.00f), ImVec4(0.70f, 1.00f, 1.00f, 1.00f),
+			ImVec4(1.00f, 0.80f, 0.50f, 1.00f), ImVec4(0.40f, 0.40f, 0.40f, 1.00f),
+
+			// Muted / Grayscale
+			ImVec4(0.10f, 0.10f, 0.10f, 1.00f), ImVec4(0.30f, 0.30f, 0.30f, 1.00f),
+			ImVec4(0.60f, 0.60f, 0.60f, 1.00f), ImVec4(0.85f, 0.85f, 0.85f, 1.00f),
+			ImVec4(0.15f, 0.20f, 0.25f, 1.00f), ImVec4(0.35f, 0.45f, 0.55f, 1.00f),
+			ImVec4(0.80f, 0.50f, 0.50f, 1.00f), ImVec4(0.50f, 0.80f, 0.75f, 1.00f)
+
+
+		};
+
+		// making it wrap with the panel
+		float windowMax_x = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
+		float spacing = ImGui::GetStyle().ItemSpacing.x;
+		float buttonSize = 20.0f;
+
+		for (int n = 0; n < 32; n++) {
+			ImGui::PushID(n);
+			if (ImGui::ColorButton("##palette_button", palette[n])) {
+				*active_color = palette[n];
+			}
+			// applying the panel wrapping 
+			float lastButton_X = ImGui::GetItemRectMax().x;
+			float nextButton_X = lastButton_X + spacing + buttonSize;
+			// push to next line if the button does not fit 
+			if (n < 31 && nextButton_X < windowMax_x)
+				ImGui::SameLine();
+
+			ImGui::PopID();
+		}
+	}
 	color[0] = c->x; // R
 	color[1] = c->y; // G
 	color[2] = c->z; // B
