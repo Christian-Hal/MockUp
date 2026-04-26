@@ -17,6 +17,9 @@
 
 #include "CursorMode.h"
 
+#include "ImSequencer.h"
+
+
 // enum for keeping track of default / modular UI state
 enum class UIMode {
 	Default,
@@ -44,7 +47,34 @@ constexpr UIElement elements[] = {
 	UIElement::layers,
 };
 
+// delegate for the ImSequencer animation timeline 
+struct AnimationDelegate : public ImSequencer::SequenceInterface {
+	CanvasManager* manager; 
 
+	// timeline range 
+	virtual int GetFrameMin() const { return 1; }
+	virtual int GetFrameMax() const { return FrameRenderer::getNumFrames(); }
+
+	// number of tracks - want this to be tied to the layers per frame
+	virtual int GetItemCount() const { return 1; }
+
+	virtual void GetItemConfig(int index, int* frameStart, int* frameEnd, int* typeId) {
+		if (frameStart) *frameStart = 1; 
+		if (frameEnd) *frameEnd = FrameRenderer::getNumFrames();
+		if (typeId) *typeId = 0;
+	}
+
+	virtual const char* GetItemLabel(int index) const { return "Layer 1"; }
+
+	// handles playhead movement 
+	virtual void CustomEdit(int index, int type, int start, int end) {
+		// handle dragging of animation block 
+	}
+
+	// boilerplate 
+	virtual int GetItemTypeCount() const { return 1; }
+	virtual const char* GetItemTypeName(int typeIndex) const { return "Animation"; }
+};
 
 class UI {
 

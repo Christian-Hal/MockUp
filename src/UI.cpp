@@ -21,8 +21,6 @@
 
 #include "IconsFontAwesome6.h"
 
-#include "ImSequencer.h"
-
 
 std::string overwritePath;
 
