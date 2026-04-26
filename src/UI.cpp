@@ -508,9 +508,6 @@ void UI::drawMainScreen(CanvasManager& canvasManager, FrameRenderer frameRendere
 		}
 	}
 
-	// ----- Cursor Customization -----
-	drawCustomCursor(canvasManager);
-
 	// draw the UI elements only if showPanels is true
 	// draw the three main screen panels
 	if (showPanels) {
@@ -530,9 +527,6 @@ void UI::drawMainScreen(CanvasManager& canvasManager, FrameRenderer frameRendere
 			if (elementVisibility[UIElement::layers]) { drawLayersWindow(canvasManager); }
 		}
 	}
-
-	// top panel drawn regardless of input 
-	//drawTopPanel(canvasManager);
 
 	// canvas tab panel shown only if more than 1 canvas is open
 	if (canvasManager.getNumCanvases() > 0) { drawCanvasTabs(canvasManager); }
