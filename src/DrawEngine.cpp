@@ -138,6 +138,8 @@ void DrawEngine::stampBrush(glm::vec2 position)
     if (topLeftX + W < 0 || topLeftX >= curCanvas->getWidth() ||
         topLeftY + H < 0 || topLeftY >= curCanvas->getHeight()) return;
 
+    float colorAlpha = curColor.a / 255.0f;
+
     for (int r = 0; r < H; r++) 
     {
         for (int c = 0; c < W; c++) 
@@ -148,7 +150,7 @@ void DrawEngine::stampBrush(glm::vec2 position)
                 int finalX = topLeftX + c;
                 int finalY = topLeftY + r;
 
-                curCanvas->blendPixel(finalX, finalY, curColor, curColor.a/255.0);
+                curCanvas->blendPixel(finalX, finalY, curColor, colorAlpha);
             }
         }
     }

@@ -73,11 +73,6 @@ void Canvas::beginStrokeRecord()
 // Records the change of a single pixel during a stroke, storing the index of the pixel and its previous color value
 void Canvas::recordPixelChange(int index, const Color& before)
 {
-	// check if we've seen the pixel before during this stroke, keeps from reassigning the same pixel multiple times
-	if (seenPixels[index] == currentStrokeIndex) {
-		return;
-	}
-
 	// if we haven't seen the pixel before, then we mark it as seen and save it to the active stroke
 	seenPixels[index] = currentStrokeIndex;
 	Pixel pixel = { index, before, before };
@@ -385,17 +380,17 @@ void Canvas::blendPixel(int x, int y, const Color& src, float brushAlpha) {
         return;
     }
 
-	// Fully opaque writes and fully transparent writes should be direct sets.
-	// Transparent writes are used by erase mode.
-	if (src.a == 255 || src.a == 0) {
-		this->setPixel(x, y, src);
-		return;
-	}
-
 	int index = y * width + x;
 
 	// if this pixel was already blended during this stroke, skip it to prevent over-blending
 	if (seenPixels[index] == currentStrokeIndex) {
+		return;
+	}
+
+	// Fully opaque writes and fully transparent writes should be direct sets.
+	// Transparent writes are used by erase mode.
+	if (src.a == 255 || src.a == 0) {
+		this->setPixel(x, y, src);
 		return;
 	}
 
