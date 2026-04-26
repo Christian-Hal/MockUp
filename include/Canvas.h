@@ -37,7 +37,8 @@ class Canvas {
 public:
 	// constructor
 	Canvas();
-	Canvas(int w, int h, std::string name, bool isAnimation, bool useAnimTemplate);
+	Canvas(int w, int h, std::string name, bool isAnimation, bool useAnimTemplate, 
+		const Color& paperColor);
 
 	// getter methods
 	int getWidth() const;

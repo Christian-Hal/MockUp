@@ -9,7 +9,8 @@
 
 class CanvasManager {
     public:
-        Canvas& createCanvas(int width, int height, std::string name, bool isAnimation, bool useAnimTemplate);
+        Canvas& createCanvas(int width, int height, std::string name, bool isAnimation, bool useAnimTemplate, 
+            const ImVec4& paperColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
         Canvas& getActive();
         bool hasActive();
 

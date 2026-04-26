@@ -211,10 +211,10 @@ void UI::setColor(Color currentPixelColor) {
 	ImVec4* active_color = editing_primary ? &primary_color : &secondary_color;
 
 	// having to set the color through active_color to account for color swatch implementation
-	active_color->x = static_cast<float>(currentPixelColor.r) / 255.0f;  
-	active_color->y = static_cast<float>(currentPixelColor.g) / 255.0f; 
+	active_color->x = static_cast<float>(currentPixelColor.r) / 255.0f;
+	active_color->y = static_cast<float>(currentPixelColor.g) / 255.0f;
 	active_color->z = static_cast<float>(currentPixelColor.b) / 255.0f;
-	active_color->w = static_cast<float>(currentPixelColor.a) / 255.0f;  
+	active_color->w = static_cast<float>(currentPixelColor.a) / 255.0f;
 
 	color[0] = active_color->x;
 	color[1] = active_color->y;
@@ -835,7 +835,7 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 				canvasManager.getActive().removeLayer();
 			}
 		}
-		
+
 		ImGui::PopStyleColor();
 		ImGui::SetItemTooltip("Remove Layer");
 
@@ -1057,10 +1057,10 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 		{
 			bool open = true;
 			const Canvas& c = canvasManager.getOpenCanvases()[i];
-			std::string label = c.getName()	+ "##canvas" + std::to_string(i);
+			std::string label = c.getName() + "##canvas" + std::to_string(i);
 
 			bool tabvisible = ImGui::BeginTabItem(label.c_str(), &open);
-			
+
 			if (ImGui::IsItemActivated() && canvasManager.getActiveCanvasIndex() != i)
 				canvasManager.setActiveCanvas(i);
 
@@ -1154,7 +1154,7 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 			else
 				canvasManager.saveToFile(filePath);
 
-			canvasManager.getActive().isDirty = false; 
+			canvasManager.getActive().isDirty = false;
 			canvasManager.closeCanvas(pendingCloseIndex);
 		}
 
@@ -1178,6 +1178,9 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 	// want to also add canvas size presets as a map accessed from a combo 
 	static bool animTemplate = false;
 
+	static ImVec4 paperColor = { 1.0f, 1.0f, 1.0f, 1.0f }; // default white 
+	static bool changePaperColor = false;
+
 	if (UI::showNewCanvasPopup) {
 		ImGui::OpenPopup("New");
 	}
@@ -1191,17 +1194,16 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 			if (ImGui::BeginTabItem("Illustration")) {
 
 				// trying to implement changing paper color upon canvas creation
-				static bool changePaperColor = false;
 				if (ImGui::Button("Set Paper Color")) {
 					changePaperColor = true;
 				}
 				if (changePaperColor) {
 					ImGuiColorEditFlags flags = ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoInputs;
-					static ImVec4 paperColor = { 1.0f, 1.0f, 1.0f, 1.0f }; // default white
 					ImGui::SetNextItemWidth(180.0f);
 					ImGui::ColorPicker4("##papercolorpicker", (float*)&paperColor, flags);
 					if (ImGui::Button("Apply")) {
-						canvasManager.setPaperColor(paperColor);
+						//canvasManager.setPaperColor(paperColor);
+						// closes the picker
 						changePaperColor = false;
 					}
 				}
@@ -1251,7 +1253,7 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 					temp_n = "Illustration";
 
 					// create the new canvas
-					canvasManager.createCanvas(temp_w, temp_h, temp_n, false, false);
+					canvasManager.createCanvas(temp_w, temp_h, temp_n, false, false, paperColor);
 
 					// centering the newly created canvas 
 					resetCanvasPositionCb();
