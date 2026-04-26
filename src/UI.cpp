@@ -851,15 +851,50 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 	// comment that says Mori Calliope 
 	ImGui::Text("Color Set:");
 	static ImVec4 palette[32] = {
-	ImVec4(1.0f, 0.0f, 0.0f, 1.0f), ImVec4(0.0f, 1.0f, 0.0f, 1.0f), // need to add more colors 
+			// Basics & Brights
+			ImVec4(1.00f, 1.00f, 1.00f, 1.00f), ImVec4(1.00f, 0.00f, 0.00f, 1.00f),
+			ImVec4(0.00f, 1.00f, 0.00f, 1.00f), ImVec4(0.00f, 0.00f, 1.00f, 1.00f),
+			ImVec4(1.00f, 1.00f, 0.00f, 1.00f), ImVec4(1.00f, 0.00f, 1.00f, 1.00f),
+			ImVec4(0.00f, 1.00f, 1.00f, 1.00f), ImVec4(0.00f, 0.00f, 0.00f, 1.00f),
+
+			// Deep / Natural Tones
+			ImVec4(0.50f, 0.00f, 0.00f, 1.00f), ImVec4(0.00f, 0.50f, 0.00f, 1.00f),
+			ImVec4(0.00f, 0.00f, 0.50f, 1.00f), ImVec4(0.50f, 0.50f, 0.00f, 1.00f),
+			ImVec4(0.40f, 0.20f, 0.00f, 1.00f), ImVec4(1.00f, 0.50f, 0.00f, 1.00f),
+			ImVec4(0.00f, 0.25f, 0.50f, 1.00f), ImVec4(0.20f, 0.20f, 0.20f, 1.00f),
+
+			// Pastels
+			ImVec4(1.00f, 0.70f, 0.70f, 1.00f), ImVec4(0.70f, 1.00f, 0.70f, 1.00f),
+			ImVec4(0.70f, 0.70f, 1.00f, 1.00f), ImVec4(1.00f, 1.00f, 0.70f, 1.00f),
+			ImVec4(1.00f, 0.70f, 1.00f, 1.00f), ImVec4(0.70f, 1.00f, 1.00f, 1.00f),
+			ImVec4(1.00f, 0.80f, 0.50f, 1.00f), ImVec4(0.40f, 0.40f, 0.40f, 1.00f),
+
+			// Muted / Grayscale
+			ImVec4(0.10f, 0.10f, 0.10f, 1.00f), ImVec4(0.30f, 0.30f, 0.30f, 1.00f),
+			ImVec4(0.60f, 0.60f, 0.60f, 1.00f), ImVec4(0.85f, 0.85f, 0.85f, 1.00f),
+			ImVec4(0.15f, 0.20f, 0.25f, 1.00f), ImVec4(0.35f, 0.45f, 0.55f, 1.00f),
+			ImVec4(0.80f, 0.50f, 0.50f, 1.00f), ImVec4(0.50f, 0.80f, 0.75f, 1.00f)
+		
+
 	};
+
+	// making it wrap with the panel
+	float windowMax_x = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
+	float spacing = ImGui::GetStyle().ItemSpacing.x; 
+	float buttonSize = 20.0f; 
 
 	for (int n = 0; n < 32; n++) {
 		ImGui::PushID(n); 
 		if (ImGui::ColorButton("##palette_button", palette[n])) {
 			*active_color = palette[n]; 
 		}
-		if ((n + 1) % 8 != 0) ImGui::SameLine();
+		// applying the panel wrapping 
+		float lastButton_X = ImGui::GetItemRectMax().x;
+		float nextButton_X = lastButton_X + spacing + buttonSize;
+		// push to next line if the button does not fit 
+		if (n < 31 && nextButton_X < windowMax_x)
+			ImGui::SameLine();
+
 		ImGui::PopID();
 	}
 
@@ -867,6 +902,10 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 	color[1] = c->y; // G
 	color[2] = c->z; // B
 	color[3] = c->w; // A
+
+	ImGui::Spacing();
+	ImGui::Separator(); 
+	ImGui::Spacing();
 
 	// brush size slider 
 	ImGui::SliderInt("Size", &brushSize, 1, 500, "%d", ImGuiSliderFlags_Logarithmic);
