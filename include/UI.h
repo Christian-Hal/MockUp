@@ -97,6 +97,7 @@ public:
 	static bool showOpenDialog;
 	
 	void requestCloseCanvas(int index, CanvasManager& canvasManager);
+	void requestAppClose(CanvasManager& canvasManager);
 
 private:
 	SetCursorModeCallback setCursorModeCb;
@@ -160,4 +161,5 @@ private:
 	bool showSettingsPopup = false;
 	bool showCloseConfirm = false;
 	int pendingCloseIndex = -1;
+	bool pendingAppClose = false;
 };

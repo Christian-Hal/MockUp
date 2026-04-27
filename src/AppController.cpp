@@ -124,6 +124,26 @@ void AppController::run()
 	while (!window.shouldClose()) {
 		window.pollEvents();
 
+		if (glfwWindowShouldClose(window.handle()))
+		{
+			glfwSetWindowShouldClose(window.handle(), GLFW_FALSE);
+
+			bool anyDirty = false;
+			for (int i = 0; i < canvasManager.getNumCanvases(); i++) {
+				if (canvasManager.getOpenCanvases()[i].isDirty) {
+					anyDirty = true;
+					break;
+				}
+			}
+
+			if (anyDirty) {
+				ui.requestAppClose(canvasManager); // shows the popup
+			}
+			else {
+				glfwSetWindowShouldClose(appState.getWindow().handle(), GLFW_TRUE);
+			}
+		}
+
         // If there is an active canvas then let the draw engine grab and process the current mouse position
         if (canvasManager.hasActive()) {
             drawEngine.setCanvas(canvasManager.getActive());

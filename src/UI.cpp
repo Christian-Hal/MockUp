@@ -1278,6 +1278,9 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 			pendingCloseIndex = -1;
 			showCloseConfirm = false;
 			ImGui::CloseCurrentPopup();
+
+			if (pendingAppClose)
+				requestAppClose(canvasManager);
 		}
 
 		ImGui::SameLine();
@@ -1285,6 +1288,7 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 		{
 			pendingCloseIndex = -1;
 			showCloseConfirm = false;
+			pendingAppClose = false;
 			ImGui::CloseCurrentPopup();
 		}
 
@@ -1309,6 +1313,9 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 
 			canvasManager.getActive().isDirty = false; 
 			canvasManager.closeCanvas(pendingCloseIndex);
+
+			if (pendingAppClose)
+				requestAppClose(canvasManager);
 		}
 
 		pendingCloseIndex = -1;
@@ -2261,4 +2268,19 @@ void UI::requestCloseCanvas(int index, CanvasManager& canvasManager)
 	}
 	else
 		canvasManager.closeCanvas(index);
+}
+
+void UI::requestAppClose(CanvasManager& canvasManager)
+{
+	pendingAppClose = true;
+	for (int i = 0; i < canvasManager.getNumCanvases(); i++) {
+		if (canvasManager.getOpenCanvases()[i].isDirty) {
+			pendingCloseIndex = i;
+			canvasManager.setActiveCanvas(i);
+			showCloseConfirm = true;
+			return;
+		}
+	}
+	// no dirty canvases, just close immediately
+	glfwSetWindowShouldClose(glfwGetCurrentContext(), GLFW_TRUE);
 }
