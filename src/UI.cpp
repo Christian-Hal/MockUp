@@ -979,6 +979,7 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 		if (ImGui::Button("New Layer")) {
 			// increase the number of layers by 1
 			canvasManager.getActive().createLayer();
+			canvasManager.getActive().isDirty = true;
 		}
 		// remove a layer button 
 
@@ -986,6 +987,7 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 			if (canvasManager.getActive().getNumLayers() > 2) {
 				// decrease the number of layers by 1
 				canvasManager.getActive().removeLayer();
+				canvasManager.getActive().isDirty = true;
 			}
 		}
 
@@ -1956,6 +1958,7 @@ void UI::drawLayersWindow(CanvasManager& canvasManager) {
 		if (ImGui::Button("New Layer")) {
 			// increase the number of layers by 1
 			canvasManager.getActive().createLayer();
+			canvasManager.getActive().isDirty = true;
 		}
 		// remove a layer button 
 
@@ -1963,6 +1966,7 @@ void UI::drawLayersWindow(CanvasManager& canvasManager) {
 			if (canvasManager.getActive().getNumLayers() > 2) {
 				// decrease the number of layers by 1
 				canvasManager.getActive().removeLayer();
+				canvasManager.getActive().isDirty = true;
 			}
 		}
 
