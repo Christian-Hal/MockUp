@@ -29,6 +29,7 @@ Canvas& CanvasManager::createCanvas(int width, int height, std::string name, boo
     FrameRenderer::newCanvas(&oldCanvasCopy, &canvases[activeCanvasIndex]);
 
     canvasChange = true;
+    paperChange = true;
 
     return canvases[activeCanvasIndex];
 }
@@ -102,6 +103,7 @@ void CanvasManager::setPaperColor(const ImVec4& color)
     };
 
     getActive().setBackgroundColor(bgColor);
+    paperChange = true;
 }
 
 void CanvasManager::undo()
@@ -181,6 +183,7 @@ void CanvasManager::setActiveCanvas(int index)
     activeCanvasIndex = index;
 
     canvasChange = true;
+    paperChange = true;
 
     FrameRenderer::updateCanvas(&oldCanvasCopy, &getActive(), index);
 }
