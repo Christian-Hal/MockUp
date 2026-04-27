@@ -1250,7 +1250,10 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 		{
 			canvasManager.setActiveCanvas(pendingCloseIndex);
 			IGFD::FileDialogConfig config;
-			config.path = ".";
+
+			if (getDefaultFolderPathCb) config.path = getDefaultFolderPathCb();
+				else config.path = ".";
+			
 			config.fileName = canvasManager.getActive().getName();
 			config.flags = ImGuiFileDialogFlags_ConfirmOverwrite;
 			ImGuiFileDialog::Instance()->OpenDialog("SaveBeforeCloseDlg", "Save Image", ".png,.jpg,.ora", config);
@@ -1656,7 +1659,8 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 				ImGuiFileDialog::Instance()->OpenDialog(
 					"LoadFileDlg",
 					"Choose File",
-					".png, .jpg, .ora"
+					".png, .jpg, .ora",
+					config
 				);
 			}
 			ImGui::EndMenu();
@@ -1762,6 +1766,7 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 
 			// if the current UI state is the start menu then change it to the main screen
 			if (curState == UIState::start_menu) { curState = UIState::main_screen; }
+			saveToRecentActivityCb(filePath);
 
 		}
 
