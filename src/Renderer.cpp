@@ -56,6 +56,9 @@ uniform sampler2D paperTex;
 void main(){
     vec4 canvasColor = texture(canvasTex, TexCoord);
     vec4 paperColor = texture(paperTex, TexCoord);
+
+	if (canvasColor.a > 0.001) 
+        canvasColor.rgb /= canvasColor.a;
     
     // Blend using canvas's alpha channel - canvas appears on top
     FragColor = mix(paperColor, canvasColor, canvasColor.a);
