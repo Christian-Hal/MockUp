@@ -1774,6 +1774,7 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 			}
 
 			saveToRecentActivityCb(filePath);
+			canvasManager.getActive().isDirty = false;
 		}
 
 		ImGuiFileDialog::Instance()->Close();
@@ -1824,7 +1825,7 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 
 
 			FrameRenderer::saveAnimation(filePath, canvasManager.getActive());
-
+			canvasManager.getActive().isDirty = false;
 		}
 
 		ImGuiFileDialog::Instance()->Close();
