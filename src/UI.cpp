@@ -2128,8 +2128,8 @@ void UI::drawCursorModesWindow(CanvasManager& canvasManager) {
 	ImGui::End();
 }
 
+// helper method to render the buttons for the timeline
 void renderTimelineControls(CanvasManager& canvasManager) {
-	// Basic playback and frame management
 	if (ImGui::Button("+")) {
 		FrameRenderer::createFrame(canvasManager.getActive());
 	}
@@ -2141,13 +2141,11 @@ void renderTimelineControls(CanvasManager& canvasManager) {
 	ImGui::Spacing();
 	ImGui::SameLine();
 
-	// Playback
 	if (ImGui::Button("Play")) {
 		FrameRenderer::play(canvasManager.getActive());
 	}
 	ImGui::SameLine();
 
-	// Onion Skin Toggle
 	if (ImGui::Button("Onion Skins")) {
 		FrameRenderer::removeOnionSkin(canvasManager.getActive());
 		FrameRenderer::toggleOnionSkin();
@@ -2164,55 +2162,55 @@ void UI::drawTimelineWindow(CanvasManager& canvasManager) {
 
 	ImGui::Begin("Timeline");
 
-	// 1. Render the top buttons
+	// getting our buttons
 	renderTimelineControls(canvasManager);
 
-	// 2. Setup Dimensions
-	const float k_cellWidth = 30.0f;
-	const float k_cellHeight = 25.0f;
+	// establishing the animation cel dimensions
+	const float k_cellWidth = 20.0f;
+	const float k_cellHeight = 20.0f;
 	int totalFrames = FrameRenderer::getNumFrames();
-	int currentFrame = FrameRenderer::getCurFrame(); // 1-indexed based on your prev code
+	int currentFrame = FrameRenderer::getCurFrame(); 
 
-	// 3. The Grid
+	// building the grid that serves as the core of the timeline 
 	static ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX |
 		ImGuiTableFlags_ScrollY | ImGuiTableFlags_Borders |
 		ImGuiTableFlags_RowBg;
 
-	// We use totalFrames + 1 columns (Column 0 = Layer Name)
+	// totalFrames + 1 columns column 0 is the layer name 
 	if (ImGui::BeginTable("TimelineGrid", totalFrames + 1, flags)) {
 
-		// Pin the Layer Names and the Frame Numbers
+		// layer names and frame numbers 
 		ImGui::TableSetupScrollFreeze(1, 1);
 
-		// Configure Header
+		// configure the header
 		ImGui::TableSetupColumn("Animation Folders", ImGuiTableColumnFlags_WidthFixed, 150.0f);
 		for (int n = 0; n < totalFrames; n++) {
 			ImGui::TableSetupColumn(std::to_string(n + 1).c_str(), ImGuiTableColumnFlags_WidthFixed, k_cellWidth);
 		}
 		ImGui::TableHeadersRow();
 
-		// 4. Render Rows (Mimicking CSP Layers)
+		// rendering the rows
 		ImGui::TableNextRow(ImGuiTableRowFlags_None, k_cellHeight);
 
-		// Column 0: Layer Info
+		// column 0 - contains timeline info only
 		ImGui::TableSetColumnIndex(0);
 		ImGui::AlignTextToFramePadding();
 		ImGui::Selectable("Folder 1", false);
 
-		// Columns 1 to N: The Cels
+		// remaining columns - contain actual animation cels
 		for (int frame = 1; frame <= totalFrames; frame++) {
 			ImGui::TableSetColumnIndex(frame);
 			ImGui::PushID(frame);
 
 			bool isCurrent = (frame == currentFrame);
 
-			// Draw the "Cel" box
+			// the box for each cel
 			ImU32 cellBgColor = isCurrent ? IM_COL32(255, 0, 0, 100) : IM_COL32(60, 60, 60, 255);
 			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cellBgColor);
 
-			// Clickable region for each frame
+			// clickable region for each cel
 			if (ImGui::Selectable("##cell", isCurrent, ImGuiSelectableFlags_None, ImVec2(k_cellWidth, k_cellHeight))) {
-				// Calculate the offset (jump) needed for FrameRenderer
+				// the offset needed for frame renderer
 				int offset = frame - currentFrame;
 				if (offset != 0) {
 					FrameRenderer::selectFrame(canvasManager.getActive(), offset);
