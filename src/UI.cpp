@@ -2157,67 +2157,100 @@ void renderTimelineControls(CanvasManager& canvasManager) {
 }
 
 void UI::drawTimelineWindow(CanvasManager& canvasManager) {
+	// only draw if there is an animations
 	if (!canvasManager.hasActive() || !canvasManager.getActive().isAnimation())
 		return;
 
+	Canvas& activeCanvas = canvasManager.getActive();
 	ImGui::Begin("Timeline");
 
-	// getting our buttons
 	renderTimelineControls(canvasManager);
 
-	// establishing the animation cel dimensions
+	// dimensions for our animation cels
 	const float k_cellWidth = 20.0f;
 	const float k_cellHeight = 20.0f;
 	int totalFrames = FrameRenderer::getNumFrames();
-	int currentFrame = FrameRenderer::getCurFrame(); 
+	int currentFrame = FrameRenderer::getCurFrame();
+	int numLayers = activeCanvas.getNumLayers();
+	int currentLayerIdx = activeCanvas.getCurLayer();
 
-	// building the grid that serves as the core of the timeline 
+	// timeline flags
 	static ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX |
 		ImGuiTableFlags_ScrollY | ImGuiTableFlags_Borders |
-		ImGuiTableFlags_RowBg;
+		ImGuiTableFlags_RowBg |
+		ImGuiTableFlags_SizingFixedFit; 
 
-	// totalFrames + 1 columns column 0 is the layer name 
 	if (ImGui::BeginTable("TimelineGrid", totalFrames + 1, flags)) {
 
-		// layer names and frame numbers 
 		ImGui::TableSetupScrollFreeze(1, 1);
 
-		// configure the header
-		ImGui::TableSetupColumn("Animation Folders", ImGuiTableColumnFlags_WidthFixed, 150.0f);
-		for (int n = 0; n < totalFrames; n++) {
-			ImGui::TableSetupColumn(std::to_string(n + 1).c_str(), ImGuiTableColumnFlags_WidthFixed, k_cellWidth);
+		// column 0 - contains timeline title 
+		ImGui::TableSetupColumn("Animation Layers", ImGuiTableColumnFlags_WidthFixed, 150.0f);
+
+		// remaining columns - frame numbers 
+		for (int n = 1; n <= totalFrames; n++) {
+			// Use a pointer to a string or a static buffer to ensure the label persists during the call
+			std::string frameLabel = std::to_string(n);
+			ImGui::TableSetupColumn(frameLabel.c_str(), ImGuiTableColumnFlags_WidthFixed, k_cellWidth);
 		}
+
 		ImGui::TableHeadersRow();
+	
 
-		// rendering the rows
-		ImGui::TableNextRow(ImGuiTableRowFlags_None, k_cellHeight);
 
-		// column 0 - contains timeline info only
-		ImGui::TableSetColumnIndex(0);
-		ImGui::AlignTextToFramePadding();
-		ImGui::Selectable("Folder 1", false);
+		// iterating through layers starting at 1 
+		for (int row = 1; row < numLayers; row++) {
+			ImGui::TableNextRow(ImGuiTableRowFlags_None, k_cellHeight);
 
-		// remaining columns - contain actual animation cels
-		for (int frame = 1; frame <= totalFrames; frame++) {
-			ImGui::TableSetColumnIndex(frame);
-			ImGui::PushID(frame);
+			// column 0 - layer information
+			ImGui::TableSetColumnIndex(0);
+			bool isLayerSelected = (row == currentLayerIdx);
 
-			bool isCurrent = (frame == currentFrame);
-
-			// the box for each cel
-			ImU32 cellBgColor = isCurrent ? IM_COL32(255, 0, 0, 100) : IM_COL32(60, 60, 60, 255);
-			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cellBgColor);
-
-			// clickable region for each cel
-			if (ImGui::Selectable("##cell", isCurrent, ImGuiSelectableFlags_None, ImVec2(k_cellWidth, k_cellHeight))) {
-				// the offset needed for frame renderer
-				int offset = frame - currentFrame;
-				if (offset != 0) {
-					FrameRenderer::selectFrame(canvasManager.getActive(), offset);
-				}
+			std::string label = ICON_FA_LAYER_GROUP " Layer " + std::to_string(row);
+			if (ImGui::Selectable(label.c_str(), isLayerSelected, ImGuiSelectableFlags_SpanAllColumns)) {
+				activeCanvas.selectLayer(row);
 			}
 
-			ImGui::PopID();
+			// remaining columns - animation cels
+			for (int frame = 1; frame <= totalFrames; frame++) {
+				ImGui::TableSetColumnIndex(frame);
+				ImGui::PushID(row * 1000 + frame); // Unique ID per cell
+
+				bool isCurrentFrame = (frame == currentFrame);
+
+				// colors:
+				// 1. red if its the selected cel
+				// 2. darker if its the selected layer
+				// 3. grey for all others
+				ImU32 cellBgColor = IM_COL32(50, 50, 50, 255);
+				if (isCurrentFrame) cellBgColor = IM_COL32(255, 0, 0, 80);
+				else if (isLayerSelected) cellBgColor = IM_COL32(80, 80, 80, 255);
+
+				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cellBgColor);
+
+				// Interaction: Select Frame and Layer simultaneously
+				if (ImGui::Selectable("##cell", isCurrentFrame && isLayerSelected, ImGuiSelectableFlags_None, ImVec2(k_cellWidth, k_cellHeight))) {
+					// Update Layer
+					activeCanvas.selectLayer(row);
+					// Update Frame
+					int offset = frame - currentFrame;
+					if (offset != 0) {
+						FrameRenderer::selectFrame(activeCanvas, offset);
+					}
+				}
+
+				// Visual decoration: Draw a small circle if a "Cel" (drawing) exists here
+				// (You would need a function like activeCanvas.hasContent(layer, frame))
+				/*
+				if (activeCanvas.hasContent(row, frame)) {
+					ImGui::GetWindowDrawList()->AddCircleFilled(
+						ImVec2(ImGui::GetItemRectMin().x + k_cellWidth/2, ImGui::GetItemRectMin().y + k_cellHeight/2),
+						4.0f, IM_COL32(200, 200, 200, 255));
+				}
+				*/
+
+				ImGui::PopID();
+			}
 		}
 		ImGui::EndTable();
 	}
