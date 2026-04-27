@@ -16,9 +16,9 @@
 
 Canvas& CanvasManager::createCanvas(int width, int height, std::string name, bool isAnimation, bool useAnimTemplate)
 {
-    Canvas* oldCanvasCopy = nullptr;
+    Canvas oldCanvasCopy;
     if (hasActive()) {
-        oldCanvasCopy = &getActive();
+        oldCanvasCopy = getActive();
     }
 
     std::string fixed_name = checkName(name);
@@ -26,7 +26,7 @@ Canvas& CanvasManager::createCanvas(int width, int height, std::string name, boo
 
     activeCanvasIndex = canvases.size() - 1;
 
-    FrameRenderer::newCanvas(oldCanvasCopy, &canvases[activeCanvasIndex]);
+    FrameRenderer::newCanvas(&oldCanvasCopy, &canvases[activeCanvasIndex]);
 
     canvasChange = true;
     paperChange = true;

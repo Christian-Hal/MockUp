@@ -157,20 +157,10 @@ void FrameRenderer::createFrame(Canvas& canvas){
     //band-aid solution. this does not fix removing layers fully
 
     vector<vector<Color>> layDat;
-    if (canvas.isUsingAnimTemplate()) {
-        // 3 layers: background, template, empty drawing layer
-        layDat.resize(3, vector<Color>(meta[0] * meta[1], {0,0,0,0}));
-
-        layDat[0] = backgroundLayer;
-        //canvas.loadAnimTemplate(); // sets the template layer to the animation template
-        layDat[1] = canvas.getLayerData()[1]; // sets the template layer
-
-    } else {
-        // normal behavior
-        int numLayers = meta[2];
-        layDat.resize(numLayers, vector<Color>(meta[0] * meta[1], {0,0,0,0}));
-        layDat[0] = backgroundLayer;
-    }
+    // normal behavior
+    int numLayers = meta[2];
+    layDat.resize(numLayers, vector<Color>(meta[0] * meta[1], {0,0,0,0}));
+    layDat[0] = backgroundLayer;
 
     canvas.setLayerData(layDat);
     
