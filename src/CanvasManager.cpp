@@ -211,6 +211,13 @@ void CanvasManager::saveToFile(const std::string& path)
     std::vector<Color> pixels(width * height);
     std::memcpy(pixels.data(), getActive().getData(), width * height * sizeof(Color));
 
+    // change all empty pixels to the background color before saving
+    for (int i = 0; i < width * height; i++)
+    {
+        if (pixels[i].a == 0)
+            pixels[i] = getActive().getBackgroundColor();
+    }
+
     // flip image vertically
     savingFlip(height, width, pixels);
 
@@ -262,6 +269,15 @@ void CanvasManager::saveORA(const std::string& path)
     for (int i = 0; i < numLayers; i++)
     {
         std::vector<Color> flipped = layers[i];
+
+        // layer 0 needs to be filled with background color for saving
+        if (i == 0) {
+            for (int j = 0; j < width * height; j++)
+            {
+                if (flipped[j].a == 0)
+                    flipped[j] = getActive().getBackgroundColor();
+            }
+        }
 
         savingFlip(height, width, flipped);
 
