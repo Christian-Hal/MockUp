@@ -456,6 +456,16 @@ void CanvasManager::loadORA(const std::string& path)
             continue;
         }
 
+        // special behavior for the final layer from the ORA file
+        if (i == (int)layers.size() - 1)
+        {
+            // grab the first color of the final layer and set it as the background color of the canvas
+            Color bgColor = {data[0], data[1], data[2], data[3]};
+            canvas.setBackgroundColor(bgColor);
+            stbi_image_free(data);
+            continue;
+        }
+
         std::vector<unsigned char> fullCanvas(width * height * 4, 0);
 
         for (int row = 0; row < h; row++)
