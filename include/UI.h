@@ -146,6 +146,7 @@ private:
 	// separate rendering functions for all components to unify the windows and panels 
 	void renderTimeline(CanvasManager& canvasManager);
 	void renderTimelineControls(CanvasManager& canvasManager);
+	void renderColorSet(CanvasManager& canvasManager, ImVec4* active_color);
 
 	void drawNewCanvasPopup(CanvasManager& canvasManager);
 	void drawSettingsPopup(CanvasManager& canvasManager);

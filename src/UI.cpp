@@ -22,9 +22,6 @@
 #include "IconsFontAwesome6.h"
 
 
-
-std::string overwritePath;
-
 // variables to store info for UI declared up here 
 /// panel sizes
 int TopSize = 0;
@@ -57,7 +54,6 @@ static ImVec4 secondary_color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 // determines which color swatch the color wheel is bound to 
 static bool editing_primary = true;
 
-
 // storing time for user input 
 static double lastFrame = 0.0;
 
@@ -85,7 +81,6 @@ struct PreviewImage
 std::unordered_map<std::string, PreviewImage> previewCache;
 
 
-
 void UI::bindCursorCallbacks(SetCursorModeCallback setCb, GetCursorModeCallback getCb)
 {
 	// Store controller-provided hooks so UI can request state changes
@@ -94,12 +89,10 @@ void UI::bindCursorCallbacks(SetCursorModeCallback setCb, GetCursorModeCallback 
 	getCursorModeCb = std::move(getCb);
 }
 
-
 void UI::bindCanvasCallbacks(ResetCanvasPositionCallback resetPositionCb)
 {
 	resetCanvasPositionCb = std::move(resetPositionCb);
 }
-
 
 void UI::bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallback setActiveCb, GetActiveBrushCallback getActiveCb, LoadBrushCallback loadBrushCb, GenerateBrushDabCallback genDabCb)
 {
@@ -109,7 +102,6 @@ void UI::bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallba
 	loadBrushFromFileCb = std::move(loadBrushCb);
 	generateDabCb = std::move(genDabCb);
 }
-
 
 void UI::bindHotkeyCallbacks(GetHotkeyLabelCallback getLabelCb, StartRebindCallback startCb, BoolCallback isWaitingCb, BoolCallback didFailCb)
 {
@@ -258,7 +250,7 @@ void UI::setColor(Color currentPixelColor) {
 }
 
 
-// cursor mode getter 
+// cursor mode get and set
 CursorMode UI::getCursorMode() const {
 	// Prefer controller-owned state once callbacks are bound.
 	if (getCursorModeCb) {
@@ -278,7 +270,7 @@ void UI::setCursorMode(CursorMode temp) {
 }
 
 
-// UI initialization 
+// ----- UI initialization -----
 void UI::init(GLFWwindow* window, Renderer& rendInst, Globals& g_inst) {
 
 	// set the initial ui state
@@ -690,7 +682,7 @@ void UI::drawCustomCursor(CanvasManager& canvasManager) {
 	}
 }
 
-// methods for drawing the individual menu panels
+// ----- drawing the individual menu panels -----
 void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	// initialize the panel
 	ImGui::SetNextWindowPos(ImVec2(0, TopSize), ImGuiCond_Always); // line that needs to change to make it fit MainMenuBar
@@ -795,6 +787,10 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	ImGui::Separator();
 	ImGui::Spacing();
 
+	// need active color here so that it is updated every frame
+	ImVec4* active_color = editing_primary ? &primary_color : &secondary_color;
+	renderColorSet(canvasManager, active_color);
+
 	// end step
 	LeftSize = ImGui::GetWindowWidth();
 	ImVec2 size = ImGui::GetWindowSize();
@@ -842,64 +838,15 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 	ImGui::Separator();
 	ImGui::Spacing();
 
-	// color palette section 
 	// comment that says Mori Calliope 
-	ImGui::Text("Color Set:");
-	static ImVec4 palette[32] = {
-			// Basics & Brights
-			ImVec4(1.00f, 1.00f, 1.00f, 1.00f), ImVec4(1.00f, 0.00f, 0.00f, 1.00f),
-			ImVec4(0.00f, 1.00f, 0.00f, 1.00f), ImVec4(0.00f, 0.00f, 1.00f, 1.00f),
-			ImVec4(1.00f, 1.00f, 0.00f, 1.00f), ImVec4(1.00f, 0.00f, 1.00f, 1.00f),
-			ImVec4(0.00f, 1.00f, 1.00f, 1.00f), ImVec4(0.00f, 0.00f, 0.00f, 1.00f),
-
-			// Deep / Natural Tones
-			ImVec4(0.50f, 0.00f, 0.00f, 1.00f), ImVec4(0.00f, 0.50f, 0.00f, 1.00f),
-			ImVec4(0.00f, 0.00f, 0.50f, 1.00f), ImVec4(0.50f, 0.50f, 0.00f, 1.00f),
-			ImVec4(0.40f, 0.20f, 0.00f, 1.00f), ImVec4(1.00f, 0.50f, 0.00f, 1.00f),
-			ImVec4(0.00f, 0.25f, 0.50f, 1.00f), ImVec4(0.20f, 0.20f, 0.20f, 1.00f),
-
-			// Pastels
-			ImVec4(1.00f, 0.70f, 0.70f, 1.00f), ImVec4(0.70f, 1.00f, 0.70f, 1.00f),
-			ImVec4(0.70f, 0.70f, 1.00f, 1.00f), ImVec4(1.00f, 1.00f, 0.70f, 1.00f),
-			ImVec4(1.00f, 0.70f, 1.00f, 1.00f), ImVec4(0.70f, 1.00f, 1.00f, 1.00f),
-			ImVec4(1.00f, 0.80f, 0.50f, 1.00f), ImVec4(0.40f, 0.40f, 0.40f, 1.00f),
-
-			// Muted / Grayscale
-			ImVec4(0.10f, 0.10f, 0.10f, 1.00f), ImVec4(0.30f, 0.30f, 0.30f, 1.00f),
-			ImVec4(0.60f, 0.60f, 0.60f, 1.00f), ImVec4(0.85f, 0.85f, 0.85f, 1.00f),
-			ImVec4(0.15f, 0.20f, 0.25f, 1.00f), ImVec4(0.35f, 0.45f, 0.55f, 1.00f),
-			ImVec4(0.80f, 0.50f, 0.50f, 1.00f), ImVec4(0.50f, 0.80f, 0.75f, 1.00f)
-		
-
-	};
-
-	// making it wrap with the panel
-	float windowMax_x = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
-	float spacing = ImGui::GetStyle().ItemSpacing.x; 
-	float buttonSize = 20.0f; 
-
-	for (int n = 0; n < 32; n++) {
-		ImGui::PushID(n); 
-		if (ImGui::ColorButton("##palette_button", palette[n])) {
-			*active_color = palette[n]; 
-		}
-		// applying the panel wrapping 
-		float lastButton_X = ImGui::GetItemRectMax().x;
-		float nextButton_X = lastButton_X + spacing + buttonSize;
-		// push to next line if the button does not fit 
-		if (n < 31 && nextButton_X < windowMax_x)
-			ImGui::SameLine();
-
-		ImGui::PopID();
-	}
-
+	
 	color[0] = c->x; // R
 	color[1] = c->y; // G
 	color[2] = c->z; // B
 	color[3] = c->w; // A
 
 	ImGui::Spacing();
-	ImGui::Separator(); 
+	ImGui::Separator();
 	ImGui::Spacing();
 
 	// brush size slider 
@@ -1017,8 +964,6 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 	ImGui::End();
 }
 
-// want bottom panel with timeline to only be visible if the canvas created 
-// is tagged with being an animation canvas 
 void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRenderer) {
 	// initialize the panel
 	ImGui::SetNextWindowPos(ImVec2(LeftSize, displayHeight - BotSize), ImGuiCond_Always);
@@ -1026,11 +971,12 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 	ImGui::Begin("Bottom Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
 	// only draw if there is an animations
-	if (!canvasManager.hasActive() || !canvasManager.getActive().isAnimation())
-		return;
-
-	renderTimelineControls(canvasManager);
-	renderTimeline(canvasManager);
+	if (canvasManager.hasActive() && canvasManager.getActive().isAnimation()){
+		// drawing the actual timeline 
+		renderTimelineControls(canvasManager);
+		renderTimeline(canvasManager);
+	}
+	
 
 	// end step
 	if (ImGui::GetWindowHeight() > displayHeight - 2 * TopSize)
@@ -1039,7 +985,6 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 		BotSize = ImGui::GetWindowHeight();
 	ImGui::End();
 }
-
 
 void UI::drawBlockPanel(CanvasManager& canvasManager) {
 	ImGui::SetNextWindowPos(ImVec2(LeftSize, TopSize));
@@ -1177,7 +1122,7 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 }
 
 
-// new canvas popup 
+// ---- popups which are drawn conditionally -----
 void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 {
 	static int temp_w = 1920;
@@ -1456,9 +1401,9 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 					}
 				}
 			}
-			else 
+			else
 				ImGui::Text("Canvas settings will appear here when a canvas is open.");
-			
+
 		}
 
 		else if (settingsSection == 3) {
@@ -1488,8 +1433,8 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 }
 
 
-// main menu bar for file, animation, settings, etc...
-// nested menus 
+// ----- main menu bar for file, animation, settings, etc... -----
+//       nested menus 
 void UI::drawMainMenu(CanvasManager& canvasManager) {
 	// starting the overall main menu bar
 	// testing the main menu implementation
@@ -1682,7 +1627,7 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 
 }
 
-// drawing individual windows 
+// ----- drawing individual windows for modular UI -----
 
 void UI::drawColorWindow(CanvasManager& canvasManager) {
 	// name our window 
@@ -1723,59 +1668,10 @@ void UI::drawColorWindow(CanvasManager& canvasManager) {
 	ImGui::Spacing();
 
 	// for modular UI, checkbox to decide if palette is rendered 
-	static bool showPalette = true; 
+	static bool showPalette = true;
 	ImGui::Checkbox("Show Color Set", &showPalette);
 	if (showPalette) {
-		// color palette section 
-		// comment that says Mori Calliope 
-		ImGui::Text("Color Set:");
-		static ImVec4 palette[32] = {
-			// Basics & Brights
-			ImVec4(1.00f, 1.00f, 1.00f, 1.00f), ImVec4(1.00f, 0.00f, 0.00f, 1.00f),
-			ImVec4(0.00f, 1.00f, 0.00f, 1.00f), ImVec4(0.00f, 0.00f, 1.00f, 1.00f),
-			ImVec4(1.00f, 1.00f, 0.00f, 1.00f), ImVec4(1.00f, 0.00f, 1.00f, 1.00f),
-			ImVec4(0.00f, 1.00f, 1.00f, 1.00f), ImVec4(0.00f, 0.00f, 0.00f, 1.00f),
-
-			// Deep / Natural Tones
-			ImVec4(0.50f, 0.00f, 0.00f, 1.00f), ImVec4(0.00f, 0.50f, 0.00f, 1.00f),
-			ImVec4(0.00f, 0.00f, 0.50f, 1.00f), ImVec4(0.50f, 0.50f, 0.00f, 1.00f),
-			ImVec4(0.40f, 0.20f, 0.00f, 1.00f), ImVec4(1.00f, 0.50f, 0.00f, 1.00f),
-			ImVec4(0.00f, 0.25f, 0.50f, 1.00f), ImVec4(0.20f, 0.20f, 0.20f, 1.00f),
-
-			// Pastels
-			ImVec4(1.00f, 0.70f, 0.70f, 1.00f), ImVec4(0.70f, 1.00f, 0.70f, 1.00f),
-			ImVec4(0.70f, 0.70f, 1.00f, 1.00f), ImVec4(1.00f, 1.00f, 0.70f, 1.00f),
-			ImVec4(1.00f, 0.70f, 1.00f, 1.00f), ImVec4(0.70f, 1.00f, 1.00f, 1.00f),
-			ImVec4(1.00f, 0.80f, 0.50f, 1.00f), ImVec4(0.40f, 0.40f, 0.40f, 1.00f),
-
-			// Muted / Grayscale
-			ImVec4(0.10f, 0.10f, 0.10f, 1.00f), ImVec4(0.30f, 0.30f, 0.30f, 1.00f),
-			ImVec4(0.60f, 0.60f, 0.60f, 1.00f), ImVec4(0.85f, 0.85f, 0.85f, 1.00f),
-			ImVec4(0.15f, 0.20f, 0.25f, 1.00f), ImVec4(0.35f, 0.45f, 0.55f, 1.00f),
-			ImVec4(0.80f, 0.50f, 0.50f, 1.00f), ImVec4(0.50f, 0.80f, 0.75f, 1.00f)
-
-
-		};
-
-		// making it wrap with the panel
-		float windowMax_x = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
-		float spacing = ImGui::GetStyle().ItemSpacing.x;
-		float buttonSize = 20.0f;
-
-		for (int n = 0; n < 32; n++) {
-			ImGui::PushID(n);
-			if (ImGui::ColorButton("##palette_button", palette[n])) {
-				*active_color = palette[n];
-			}
-			// applying the panel wrapping 
-			float lastButton_X = ImGui::GetItemRectMax().x;
-			float nextButton_X = lastButton_X + spacing + buttonSize;
-			// push to next line if the button does not fit 
-			if (n < 31 && nextButton_X < windowMax_x)
-				ImGui::SameLine();
-
-			ImGui::PopID();
-		}
+		renderColorSet(canvasManager, active_color);
 	}
 	color[0] = c->x; // R
 	color[1] = c->y; // G
@@ -2025,6 +1921,18 @@ void UI::drawCursorModesWindow(CanvasManager& canvasManager) {
 	ImGui::End();
 }
 
+void UI::drawTimelineWindow(CanvasManager& canvasManager) {
+	// only draw if there is an animations
+	if (!canvasManager.hasActive() || !canvasManager.getActive().isAnimation())
+		return;
+
+	ImGui::Begin("Timeline");
+	renderTimelineControls(canvasManager);
+	renderTimeline(canvasManager);
+	ImGui::End();
+}
+
+
 // ---- separate methods to handle rendering all components ----- 
 //      done to unify the components across windows and panels
 void UI::renderTimeline(CanvasManager& canvasManager) {
@@ -2059,8 +1967,6 @@ void UI::renderTimeline(CanvasManager& canvasManager) {
 		}
 
 		ImGui::TableHeadersRow();
-
-
 
 		// iterating through layers starting at 1 
 		for (int row = 1; row < numLayers; row++) {
@@ -2111,7 +2017,6 @@ void UI::renderTimeline(CanvasManager& canvasManager) {
 	}
 }
 
-// helper method to render the buttons for the timeline
 void UI::renderTimelineControls(CanvasManager& canvasManager) {
 	if (ImGui::Button("+")) {
 		FrameRenderer::createFrame(canvasManager.getActive());
@@ -2139,19 +2044,58 @@ void UI::renderTimelineControls(CanvasManager& canvasManager) {
 	ImGui::Text("Frame: %d / %d", FrameRenderer::getCurFrame(), FrameRenderer::getNumFrames());
 }
 
+void UI::renderColorSet(CanvasManager& canvasManager, ImVec4* active_color) {
+	// color palette section 
+		// comment that says Mori Calliope 
+	ImGui::Text("Color Set:");
+	static ImVec4 palette[32] = {
+		// Basics & Brights
+		ImVec4(1.00f, 1.00f, 1.00f, 1.00f), ImVec4(1.00f, 0.00f, 0.00f, 1.00f),
+		ImVec4(0.00f, 1.00f, 0.00f, 1.00f), ImVec4(0.00f, 0.00f, 1.00f, 1.00f),
+		ImVec4(1.00f, 1.00f, 0.00f, 1.00f), ImVec4(1.00f, 0.00f, 1.00f, 1.00f),
+		ImVec4(0.00f, 1.00f, 1.00f, 1.00f), ImVec4(0.00f, 0.00f, 0.00f, 1.00f),
+
+		// Deep / Natural Tones
+		ImVec4(0.50f, 0.00f, 0.00f, 1.00f), ImVec4(0.00f, 0.50f, 0.00f, 1.00f),
+		ImVec4(0.00f, 0.00f, 0.50f, 1.00f), ImVec4(0.50f, 0.50f, 0.00f, 1.00f),
+		ImVec4(0.40f, 0.20f, 0.00f, 1.00f), ImVec4(1.00f, 0.50f, 0.00f, 1.00f),
+		ImVec4(0.00f, 0.25f, 0.50f, 1.00f), ImVec4(0.20f, 0.20f, 0.20f, 1.00f),
+
+		// Pastels
+		ImVec4(1.00f, 0.70f, 0.70f, 1.00f), ImVec4(0.70f, 1.00f, 0.70f, 1.00f),
+		ImVec4(0.70f, 0.70f, 1.00f, 1.00f), ImVec4(1.00f, 1.00f, 0.70f, 1.00f),
+		ImVec4(1.00f, 0.70f, 1.00f, 1.00f), ImVec4(0.70f, 1.00f, 1.00f, 1.00f),
+		ImVec4(1.00f, 0.80f, 0.50f, 1.00f), ImVec4(0.40f, 0.40f, 0.40f, 1.00f),
+
+		// Muted / Grayscale
+		ImVec4(0.10f, 0.10f, 0.10f, 1.00f), ImVec4(0.30f, 0.30f, 0.30f, 1.00f),
+		ImVec4(0.60f, 0.60f, 0.60f, 1.00f), ImVec4(0.85f, 0.85f, 0.85f, 1.00f),
+		ImVec4(0.15f, 0.20f, 0.25f, 1.00f), ImVec4(0.35f, 0.45f, 0.55f, 1.00f),
+		ImVec4(0.80f, 0.50f, 0.50f, 1.00f), ImVec4(0.50f, 0.80f, 0.75f, 1.00f)
 
 
-void UI::drawTimelineWindow(CanvasManager& canvasManager) {
-	// only draw if there is an animations
-	if (!canvasManager.hasActive() || !canvasManager.getActive().isAnimation())
-		return;
+	};
 
-	ImGui::Begin("Timeline");
-	renderTimelineControls(canvasManager);
-	renderTimeline(canvasManager);
-	ImGui::End();
+	// making it wrap with the panel
+	float windowMax_x = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
+	float spacing = ImGui::GetStyle().ItemSpacing.x;
+	float buttonSize = 20.0f;
+
+	for (int n = 0; n < 32; n++) {
+		ImGui::PushID(n);
+		if (ImGui::ColorButton("##palette_button", palette[n])) {
+			*active_color = palette[n];
+		}
+		// applying the panel wrapping 
+		float lastButton_X = ImGui::GetItemRectMax().x;
+		float nextButton_X = lastButton_X + spacing + buttonSize;
+		// push to next line if the button does not fit 
+		if (n < 31 && nextButton_X < windowMax_x)
+			ImGui::SameLine();
+
+		ImGui::PopID();
+	}
 }
-
 
 
 // ending and cleanup 
