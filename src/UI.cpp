@@ -1384,7 +1384,6 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 
 				// if user creates a canvas, remove the popup 
 				if (ImGui::Button("Create")) {
-					temp_n = "Illustration";
 
 					// create the new canvas
 					canvasManager.createCanvas(temp_w, temp_h, temp_n, false, false);
@@ -1426,7 +1425,6 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 
 				// if user creates a canvas, remove the popup 
 				if (ImGui::Button("Create")) {
-					temp_n = "Animation";
 
 					// create the new canvas
 					canvasManager.createCanvas(temp_w, temp_h, temp_n_a, true, animTemplate);
