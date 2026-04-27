@@ -447,6 +447,16 @@ const Color& Canvas::getPixel(int x, int y) const
 	return const_cast<Color&>(pixels[y * width + x]);
 }
 
+const Color& Canvas::getLayerPixel(int x, int y) 
+{
+	// making sure (x, y) is within bounds
+	if (x < 0 || x >= width || y < 0 || y >= height) {
+		// if its not, return the background color
+		return const_cast<Color&>(backgroundColor);
+	}
+	return layerData[curLayer][(y * width) + x];
+}
+
 
 
 // adds a layer to layerData

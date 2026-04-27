@@ -14,10 +14,23 @@ struct Color {
 
     Is true if rgba values are equal for both Colors. 
     */
-    bool operator==(const Color& other) const {
-        return (r == other.r) && (g == other.g) && (b == other.b)  && (a == other.a);
+
+	// Color == Color operation
+	friend bool operator==(const Color& lhs, const Color& rhs) {
+        return (lhs.r == rhs.r && 
+                lhs.g == rhs.g && 
+                lhs.b == rhs.b && 
+                lhs.a == rhs.a);
+		}
+
+	// print operation
+	friend std::ostream& operator<<(std::ostream& os, const Color& c) {
+        os << "(Red: " << (int)c.r << ", Green: " << (int)c.g << ", Blue: " << (int)c.b << ", Alpha: " << (int)c.a << ")";
+        return os;
     }
 };
+
+
 
 struct Pixel {
     int index;
@@ -62,6 +75,7 @@ public:
 	void setPixel(int x, int y, const Color& color);
 	void blendPixel(int x, int y, const Color& srcColor, float brushAlpha);
 	const Color& getPixel(int x, int y) const;
+	const Color& getLayerPixel(int x, int y);
 	void setPixels(std::vector<Color> newPixels);
 	void setLayerData(std::vector<std::vector<Color>> newLayerData);
 
