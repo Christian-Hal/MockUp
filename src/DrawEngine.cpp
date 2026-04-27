@@ -131,8 +131,8 @@ void DrawEngine::stampBrush(glm::vec2 position)
 
 
     // calculate other needed information
-    int topLeftX = static_cast<int>(std::floor(position.x - (W / 2.0f))); 
-    int topLeftY = static_cast<int>(std::floor(position.y - (H / 2.0f))); 
+    int topLeftX = static_cast<int>(std::round(position.x - (W / 2.0f))); 
+    int topLeftY = static_cast<int>(std::round(position.y - (H / 2.0f))); 
 
     // skip the stamp if its completely off the canvas
     if (topLeftX + W < 0 || topLeftX >= curCanvas->getWidth() ||
