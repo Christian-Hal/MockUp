@@ -22,6 +22,7 @@
 #include "IconsFontAwesome6.h"
 
 
+
 std::string overwritePath;
 
 // variables to store info for UI declared up here 
@@ -2127,128 +2128,87 @@ void UI::drawCursorModesWindow(CanvasManager& canvasManager) {
 	ImGui::End();
 }
 
-void UI::drawTimelineWindow(CanvasManager& canvasManager) {
-	// only display animation settings if there is an active canvas
-	if (canvasManager.hasActive() && canvasManager.getActive().isAnimation())
-	{
-		ImGui::Begin("Timeline");
+// trying an ImSequencer implementation
+void UI::drawTimelineWindow(CanvasManager& canvasManager)
+{
+	if (!canvasManager.hasActive() || !canvasManager.getActive().isAnimation())
+		return;
 
-		int currentFrame = FrameRenderer::getCurFrame();
-		int totalFrames = FrameRenderer::getNumFrames();
-		if (ImGui::Button("+")) {
-			FrameRenderer::createFrame(canvasManager.getActive());
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("-")) {
-			FrameRenderer::removeFrame(canvasManager.getActive());
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Play animation")) {
-			FrameRenderer::play(canvasManager.getActive());
-		}
-		ImGui::SameLine();
-		ImGui::Spacing();
-		if (ImGui::Button("Toggle Onion Skins")) {
-			FrameRenderer::removeOnionSkin(canvasManager.getActive());
-			FrameRenderer::toggleOnionSkin();
-			FrameRenderer::updateOnionSkin(canvasManager.getActive());
-		}
-		/*
-				ImGui::SameLine();
-				if (ImGui::Button("<-")){
-					FrameRenderer::setNumBefore(FrameRenderer::getNumBefore() + 1);
-					FrameRenderer::updateOnionSkin(canvasManager.getActive());
+	ImGui::Begin("Timeline");
 
-				}
-				ImGui::SameLine();
-				if (ImGui::Button("->")){
-					FrameRenderer::setNumAfter(FrameRenderer::getNumAfter() + 1);
-					FrameRenderer::updateOnionSkin(canvasManager.getActive());
-				}
-		*/
+	static AnimationDelegate seq;
+	seq.manager = &canvasManager;
 
-		// --- Timeline ---
-		ImGuiStyle& style = ImGui::GetStyle();
+	static bool expanded = true;
+	static int selected = -1;
+	static int firstFrame = 1;
 
-		float old_rounding = style.FrameRounding;
-		ImVec2 old_padding = style.FramePadding;
-		ImVec4 old_bg = style.Colors[ImGuiCol_FrameBg];
-		ImVec4 old_bg_hovered = style.Colors[ImGuiCol_FrameBgHovered];
-		ImVec4 old_bg_active = style.Colors[ImGuiCol_FrameBgActive];
-		float old_border = style.FrameBorderSize;
-		ImVec4 old_border_color = style.Colors[ImGuiCol_Border];
+	int currentFrame = FrameRenderer::getCurFrame();
+	FrameRenderer::selectFrame(canvasManager.getActive(),
+		currentFrame - FrameRenderer::getCurFrame());
 
-		style.Colors[ImGuiCol_FrameBg] = ImVec4(0, 0, 0, 0);
-		style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0, 0, 0, 0);
-		style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0, 0, 0, 0);
-		style.FrameBorderSize = 0.0f;
-		style.Colors[ImGuiCol_Border] = ImVec4(0, 0, 0, 0);
-
-		style.FramePadding = ImVec2(6, 12);
-		style.FrameRounding = 2.0f;
-		ImGui::SetNextItemWidth(displayWidth - (LeftSize + RightSize * 1.1));
-		// Save old color
-		ImVec4 old_color = style.Colors[ImGuiCol_SliderGrab];
-
-		// Set grab to red
-		style.Colors[ImGuiCol_SliderGrab] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
-		style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
-		style.GrabMinSize = 4.0f;
-		// Draw the slider
-		bool isPressed = ImGui::SliderFloat("##wide_slider", &curFrame, 1.0f, static_cast<float>(FrameRenderer::getNumFrames()), "");
-		curFrame = (int)roundf(curFrame);
-		if (curFrame != FrameRenderer::getCurFrame() && isPressed) {
-			FrameRenderer::selectFrame(canvasManager.getActive(), curFrame - FrameRenderer::getCurFrame());
-		}
-		else {
-			curFrame = FrameRenderer::getCurFrame();
-		}
-
-		ImDrawList* draw = ImGui::GetWindowDrawList();
-
-		// Get slider bounds
-		ImVec2 min = ImGui::GetItemRectMin();
-		ImVec2 max = ImGui::GetItemRectMax();
-
-		float width = max.x - min.x;
-
-		draw->AddLine(
-			ImVec2(min.x, (min.y + max.y) / 2),
-			ImVec2(max.x, (min.y + max.y) / 2),
-			IM_COL32(255, 255, 255, 100),
-			1.0f
-		);
-		// number of segments = steps - 1
-		for (int i = 0; i < FrameRenderer::getNumFrames(); i++)
-		{
-			float t = (float)i / (float)(FrameRenderer::getNumFrames() - 1);
-			float x = min.x + t * width;
-
-			// draw a vertical line (divider)
-			draw->AddLine(
-				ImVec2(x, min.y),
-				ImVec2(x, max.y),
-				IM_COL32(255, 255, 255, 100),
-				1.0f
-			);
-		}
-		// Restore style
-		style.Colors[ImGuiCol_SliderGrab] = old_color;
-		style.Colors[ImGuiCol_SliderGrabActive] = old_color;
-		style.Colors[ImGuiCol_FrameBg] = old_bg;
-		style.Colors[ImGuiCol_FrameBgHovered] = old_bg_hovered;
-		style.Colors[ImGuiCol_FrameBgActive] = old_bg_active;
-		style.FrameBorderSize = old_border;
-		style.Colors[ImGuiCol_Border] = old_border_color;
-
-		// Restore frame settings
-		style.FramePadding = old_padding;
-		style.FrameRounding = old_rounding;
-		ImGui::SameLine();
-
-		ImGui::End();
-
+	// --- Controls ---
+	if (ImGui::Button("+")) {
+		FrameRenderer::createFrame(canvasManager.getActive());
 	}
+	ImGui::SameLine();
+	if (ImGui::Button("-")) {
+		FrameRenderer::removeFrame(canvasManager.getActive());
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("<")) {
+		FrameRenderer::selectFrame(canvasManager.getActive(), -1);
+	}
+	ImGui::SameLine();
+	if (ImGui::Button(">")) {
+		FrameRenderer::selectFrame(canvasManager.getActive(), +1);
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Play")) {
+		FrameRenderer::play(canvasManager.getActive());
+	}
+
+	ImGui::Separator();
+
+	// give space so sequencer renders properly
+	ImGui::BeginChild("SequencerRegion", ImVec2(0, 300), true);
+
+	ImSequencer::Sequencer(
+		&seq,
+		&currentFrame,
+		&expanded,
+		&selected,
+		&firstFrame,
+		ImSequencer::SEQUENCER_EDIT_ALL |
+		ImSequencer::SEQUENCER_ADD |
+		ImSequencer::SEQUENCER_DEL
+	);
+
+	ImGui::EndChild();
+
+	//  Sync sequencer  engine 
+	static int lastFrame = FrameRenderer::getCurFrame();
+
+	// if user moved playhead in UI
+	if (currentFrame != lastFrame)
+	{
+		Canvas& c = canvasManager.getActive();
+
+		FrameRenderer::selectFrame(
+			c,
+			currentFrame - FrameRenderer::getCurFrame()
+		);
+
+		lastFrame = currentFrame;
+	}
+
+	// ALWAYS keep UI in sync with engine
+	currentFrame = FrameRenderer::getCurFrame();
+
+	//  Sync engine  UI (fixes add-frame jumping)
+	currentFrame = FrameRenderer::getCurFrame();
+
+	ImGui::End();
 }
 
 // ending and cleanup 

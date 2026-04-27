@@ -29,8 +29,8 @@ enum class UIMode {
 // enum for all of the different UI elements
 enum class UIElement
 {
-    colorWheel,
-    brushSizeSlider,
+	colorWheel,
+	brushSizeSlider,
 	brushSelection,
 	cursorModeButtons,
 	animationTimeline,
@@ -39,41 +39,146 @@ enum class UIElement
 
 // this creates a list of the elements that we can interate through
 constexpr UIElement elements[] = {
-    UIElement::colorWheel,
-    UIElement::brushSizeSlider,
-    UIElement::brushSelection,
-    UIElement::cursorModeButtons,
-    UIElement::animationTimeline,
+	UIElement::colorWheel,
+	UIElement::brushSizeSlider,
+	UIElement::brushSelection,
+	UIElement::cursorModeButtons,
+	UIElement::animationTimeline,
 	UIElement::layers,
 };
 
 // delegate for the ImSequencer animation timeline 
-struct AnimationDelegate : public ImSequencer::SequenceInterface {
-	CanvasManager* manager; 
+//struct AnimationDelegate : public ImSequencer::SequenceInterface
+//{
+//	// fixed demo data (guaranteed visible)
+//	int frameMin = 0;
+//	int frameMax = 100;
+//
+//	static const int ITEM_COUNT = 5;
+//
+//	int starts[ITEM_COUNT] = { 0, 10, 20, 30, 40 };
+//	int ends[ITEM_COUNT] = { 10, 25, 50, 60, 90 };
+//
+//	// timeline range
+//	int GetFrameMin() const override { return frameMin; }
+//	int GetFrameMax() const override { return frameMax; }
+//
+//	int GetItemCount() const override { return ITEM_COUNT; }
+//
+//	int GetItemTypeCount() const override { return 1; }
+//	const char* GetItemTypeName(int) const override { return "Track"; }
+//
+//	const char* GetItemLabel(int index) const override {
+//		static char buf[32];
+//		sprintf_s(buf, "Track %d", index);
+//		return buf;
+//	}
+//
+//	void Get(int index, int** start, int** end, int* type, unsigned int* color) override
+//	{
+//		if (start) *start = &starts[index];
+//		if (end)   *end = &ends[index];
+//		if (type)  *type = 0;
+//		if (color) *color = IM_COL32(100, 180, 255, 255);
+//	}
+//
+//	void Add(int) override {}
+//	void Del(int) override {}
+//	void Duplicate(int) override {}
+//
+//	void BeginEdit(int) override {}
+//	void EndEdit() override {}
+//
+//	void DoubleClick(int) override {}
+//};
 
-	// timeline range 
-	virtual int GetFrameMin() const { return 1; }
-	virtual int GetFrameMax() const { return FrameRenderer::getNumFrames(); }
+struct AnimationDelegate : public ImSequencer::SequenceInterface
+{
+	CanvasManager* manager = nullptr;
 
-	// number of tracks - want this to be tied to the layers per frame
-	virtual int GetItemCount() const { return 1; }
+	//  tracks = layers (NOT frames)
+	int GetItemCount() const override
+	{
+		if (!manager || !manager->hasActive())
+			return 0;
 
-	virtual void GetItemConfig(int index, int* frameStart, int* frameEnd, int* typeId) {
-		if (frameStart) *frameStart = 1; 
-		if (frameEnd) *frameEnd = FrameRenderer::getNumFrames();
-		if (typeId) *typeId = 0;
+		return manager->getActive().getNumLayers();
 	}
 
-	virtual const char* GetItemLabel(int index) const { return "Layer 1"; }
+	int GetFrameMin() const override { return 1; }
+	int GetFrameMax() const override { return FrameRenderer::getNumFrames(); }
 
-	// handles playhead movement 
-	virtual void CustomEdit(int index, int type, int start, int end) {
-		// handle dragging of animation block 
+	int GetItemTypeCount() const override { return 1; }
+	const char* GetItemTypeName(int) const override { return "Layer"; }
+
+	const char* GetItemLabel(int index) const override
+	{
+		static char buf[32];
+		sprintf_s(buf, "Layer %d", index);
+		return buf;
 	}
 
-	// boilerplate 
-	virtual int GetItemTypeCount() const { return 1; }
-	virtual const char* GetItemTypeName(int typeIndex) const { return "Animation"; }
+	void Get(int index, int** start, int** end, int* type, unsigned int* color) override
+	{
+		static std::vector<int> starts;
+		static std::vector<int> ends;
+
+		int frames = FrameRenderer::getNumFrames();
+
+		starts.resize(frames);
+		ends.resize(frames);
+
+		for (int i = 0; i < frames; i++)
+		{
+			starts[i] = i + 1;
+			ends[i] = i + 2;
+		}
+
+		if (start) *start = &starts[FrameRenderer::getCurFrame() - 1];
+		if (end)   *end = &ends[FrameRenderer::getCurFrame() - 1];
+		if (type)  *type = 0;
+
+		if (color)
+		{
+			*color = (index == manager->getActive().getCurLayer())
+				? IM_COL32(255, 200, 100, 255)
+				: IM_COL32(100, 180, 255, 255);
+		}
+	}
+
+	void DoubleClick(int index) override
+	{
+		if (!manager) return;
+
+		Canvas& c = manager->getActive();
+
+		int targetFrame = index + 1;
+		int delta = targetFrame - FrameRenderer::getCurFrame();
+
+		FrameRenderer::selectFrame(c, delta);
+	}
+
+	void Add(int) override
+	{
+		if (!manager) return;
+
+		Canvas& c = manager->getActive();
+
+		FrameRenderer::createFrame(c);
+
+		int newFrame = FrameRenderer::getCurFrame();
+		FrameRenderer::selectFrame(c, 0); // sync refresh (important)
+	}
+
+	void Del(int) override
+	{
+		if (!manager) return;
+		FrameRenderer::removeFrame(manager->getActive());
+	}
+
+	void Duplicate(int) override {}
+	void BeginEdit(int) override {}
+	void EndEdit() override {}
 };
 
 class UI {
@@ -85,14 +190,14 @@ public:
 	using SetActiveBrushCallback = std::function<void(int)>;
 	using GetActiveBrushCallback = std::function<const BrushTool& ()>;
 	using LoadBrushCallback = std::function<void(const std::string&)>;
-	using GenerateBrushDabCallback = std::function<std::vector<float>(int)>; 
+	using GenerateBrushDabCallback = std::function<std::vector<float>(int)>;
 	using GetHotkeyLabelCallback = std::function<std::string(InputAction)>;
 	using StartRebindCallback = std::function<void(InputAction)>;
 	using BoolCallback = std::function<bool()>;
 	using ResetCanvasPositionCallback = std::function<void()>;
 
 	using saveToRecentActivityCallback = std::function<void(const std::string&)>;
-	using getRecentActivityCallback = std::function<const std::vector<std::string>&()>;
+	using getRecentActivityCallback = std::function<const std::vector<std::string>& ()>;
 	using getDefaultFolderPathCallback = std::function<std::string()>;
 	using setDefaultFolderPathCallback = std::function<void(const std::string&)>;
 
@@ -137,7 +242,7 @@ private:
 	SetActiveBrushCallback setActiveBrushCb;
 	GetActiveBrushCallback getActiveBrushCb;
 	LoadBrushCallback loadBrushFromFileCb;
-	GenerateBrushDabCallback generateDabCb; 
+	GenerateBrushDabCallback generateDabCb;
 
 	GetHotkeyLabelCallback getHotkeyLabelCb;
 	StartRebindCallback startRebindCb;
@@ -161,7 +266,7 @@ private:
 	void drawMainScreen(CanvasManager& canvasManager, FrameRenderer frameRenderer);
 
 	// helper functions for drawing different panels / popups
-	void drawCustomCursor(CanvasManager& canvasManager); 
+	void drawCustomCursor(CanvasManager& canvasManager);
 	void drawLeftPanel(CanvasManager& canvasManager);
 	void drawRightPanel(CanvasManager& canvasManager);
 	void drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRenderer);
@@ -169,7 +274,7 @@ private:
 	void drawCanvasTabs(CanvasManager& canvasManager);
 	void drawMainMenu(CanvasManager& canvasManager);
 	void drawColorWindow(CanvasManager& canvasManager);
-	void drawBrushSizeWindow(CanvasManager& canvasManager); 
+	void drawBrushSizeWindow(CanvasManager& canvasManager);
 	void drawLayersWindow(CanvasManager& canvasManager);
 	void drawBrushesWindow(CanvasManager& canvasManager);
 	void drawCursorModesWindow(CanvasManager& canvasManager);

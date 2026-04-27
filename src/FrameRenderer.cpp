@@ -177,6 +177,8 @@ void FrameRenderer::createFrame(Canvas& canvas){
     // create function that renames any other frames that come after
     writeAllData(&canvas);
     timeFunction("updateOnionSkins", [&] { updateOnionSkin(canvas); });
+
+    curFrame = numFrames;
 }
 
 // remove current frame and update file names accordingly
