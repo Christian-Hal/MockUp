@@ -2128,26 +2128,8 @@ void UI::drawCursorModesWindow(CanvasManager& canvasManager) {
 	ImGui::End();
 }
 
-// trying an ImSequencer implementation
-void UI::drawTimelineWindow(CanvasManager& canvasManager)
-{
-	if (!canvasManager.hasActive() || !canvasManager.getActive().isAnimation())
-		return;
-
-	ImGui::Begin("Timeline");
-
-	static AnimationDelegate seq;
-	seq.manager = &canvasManager;
-
-	static bool expanded = true;
-	static int selected = -1;
-	static int firstFrame = 1;
-
-	int currentFrame = FrameRenderer::getCurFrame();
-	FrameRenderer::selectFrame(canvasManager.getActive(),
-		currentFrame - FrameRenderer::getCurFrame());
-
-	// --- Controls ---
+void renderTimelineControls(CanvasManager& canvasManager) {
+	// Basic playback and frame management
 	if (ImGui::Button("+")) {
 		FrameRenderer::createFrame(canvasManager.getActive());
 	}
@@ -2156,60 +2138,94 @@ void UI::drawTimelineWindow(CanvasManager& canvasManager)
 		FrameRenderer::removeFrame(canvasManager.getActive());
 	}
 	ImGui::SameLine();
-	if (ImGui::Button("<")) {
-		FrameRenderer::selectFrame(canvasManager.getActive(), -1);
-	}
+	ImGui::Spacing();
 	ImGui::SameLine();
-	if (ImGui::Button(">")) {
-		FrameRenderer::selectFrame(canvasManager.getActive(), +1);
-	}
-	ImGui::SameLine();
+
+	// Playback
 	if (ImGui::Button("Play")) {
 		FrameRenderer::play(canvasManager.getActive());
 	}
+	ImGui::SameLine();
 
-	ImGui::Separator();
-
-	// give space so sequencer renders properly
-	ImGui::BeginChild("SequencerRegion", ImVec2(0, 300), true);
-
-	ImSequencer::Sequencer(
-		&seq,
-		&currentFrame,
-		&expanded,
-		&selected,
-		&firstFrame,
-		ImSequencer::SEQUENCER_EDIT_ALL |
-		ImSequencer::SEQUENCER_ADD |
-		ImSequencer::SEQUENCER_DEL
-	);
-
-	ImGui::EndChild();
-
-	//  Sync sequencer  engine 
-	static int lastFrame = FrameRenderer::getCurFrame();
-
-	// if user moved playhead in UI
-	if (currentFrame != lastFrame)
-	{
-		Canvas& c = canvasManager.getActive();
-
-		FrameRenderer::selectFrame(
-			c,
-			currentFrame - FrameRenderer::getCurFrame()
-		);
-
-		lastFrame = currentFrame;
+	// Onion Skin Toggle
+	if (ImGui::Button("Onion Skins")) {
+		FrameRenderer::removeOnionSkin(canvasManager.getActive());
+		FrameRenderer::toggleOnionSkin();
+		FrameRenderer::updateOnionSkin(canvasManager.getActive());
 	}
 
-	// ALWAYS keep UI in sync with engine
-	currentFrame = FrameRenderer::getCurFrame();
+	ImGui::SameLine();
+	ImGui::Text("Frame: %d / %d", FrameRenderer::getCurFrame(), FrameRenderer::getNumFrames());
+}
 
-	//  Sync engine  UI (fixes add-frame jumping)
-	currentFrame = FrameRenderer::getCurFrame();
+void UI::drawTimelineWindow(CanvasManager& canvasManager) {
+	if (!canvasManager.hasActive() || !canvasManager.getActive().isAnimation())
+		return;
 
+	ImGui::Begin("Timeline");
+
+	// 1. Render the top buttons
+	renderTimelineControls(canvasManager);
+
+	// 2. Setup Dimensions
+	const float k_cellWidth = 30.0f;
+	const float k_cellHeight = 25.0f;
+	int totalFrames = FrameRenderer::getNumFrames();
+	int currentFrame = FrameRenderer::getCurFrame(); // 1-indexed based on your prev code
+
+	// 3. The Grid
+	static ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX |
+		ImGuiTableFlags_ScrollY | ImGuiTableFlags_Borders |
+		ImGuiTableFlags_RowBg;
+
+	// We use totalFrames + 1 columns (Column 0 = Layer Name)
+	if (ImGui::BeginTable("TimelineGrid", totalFrames + 1, flags)) {
+
+		// Pin the Layer Names and the Frame Numbers
+		ImGui::TableSetupScrollFreeze(1, 1);
+
+		// Configure Header
+		ImGui::TableSetupColumn("Animation Folders", ImGuiTableColumnFlags_WidthFixed, 150.0f);
+		for (int n = 0; n < totalFrames; n++) {
+			ImGui::TableSetupColumn(std::to_string(n + 1).c_str(), ImGuiTableColumnFlags_WidthFixed, k_cellWidth);
+		}
+		ImGui::TableHeadersRow();
+
+		// 4. Render Rows (Mimicking CSP Layers)
+		ImGui::TableNextRow(ImGuiTableRowFlags_None, k_cellHeight);
+
+		// Column 0: Layer Info
+		ImGui::TableSetColumnIndex(0);
+		ImGui::AlignTextToFramePadding();
+		ImGui::Selectable("Folder 1", false);
+
+		// Columns 1 to N: The Cels
+		for (int frame = 1; frame <= totalFrames; frame++) {
+			ImGui::TableSetColumnIndex(frame);
+			ImGui::PushID(frame);
+
+			bool isCurrent = (frame == currentFrame);
+
+			// Draw the "Cel" box
+			ImU32 cellBgColor = isCurrent ? IM_COL32(255, 0, 0, 100) : IM_COL32(60, 60, 60, 255);
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cellBgColor);
+
+			// Clickable region for each frame
+			if (ImGui::Selectable("##cell", isCurrent, ImGuiSelectableFlags_None, ImVec2(k_cellWidth, k_cellHeight))) {
+				// Calculate the offset (jump) needed for FrameRenderer
+				int offset = frame - currentFrame;
+				if (offset != 0) {
+					FrameRenderer::selectFrame(canvasManager.getActive(), offset);
+				}
+			}
+
+			ImGui::PopID();
+		}
+		ImGui::EndTable();
+	}
 	ImGui::End();
 }
+
 
 // ending and cleanup 
 void UI::shutdown() {
