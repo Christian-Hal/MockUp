@@ -77,6 +77,7 @@ public:
 	const Color& getPixel(int x, int y) const;
 	const Color& getLayerPixel(int x, int y);
 	void setPixels(std::vector<Color> newPixels);
+	void reblendLayers();
 	void setLayerData(std::vector<std::vector<Color>> newLayerData);
 
 	// layer manipulation

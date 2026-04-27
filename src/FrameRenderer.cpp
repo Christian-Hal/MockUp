@@ -252,10 +252,16 @@ void FrameRenderer::selectFrame(Canvas& canvas, int frameDelta){
         frames[curFrame - 1] =  vector<Color>(canvas.getData(), canvas.getData() + (canvas.getWidth() * canvas.getHeight()));
         writeAllData(&canvas);
         curFrame = curFrame + frameDelta;
+        while(frLayerData[curCanvas-1][curFrame-1].size() < canvas.getNumLayers()){
+            frLayerData[curCanvas-1][curFrame-1].push_back(vector<Color>(canvas.getWidth() * canvas.getHeight(), {0,0,0,0}));
+
+        }
         int* meta = readMetaData();
+        
         canvas.setPixels(frames[curFrame-1]);
         canvas.setLayerData(readLayerData(meta));
         updateOnionSkin(canvas);
+
     }
 }
 
@@ -299,16 +305,16 @@ void FrameRenderer::updateOnionSkin(Canvas& canvas){
         Color red = {255, 0, 0, 128};
         Color bg = canvas.getBackgroundColor();
         Color blendedColor = canvas.colorTimes(bg, green);
-
+        Color empty = {0,0,0,0};
         int oldLayer = canvas.getCurLayer();
         canvas.selectLayer(0);
         for(int i = 0; i < numBefore; i++){
             if(curFrame > 1 + i){
                 for(int j = 0; j < pixelCount; j++){
-                    if (frames[curFrame - 2 - i][j] == bg) continue;
+                    if (frames[curFrame - 2 - i][j] == empty) continue;
                     int x = j % width;
                     int y = j / width;
-                    canvas.blendPixel(x, y, blendedColor, blendedColor.a / 255.0f);
+                    canvas.setPixel(x, y, blendedColor);
                 }
             }
         }
@@ -316,10 +322,10 @@ void FrameRenderer::updateOnionSkin(Canvas& canvas){
         for(int i = 0; i < numAfter; i++){
             if(curFrame < numFrames - i){ 
                 for(int j = 0; j < pixelCount; j++){
-                    if (frames[curFrame + i][j] == bg ) continue;
+                    if (frames[curFrame + i][j] == empty) continue;
                     int x = j % width;
                     int y = j / width;
-                    canvas.blendPixel(x, y, blendedColor2, blendedColor2.a / 255.0f);
+                    canvas.setPixel(x, y, blendedColor2);
 
                 }
             }
@@ -345,6 +351,7 @@ void FrameRenderer::removeOnionSkin(Canvas& canvas){
         canvas.setPixel(x, y, bg);
     }
     canvas.selectLayer(oldLayer);
+    canvas.reblendLayers();
 }
 
 
