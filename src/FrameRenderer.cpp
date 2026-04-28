@@ -11,6 +11,8 @@
 #include <array>
 #include <thread>
 #include <chrono>
+#include <stb_image.h>
+
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -373,7 +375,8 @@ void FrameRenderer::toggleOnionSkin(){
 }
 
 void FrameRenderer::saveAnimation(const string& path, Canvas& canvas){
-    writeAllData(&canvas);
+    stbi_set_flip_vertically_on_load(true);
+    selectFrame(canvas, 0);
     int width = canvas.getWidth();
     int height = canvas.getHeight();
     string prefix = path.substr(0, path.find_last_of('.'));
@@ -397,25 +400,30 @@ void FrameRenderer::saveAnimation(const string& path, Canvas& canvas){
         }
         vector<Color> pixels(width * height);
         memcpy(pixels.data(), frames[i].data(), width * height * sizeof(Color));
-        for (int y = 0; y < height / 2; y++)
-        {
-            int opposite = height - y - 1;
-            for (int x = 0; x < width; x++)
-            {
-                swap(pixels[y * width + x], pixels[opposite * width + x]);
-            }
-        }
-
         if (ext == "png")
             stbi_write_png(finalPath.c_str(), width, height, 4, pixels.data(), width * 4);
     
         else if (ext == "jpg")
             stbi_write_jpg(finalPath.c_str(), width, height, 4, pixels.data(), 100);
     }
+    stbi_set_flip_vertically_on_load(false);
+
 }
 
-void FrameRenderer::loadAnimation(const string& path, Canvas& canvas){
-    
+void FrameRenderer::loadAnimation(Canvas& canvas, vector<filesystem::path> images){
+    stbi_set_flip_vertically_on_load(true);
+    int width1, height1, channels1;
+    unsigned char* data = stbi_load(images[0].string().c_str(), &width1, &height1, &channels1, 4);
+    for(int i = 0; i < images.size(); i++){
+        if(i != 0) FrameRenderer::createFrame(canvas);
+        int width2, height2, channels2;
+        unsigned char* data = stbi_load(images[i].string().c_str(), &width2, &height2, &channels2, 4);
+        if(width1 == width2 && height1 == height2){
+            canvas.loadImage(data, 1);
+        }
+    }
+    stbi_set_flip_vertically_on_load(false);
+
 }
 
 // gets the current frame (which is a number from 1-NumFrames)

@@ -458,6 +458,37 @@ void UI::drawStartScreen(CanvasManager& canvasManager)
 		ImGuiFileDialog::Instance()->Close();
 	}
 
+	if (ImGuiFileDialog::Instance()->Display("LoadFileAnim"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk())
+		{
+			std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
+
+			std::string extension = ImGuiFileDialog::Instance()->GetCurrentFilter();
+
+			if (extension == ".ora")
+			{
+				canvasManager.loadORA(filePath);
+				// centering the loaded image 
+				resetCanvasPositionCb();
+			}
+			else
+			{
+				canvasManager.loadFromFile(filePath);
+				// centering the loaded image 
+				resetCanvasPositionCb();
+			}
+
+			// save to recent activity list
+			saveToRecentActivityCb(filePath);
+
+			// if the current UI state is the start menu then change it to the main screen
+			if (curState == UIState::start_menu) { curState = UIState::main_screen; }
+
+		}
+
+		ImGuiFileDialog::Instance()->Close();
+	}
 	// end step
 	ImGui::End();
 
@@ -755,6 +786,40 @@ void UI::drawTopPanel(CanvasManager& canvasManager) {
 			".png,.jpg,.ora",
 			config
 		);
+	}
+	
+	if (ImGuiFileDialog::Instance()->Display("LoadFileAnim"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk())
+		{
+			std::string filePath =
+				ImGuiFileDialog::Instance()->GetFilePathName();
+
+			std::string extension =
+				ImGuiFileDialog::Instance()->GetCurrentFilter();
+
+			if (extension == ".ora")
+			{
+				canvasManager.loadORA(filePath);
+				// centering the loaded image 
+				resetCanvasPositionCb();
+			}
+			else
+			{
+				canvasManager.loadFromFile(filePath);
+				// centering the loaded image 
+				resetCanvasPositionCb();
+			}
+
+			// save to recent activity list
+			saveToRecentActivityCb(filePath);
+
+			// if the current UI state is the start menu then change it to the main screen
+			if (curState == UIState::start_menu) { curState = UIState::main_screen; }
+
+		}
+
+		ImGuiFileDialog::Instance()->Close();
 	}
 
 	if (ImGuiFileDialog::Instance()->Display("LoadFileDlg"))
@@ -1709,6 +1774,21 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 					config
 				);
 			}
+			
+			if (ImGui::MenuItem("Open Animation...", "")) {
+				IGFD::FileDialogConfig config;
+
+				// the  path the file explorer starts in. "." is the current active directory
+				if (getDefaultFolderPathCb) config.path = getDefaultFolderPathCb();
+				else config.path = ".";
+
+				ImGuiFileDialog::Instance()->OpenDialog(
+					"LoadAnimDlg",
+					"Choose File",
+					nullptr,
+					config
+				);
+			}
 			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Window")) {
@@ -1835,10 +1915,22 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 
 		ImGuiFileDialog::Instance()->Close();
 	}
+	if (ImGuiFileDialog::Instance()->Display("LoadAnimDlg"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk())
+		{
+			std::string folder = ImGuiFileDialog::Instance()->GetCurrentPath();
 
-	// attempting to place a second main menu bar 
+			canvasManager.loadAnimation(folder);
+			
+			// if the current UI state is the start menu then change it to the main screen
+			if (curState == UIState::start_menu) { curState = UIState::main_screen; }
+		}
 
+		ImGuiFileDialog::Instance()->Close();
+	}
 }
+
 
 // drawing individual windows 
 

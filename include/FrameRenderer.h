@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <filesystem>
 
 #include "Canvas.h"
 
@@ -22,7 +23,7 @@ class FrameRenderer{
         static void removeOnionSkin(Canvas& canvas);
         static void toggleOnionSkin();
         static void saveAnimation(const string& path, Canvas& canvas);
-        static void loadAnimation(const string& path);
+        static void loadAnimation(Canvas& canvas, std::vector<std::filesystem::path> images);
         static bool inputBlocked;
         static int getCurFrame();
         static int getNumFrames();
