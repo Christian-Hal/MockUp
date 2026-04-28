@@ -112,11 +112,9 @@ private:
     std::vector<bool> editedPixels;
 
 	// seen pixels is a flat vector the size of the canvas that records if an index was seen during this stroke or not
-	// currentStrokeIndex is just the int value that seenPixels sets the index too if seen
-	// it gets checked for in recordPixelChange
+	// cleared at the beginning of each stroke
 	bool seenPixelsInitialized = false;
-	std::vector<int> seenPixels;
-	int currentStrokeIndex;
+	std::vector<bool> seenPixels;
     
 
 	/////// VARIABLES FOR THE UNDO AND REDO STUFF

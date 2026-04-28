@@ -12,8 +12,7 @@
 Canvas::Canvas() : width(0), height(0), numLayers(0), curLayer(0), pixels(), layerData(), canvasName("") {}
 Canvas::Canvas(int w, int h, std::string name, bool isAnimation, bool useAnimTemplate) 
 				: width(w), height(h), numLayers(2), curLayer(1), canvasName(name), 
-				currentStrokeIndex(-1), isAnim(isAnimation), 
-				animationTemplate(useAnimTemplate)
+				isAnim(isAnimation), animationTemplate(useAnimTemplate)
 {
 	// resize pixel vector to exist (default-initialized, fast)
 	// pixels will be properly set when layers are composited
@@ -35,23 +34,23 @@ void Canvas::beginStrokeRecord()
 {
 	// initialize the seenPixels vector if needed
 	if (!seenPixelsInitialized) {
-		seenPixels.resize(width * height, -1);
+		seenPixels.resize(width * height, false);
 		seenPixelsInitialized = true;
+	} else {
+		// clear from previous stroke
+		std::fill(seenPixels.begin(), seenPixels.end(), false);
 	}
-
+	
 	// create a new StrokePath on the current layer
 	activeStroke = StrokePath{};
 	activeStroke.layerNum = curLayer;
-
-	// sets a new stroke index for the seenPixel list
-	currentStrokeIndex++;
 }
 
 // Records the change of a single pixel during a stroke, storing the index of the pixel and its previous color value
 void Canvas::recordPixelChange(int index, const Color& before)
 {
-	// if we haven't seen the pixel before, then we mark it as seen and save it to the active stroke
-	seenPixels[index] = currentStrokeIndex;
+	// mark pixel as seen and save it to the active stroke
+	seenPixels[index] = true;
 	Pixel pixel = { index, before, before };
 	activeStroke.pixels.push_back(pixel);
 }
@@ -361,7 +360,7 @@ void Canvas::blendPixel(int x, int y, const Color& src, float brushAlpha) {
 	int index = y * width + x;
 
 	// if this pixel was already blended during this stroke, skip it to prevent over-blending
-	if (seenPixels[index] == currentStrokeIndex) {
+	if (seenPixels[index]) {
 		return;
 	}
 
