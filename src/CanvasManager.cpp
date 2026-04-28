@@ -211,11 +211,30 @@ void CanvasManager::saveToFile(const std::string& path)
     std::vector<Color> pixels(width * height);
     std::memcpy(pixels.data(), getActive().getData(), width * height * sizeof(Color));
 
-    // change all empty pixels to the background color before saving
-    for (int i = 0; i < width * height; i++)
-    {
-        if (pixels[i].a == 0)
-            pixels[i] = getActive().getBackgroundColor();
+    // if using animation template, fill empty pixels with template pixels
+    if (getActive().isUsingAnimTemplate()) {
+        stbi_set_flip_vertically_on_load(true);
+        const std::string templatePath = "assets/Animation_Template_PNG.png";
+        int templateWidth = 0, templateHeight = 0;
+        unsigned char* templateData = stbi_load(templatePath.c_str(), &templateWidth, &templateHeight, nullptr, 4);
+        
+        if (templateData) {
+            for (int i = 0; i < width * height; i++) {
+                if (pixels[i].a == 0 && i < templateWidth * templateHeight) {
+                    pixels[i].r = templateData[i * 4 + 0];
+                    pixels[i].g = templateData[i * 4 + 1];
+                    pixels[i].b = templateData[i * 4 + 2];
+                    pixels[i].a = templateData[i * 4 + 3];
+                }
+            }
+            stbi_image_free(templateData);
+        }
+    } else { // else change all empty pixels to the background color before saving
+        for (int i = 0; i < width * height; i++)
+        {
+            if (pixels[i].a == 0)
+                pixels[i] = getActive().getBackgroundColor();
+        }
     }
 
     // flip image vertically

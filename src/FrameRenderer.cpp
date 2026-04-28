@@ -2,6 +2,7 @@
 // included libraries for functionality
 #include "FrameRenderer.h"
 #include "stb_image_write.h"
+#include "stb_image.h"
 #include "imgui.h"
 
 #include <iostream>
@@ -365,16 +366,60 @@ void FrameRenderer::saveAnimation(const string& path, Canvas& canvas){
     }
     string title = path.substr(slash + 1, path.find_last_of('.') - (slash + 1));
     fs::create_directory(prefix);
-    for(int i = 0; i < frames.size(); i++){
+    
+    // Load template if using animation template
+    vector<Color> templateLayer;
+    if (canvas.isUsingAnimTemplate()) {
+        stbi_set_flip_vertically_on_load(true);
+        const string templatePath = "assets/Animation_Template_PNG.png";
+        int templateWidth = 0, templateHeight = 0;
+        unsigned char* templateData = stbi_load(templatePath.c_str(), &templateWidth, &templateHeight, nullptr, 4);
+        
+        if (templateData) {
+            templateLayer.resize(width * height);
+            for (int i = 0; i < width * height; i++) {
+                if (i < templateWidth * templateHeight) {
+                    templateLayer[i].r = templateData[i * 4 + 0];
+                    templateLayer[i].g = templateData[i * 4 + 1];
+                    templateLayer[i].b = templateData[i * 4 + 2];
+                    templateLayer[i].a = templateData[i * 4 + 3];
+                } else {
+                    templateLayer[i] = {0, 0, 0, 0};
+                }
+            }
+            stbi_image_free(templateData);
+        }
+    }
+    
+    for(int frameIdx = 0; frameIdx < frames.size(); frameIdx++){
         string finalPath;
         if(!isMac){
-            finalPath = prefix + "/" + title + "-" + to_string(i) + "." + ext;
+            finalPath = prefix + "/" + title + "-" + to_string(frameIdx) + "." + ext;
         }
         else{
-            finalPath = prefix + "\\" + title + "-" + to_string(i) + "." + ext;
+            finalPath = prefix + "\\" + title + "-" + to_string(frameIdx) + "." + ext;
         }
+        
         vector<Color> pixels(width * height);
-        memcpy(pixels.data(), frames[i].data(), width * height * sizeof(Color));
+        memcpy(pixels.data(), frames[frameIdx].data(), width * height * sizeof(Color));
+        
+        // if using animation template, fill empty pixels with template pixels
+        if (canvas.isUsingAnimTemplate() && !templateLayer.empty()) {
+            for (int i = 0; i < width * height; i++) {
+                if (pixels[i].a == 0) {
+                    pixels[i] = templateLayer[i];
+                }
+            }
+        } else {
+            // fill empty pixels with background color
+            for (int i = 0; i < width * height; i++) {
+                if (pixels[i].a == 0) {
+                    pixels[i] = canvas.getBackgroundColor();
+                }
+            }
+        }
+        
+        // Flip vertically for saving
         for (int y = 0; y < height / 2; y++)
         {
             int opposite = height - y - 1;
