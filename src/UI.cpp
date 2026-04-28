@@ -1548,6 +1548,14 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 				ImGui::SameLine(180);
 				if (ImGui::Button((hotkeyLabel(action) + "##" + name).c_str()))
 					triggerRebind(action);
+
+				// buttons for unbinding hotkeys
+				ImGui::SameLine(350);
+				std::string unbindLabel = std::string("x##unbind_") + name;
+				ImGui::BeginDisabled(hotkeyLabel(action) == "Unbound");
+				if (ImGui::SmallButton(unbindLabel.c_str()))
+					InputManager::unbindAction(action);
+				ImGui::EndDisabled();
 				};
 			
 			ShortcutRow("Draw", InputAction::setDraw);

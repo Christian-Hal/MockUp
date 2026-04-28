@@ -431,3 +431,14 @@ void InputManager::bindDefaultKeybinds()
 	bindAction(InputAction::saveFile, GLFW_KEY_S, GLFW_MOD_CONTROL);
 	bindAction(InputAction::openFile, GLFW_KEY_O, GLFW_MOD_CONTROL);
 }
+
+bool InputManager::unbindAction(InputAction action)
+{
+	auto it = ActionToKey.find(action);
+	if (it == ActionToKey.end())
+		return false;
+
+	KeyBindings.erase(it->second);
+	ActionToKey.erase(it);
+	return true;
+}

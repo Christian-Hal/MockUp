@@ -102,7 +102,7 @@ public:
 
     // Setup callback function for resolved keyboard actions.
     static void bindInputActionCallback(InputActionCallback actionCb);
-
+    static bool unbindAction(InputAction action);
 private:
     static void mouseButtonCallBack(GLFWwindow* window, int button, int action, int mods);
     static void cursorPosCallBack(GLFWwindow* window, double xpos, double ypos);
