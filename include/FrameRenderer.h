@@ -16,12 +16,13 @@ class FrameRenderer{
         static void createFrame(Canvas& canvas);
         static void removeFrame(Canvas& canvas);
         static void selectFrame(Canvas& canvas, int frameDelta);
+        static void reorderFrame(Canvas& canvas, int frameOne, int frameTwo);
         static void play(Canvas& canvas);
         static void updateOnionSkin(Canvas& canvas);
         static void removeOnionSkin(Canvas& canvas);
         static void toggleOnionSkin();
         static void saveAnimation(const string& path, Canvas& canvas);
-        static void loadAnimation(const string& path, Canvas& canvas);
+        static void loadAnimation(const string& path);
         static bool inputBlocked;
         static int getCurFrame();
         static int getNumFrames();

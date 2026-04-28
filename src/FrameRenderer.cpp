@@ -132,9 +132,9 @@ void FrameRenderer::updateCanvas(Canvas* oldCanvas, Canvas* newCanvas, int newCa
 // loads new frame with blank canvas
 void FrameRenderer::createFrame(Canvas& canvas){
     // Save the old frame
-    timeFunction("removeOnionSkin", [&] { removeOnionSkin(canvas); });
+     removeOnionSkin(canvas);
     frames[curFrame - 1] =  vector<Color>(canvas.getData(), canvas.getData() + (canvas.getWidth() * canvas.getHeight()));
-    timeFunction("writeAllData", [&] { writeAllData(&canvas);; });
+    writeAllData(&canvas);
     numFrames++;
     curFrame++;
     // insert new frame
@@ -190,6 +190,19 @@ void FrameRenderer::removeFrame(Canvas& canvas){
         canvas.setPixels(frames[curFrame-1]);
         canvas.setLayerData(readLayerData(meta));
         updateOnionSkin(canvas);
+    }
+}
+
+void FrameRenderer::reorderFrame(Canvas& canvas, int frameOne, int frameTwo){
+    if(frameOne >= 0 && frameOne < numFrames && frameTwo >= 0 && frameTwo < numFrames ){
+        selectFrame(canvas, 0);
+        frLayerData[curCanvas-1][frameOne].swap(frLayerData[curCanvas-1][frameTwo]);
+        frames[frameOne].swap(frames[frameTwo]);
+        frameData[curCanvas-1][frameOne].swap(frameData[curCanvas-1][frameTwo]);
+        canvas.setPixels(frames[curFrame-1]);
+        canvas.setLayerData(frLayerData[curCanvas-1][curFrame-1]);
+        selectFrame(canvas, 0);
+        canvas.reblendLayers();
     }
 }
 
