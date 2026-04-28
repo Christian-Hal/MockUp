@@ -359,8 +359,8 @@ void FrameRenderer::toggleOnionSkin(){
 }
 
 void FrameRenderer::saveAnimation(const string& path, Canvas& canvas){
-    writeAllData(&canvas);
-    // Ensure current frame is synced with canvas before saving
+    // Sync only the current frame to avoid corrupting stored frame data with display artifacts
+    // Don't call writeAllData() here as canvas may have temp display modifications (onion skin, etc)
     frames[curFrame - 1] = vector<Color>(canvas.getData(), canvas.getData() + (canvas.getWidth() * canvas.getHeight()));
     
     int width = canvas.getWidth();

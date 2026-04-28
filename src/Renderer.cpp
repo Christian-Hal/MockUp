@@ -237,6 +237,7 @@ void Renderer::uploadExtraTexture(const Canvas& canvas) {
 		unsigned char *data = stbi_load("assets/Animation_Template_PNG.png", &width, &height, &nrChannels, 0);
 		if (data)
 		{
+			glBindTexture(GL_TEXTURE_2D, paperTexture);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 			glGenerateMipmap(GL_TEXTURE_2D);
 		}
@@ -265,12 +266,13 @@ void Renderer::uploadAnimTextures(const Canvas& canvas) {
 	glBindTexture(GL_TEXTURE_2D, canvasTexture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, canvas.getWidth(), canvas.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, canvas.getData());
 
-	// load and generate the texture
+	// load and generate the template texture
     int width, height, nrChannels;
     stbi_set_flip_vertically_on_load(true);
     unsigned char *data = stbi_load("assets/Animation_Template_PNG.png", &width, &height, &nrChannels, 0);
     if (data)
     {
+        glBindTexture(GL_TEXTURE_2D, paperTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
