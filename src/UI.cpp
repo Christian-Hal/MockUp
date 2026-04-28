@@ -1559,12 +1559,17 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 		else if (settingsSection == 2) {
 			// only show canvas settings if there is an active canvas
 			if (canvasManager.hasActive()) {
+				bool isAnimTemplate = canvasManager.getActive().isUsingAnimTemplate();
 				ImGui::Text("Canvas settings: Canvas behavior, animation settings, etc.");
 				static bool changePaperColor = false;
+				if (isAnimTemplate) {
+					ImGui::TextWrapped("Some settings are disabled for canvases using the animation template.");
+				}
+
 				if (ImGui::Button("Change Paper Color")) {
 					changePaperColor = true;
 				}
-				if (changePaperColor) {
+				if (changePaperColor && !isAnimTemplate) {
 					ImGuiColorEditFlags flags = ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoInputs;
 					static ImVec4 paperColor = { 1.0f, 1.0f, 1.0f, 1.0f }; // default white
 					ImGui::SetNextItemWidth(180.0f);
