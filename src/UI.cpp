@@ -6,6 +6,7 @@
 #include <utility>
 #include <map>
 #include <tuple>
+#include <unordered_map>
 
 #include "ImGuiFileDialog.h"
 
@@ -23,6 +24,13 @@
 
 
 std::string overwritePath;
+
+// for the draggable buttons
+struct DragState {
+    float offsetY = 0.0f;
+	int index = 0;
+};
+static std::unordered_map<ImGuiID, DragState> dragStates;
 
 // variables to store info for UI declared up here 
 /// panel sizes
@@ -63,7 +71,6 @@ GLuint my_image_texture = 0;
 
 // state for draw erase button 
 static CursorMode cursorMode = CursorMode::Draw;
-
 
 void UI::bindCursorCallbacks(SetCursorModeCallback setCb, GetCursorModeCallback getCb)
 {
@@ -960,6 +967,7 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 	ImGui::Spacing();
 
 	// if there is a canvas then display the layer options
+	bool removeLayer = false;
 	if (canvasManager.hasActive())
 	{
 		// save the active canvas for later use
@@ -977,16 +985,10 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 		if (ImGui::Button("Remove Layer")) {
 			if (canvasManager.getActive().getNumLayers() > 2) {
 				// decrease the number of layers by 1
-				canvasManager.getActive().removeLayer();
+				removeLayer = true;
 			}
 		}
 
-		for (int i = 1; i < canvasManager.getActive().getNumLayers(); i++) {
-			std::string buttonName = "Canvas Layer " + std::to_string(i);
-			if (ImGui::Button(buttonName.c_str())) {
-				canvasManager.getActive().selectLayer(i);
-			}
-		}
 		ImGui::Text("Current Layer: %d", canvasManager.getActive().getCurLayer());
 
 		// adds a little visual split between sections
@@ -1043,12 +1045,43 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 		}
 	}
 
+	if(canvasManager.hasActive()){
+		std::vector<std::tuple<bool, float, int>> buttons;
+		int numDragStates = 0;
+		for (int i = 1; i < canvasManager.getActive().getNumLayers(); i++) {
+			std::string buttonName = "Canvas Layer " + std::to_string(i);
+			auto button = drawDraggableButton(canvasManager, buttonName.c_str(), i);
+			buttons.push_back(button);
+			numDragStates++;
+		}
+		for (int i = 0; i < buttons.size(); i++){
+			if(std::get<0>(buttons[i])){
+				canvasManager.getActive().selectLayer(std::get<2>(buttons[i]));
+			}
+		}
+		if(removeLayer){
+			canvasManager.getActive().removeLayer();
+			int maxIndex = -1;
+			ImGuiID maxId = 0;
+			for (auto& [id, state] : dragStates)
+			{
+				if (state.index > maxIndex)
+				{
+					maxIndex = state.index;
+					maxId = id;
+				}
+			}
+			dragStates.erase(maxId);
+		}
+	}
+	
 	// end step
 	RightSize = ImGui::GetWindowWidth();
 	ImVec2 size = ImGui::GetWindowSize();
 	ImGui::SetWindowSize(ImVec2(size.x, displayHeight)); // keeps its Y-value the same
 	ImGui::End();
 }
+
 
 // want bottom panel with timeline to only be visible if the canvas created 
 // is tagged with being an animation canvas 
@@ -2198,6 +2231,68 @@ void UI::drawTimelineWindow(CanvasManager& canvasManager) {
 		ImGui::SameLine();
 	}
 	ImGui::End();
+}
+
+std::tuple<bool, float, int> UI::drawDraggableButton(CanvasManager& canvasManager, const char* buttonName, int index){
+	float height = ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.y * 2.0f + 4;
+	int count = dragStates.size();
+	ImGuiID id = ImGui::GetID(buttonName);
+    DragState& state = dragStates[id];
+	state.index = index;
+
+	// Base position reacts to UI/layout changes
+	float baseX = displayWidth - (RightSize - 8);
+	float baseY = 400.0f + (RightSize * .66f) + (index * height);
+	float finalY = baseY + state.offsetY;
+	
+
+	float boxTop = 400.0f + (RightSize * .66f);
+	float boxBottom = boxTop + (count * height);
+
+	ImVec2 btnPos(baseX, finalY);
+
+	// Draw
+	ImGui::SetCursorScreenPos(btnPos);
+	bool isPressed = ImGui::Button(buttonName);
+	bool notActive = true;
+	if (ImGui::IsItemActive())
+	{
+		notActive = false;
+		float dy = ImGui::GetIO().MouseDelta.y;
+		float newOffset = state.offsetY + dy;
+
+		if (finalY >= boxTop && finalY <= boxBottom)
+		{
+			state.offsetY = newOffset;
+		}
+	}
+	if (!notActive){
+		for (auto& [otherID, other] : dragStates)
+		{
+			if (otherID == id) continue;
+			float otherFinalY = std::min(400.0f + (RightSize * .66f) + (other.index * height) + other.offsetY, displayHeight - 29.0f);
+			if (std::abs(finalY - otherFinalY) < height * 0.5f)
+			{
+				if(otherFinalY > finalY){
+					other.offsetY = std::round(((other.offsetY / height) * height) - height);
+					canvasManager.getActive().swapLayers(other.index, index);
+				}
+				else{
+					other.offsetY = std::round(((other.offsetY / height) * height) + height);
+					canvasManager.getActive().swapLayers(other.index, index);
+
+				}
+			}
+		}
+	}
+
+	// Snap on release
+	if (ImGui::IsItemDeactivated())
+	{
+		float snapped = std::round(state.offsetY / height) * height;
+		state.offsetY = snapped;
+	}
+	return {isPressed, finalY, index};
 }
 
 // ending and cleanup 

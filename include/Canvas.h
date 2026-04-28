@@ -77,13 +77,14 @@ public:
 	const Color& getPixel(int x, int y) const;
 	const Color& getLayerPixel(int x, int y);
 	void setPixels(std::vector<Color> newPixels);
-	void reblendLayers();
 	void setLayerData(std::vector<std::vector<Color>> newLayerData);
 
 	// layer manipulation
 	void createLayer();
 	void removeLayer();
 	void selectLayer(int layerNum);
+	void swapLayers(int layerOne, int layerTwo);
+	void reblendLayers();
 
 	// rotation, zoom, and offset data for each canvas
 	glm::vec2 offset = { 0.0f, 0.0f };

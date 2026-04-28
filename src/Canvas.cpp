@@ -513,6 +513,14 @@ void Canvas::selectLayer(int layerNum) {
 	curLayer = layerNum;
 }
 
+/*
+This function will swap the layers 
+*/
+void Canvas::swapLayers(int layerOne, int layerTwo){
+	layerData[layerOne].swap(layerData[layerTwo]);
+	reblendLayers();
+}
+
 
 void Canvas::loadImage(unsigned char* data, int layerIndex)
 {

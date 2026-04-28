@@ -401,6 +401,9 @@ void FrameRenderer::saveAnimation(const string& path, Canvas& canvas){
     }
 }
 
+void FrameRenderer::loadAnimation(const string& path, Canvas& canvas){
+    
+}
 
 // gets the current frame (which is a number from 1-NumFrames)
 int FrameRenderer::getCurFrame(){
