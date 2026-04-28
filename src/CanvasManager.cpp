@@ -72,6 +72,7 @@ void CanvasManager::closeCanvas(int index)
   
     FrameRenderer::removeCanvas(index, &canvases[activeCanvasIndex]);
     canvasChange = true;
+    paperChange = true;
 }
 
 

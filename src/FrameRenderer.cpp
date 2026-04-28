@@ -143,8 +143,6 @@ void FrameRenderer::createFrame(Canvas& canvas){
     int* meta = readMetaData(); // meta[0] is width, meta[1] is height
 
     // this ought to insert inbetween the oldCurrent frame
-    frames.insert(frames.begin() + (curFrame - 1), vector<Color>(meta[0] * meta[1], canvas.getBackgroundColor()));
-    
     frLayerData[curCanvas-1].insert(frLayerData[curCanvas-1].begin() + (curFrame-1), vector<vector<Color>>(
             canvas.getNumLayers(), vector<Color>(
                 meta[0] * meta[1], canvas.getBackgroundColor()
@@ -357,6 +355,9 @@ void FrameRenderer::toggleOnionSkin(){
 
 void FrameRenderer::saveAnimation(const string& path, Canvas& canvas){
     writeAllData(&canvas);
+    // Ensure current frame is synced with canvas before saving
+    frames[curFrame - 1] = vector<Color>(canvas.getData(), canvas.getData() + (canvas.getWidth() * canvas.getHeight()));
+    
     int width = canvas.getWidth();
     int height = canvas.getHeight();
     string prefix = path.substr(0, path.find_last_of('.'));
