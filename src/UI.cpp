@@ -1446,7 +1446,7 @@ void UI::drawNewCanvasPopup(CanvasManager& canvasManager)
 					resetCanvasPositionCb();
 
 					UI::showNewCanvasPopup = false;
-					temp_n = "Animation";
+					temp_n_a = "Animation";
 
 					// if the current UI state is the start menu then change it to the main screen
 					if (curState == UIState::start_menu) { curState = UIState::main_screen; }
