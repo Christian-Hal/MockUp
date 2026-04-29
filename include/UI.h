@@ -33,6 +33,7 @@ enum class UIElement
 	cursorModeButtons,
 	animationTimeline,
 	layers,
+	thumbnail,
 };
 
 // this creates a list of the elements that we can interate through
@@ -43,6 +44,7 @@ constexpr UIElement elements[] = {
 	UIElement::cursorModeButtons,
 	UIElement::animationTimeline,
 	UIElement::layers,
+	UIElement::thumbnail
 };
 
 class UI {
@@ -145,6 +147,8 @@ private:
 	void drawBrushesWindow(CanvasManager& canvasManager);
 	void drawCursorModesWindow(CanvasManager& canvasManager);
 	void drawTimelineWindow(CanvasManager& canvasManager);
+	void drawCanvasThumbnailWindow(CanvasManager& canvasManager);
+
 	std::tuple<bool, float, int> drawDraggableButton(CanvasManager& canvasManager, const char* buttonName, int index);
 
 	// separate rendering functions for all components to unify the windows and panels 

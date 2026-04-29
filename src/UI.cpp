@@ -642,6 +642,7 @@ void UI::drawMainScreen(CanvasManager& canvasManager, FrameRenderer frameRendere
 			if (elementVisibility[UIElement::cursorModeButtons]) { drawCursorModesWindow(canvasManager); }
 			if (elementVisibility[UIElement::animationTimeline]) { drawTimelineWindow(canvasManager); }
 			if (elementVisibility[UIElement::layers]) { drawLayersWindow(canvasManager); }
+			if (elementVisibility[UIElement::thumbnail]) { drawCanvasThumbnailWindow(canvasManager); }
 		}
 	}
 
@@ -1508,6 +1509,9 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 			if (ImGui::MenuItem("Layers", nullptr, elementVisibility[UIElement::layers])) {
 				elementVisibility[UIElement::layers] = !elementVisibility[UIElement::layers];
 			}
+			if (ImGui::MenuItem("Canvas Thumbnails", nullptr, elementVisibility[UIElement::thumbnail])) {
+				elementVisibility[UIElement::thumbnail] = !elementVisibility[UIElement::thumbnail];
+			}
 
 			ImGui::PopItemFlag();
 			ImGui::EndMenu();
@@ -1689,6 +1693,13 @@ void UI::drawTimelineWindow(CanvasManager& canvasManager) {
 	renderTimeline(canvasManager);
 	ImGui::End();
 }
+
+void UI::drawCanvasThumbnailWindow(CanvasManager& canvasManager)
+{
+	ImGui::Begin("Canvas Thumbnail");
+	renderCanvasThumbnail(canvasManager);
+	ImGui::End();
+} 
 
 
 // ---- separate methods to handle rendering all components ----- 
