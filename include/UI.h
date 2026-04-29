@@ -157,6 +157,7 @@ private:
 	void renderLayerInfo(CanvasManager& canvasManager);
 	void renderBrushImports(CanvasManager& canvasManager);
 	void renderCursorModes(CanvasManager& canvasManager);
+	void renderCanvasThumbnail(CanvasManager& canvasManager);
 
 	void drawNewCanvasPopup(CanvasManager& canvasManager);
 	void drawSettingsPopup(CanvasManager& canvasManager);
@@ -174,4 +175,6 @@ private:
 	bool showCloseConfirm = false;
 	int pendingCloseIndex = -1;
 	bool pendingAppClose = false;
+
+	Renderer* rendererPtr = nullptr;
 };

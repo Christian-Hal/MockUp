@@ -144,6 +144,7 @@ void Renderer::beginFrame(CanvasManager& canvasManager)
 		if (canvasManager.paperChange) {
 			uploadExtraTexture(canvasManager.getActive());
 			canvasManager.paperChange = false;
+			textureDirty = true;
 		}
 
 		// if the active canvas has chaneged then recreate the vbo/vao
@@ -151,6 +152,7 @@ void Renderer::beginFrame(CanvasManager& canvasManager)
 			createCanvasQuad(canvasManager.getActive());
 			canvasManager.canvasChange = false;
 			global.dirtyScreen = false;
+			textureDirty = true;
 		}
 
 		renderCanvas(canvasManager.getActive());
@@ -341,4 +343,8 @@ void Renderer::renderCanvas(const Canvas& canvas)
 	glBindVertexArray(vao);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
+}
+
+unsigned int Renderer::getCanvasTexture() { 
+	return canvasTexture;
 }

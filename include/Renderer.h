@@ -28,7 +28,6 @@ static float lastAngle = 0.0f;
 static bool isZoomDragging = false;
 static double lastZoomMouseY = 0.0;
 
-
 class Renderer {
 
 public:
@@ -44,9 +43,15 @@ public:
 	void uploadExtraTexture(const Canvas& canvas);
 	void renderCanvas(const Canvas& canvas);
 
+	// just returns the canvas texture, legit only used by the UI for the canvas thumbnail
+	// yes i gave up on doing a callback function for this, UI already had a reference to renderer
+	unsigned int getCanvasTexture();
+
+	// just keeps track of if the texture has changed
+	bool textureDirty = true;
+
 	// color picking 
 	void pickColor(double mouseX, double mouseY, Canvas& canvas); 
-
 
 	//bool drawVertices = false;
 	std::vector<float> drawVertices;

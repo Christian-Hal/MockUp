@@ -294,6 +294,7 @@ void UI::setCursorMode(CursorMode temp) {
 
 // ----- UI initialization -----
 void UI::init(GLFWwindow* window, Renderer& rendInst, Globals& g_inst) {
+	rendererPtr = &rendInst;
 
 	// set the initial ui state
 	curState = UIState::start_menu;
@@ -745,9 +746,10 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	ImGui::Separator();
 	ImGui::Spacing();
 
-	// color set section
-	// need active color here so that it is updated every frame
+	// ----- Color wheel and Color set ------
+	// Determine which pointer to pass to the picker
 	ImVec4* active_color = editing_primary ? &primary_color : &secondary_color;
+	renderColorWheel(canvasManager, active_color);
 	renderColorSet(canvasManager, active_color);
 
 	// end step
@@ -763,11 +765,7 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 	ImGui::SetNextWindowSize(ImVec2(RightSize, displayHeight - TopSize), ImGuiCond_Always);
 	ImGui::Begin("Right Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
-	// ----- Color wheel ------
-	// Determine which pointer to pass to the picker
-	ImVec4* active_color = editing_primary ? &primary_color : &secondary_color;
-
-	renderColorWheel(canvasManager, active_color);
+	renderCanvasThumbnail(canvasManager);
 
 	ImGui::Spacing();
 	ImGui::Separator();
@@ -1922,6 +1920,7 @@ void UI::renderColorWheel(CanvasManager& canvasManager, ImVec4* active_color) {
 }
 
 void UI::renderBrushSize(CanvasManager& canvasManager) {
+	ImGui::Text("Brush Sizes:");
 	// * make these wrap with the panel like the color set does * 
 	ImGui::SliderInt("Size", &brushSize, 1, 500, "%d", ImGuiSliderFlags_Logarithmic);
 	// presets 
@@ -2267,4 +2266,20 @@ void UI::requestAppClose(CanvasManager& canvasManager)
 	}
 	// no dirty canvases, just close immediately
 	glfwSetWindowShouldClose(glfwGetCurrentContext(), GLFW_TRUE);
+}
+
+void UI::renderCanvasThumbnail(CanvasManager& canvasManager) {
+	if (!canvasManager.hasActive()) return;
+
+	static unsigned int textureID = 0;
+
+	if (rendererPtr->textureDirty) {
+		textureID = rendererPtr->getCanvasTexture();
+		rendererPtr->textureDirty = false;
+	}
+
+	float width = ImGui::GetContentRegionAvail().x;
+	float height = width * canvasManager.getActive().getHeight() / canvasManager.getActive().getWidth();
+
+	ImGui::Image((void*)(intptr_t)textureID, ImVec2(width, height), ImVec2(0, 1), ImVec2(1, 0));
 }
