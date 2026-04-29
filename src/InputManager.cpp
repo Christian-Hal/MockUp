@@ -343,6 +343,10 @@ void InputManager::saveKeybinds()
 		if (action == InputAction::newFile) str = "newFile";
 		if (action == InputAction::newFrame) str = "newFrame";
 		if (action == InputAction::closeCanvas) str = "closeCanvas";
+		if (action == InputAction::removeFrame) str = "removeFrame";
+		if (action == InputAction::quickPlay) str = "quickPlay";
+		if (action == InputAction::saveFile) str = "saveFile";
+		if (action == InputAction::openFile) str = "openFile";
 
         j[str] = {
             {"key", combo.key},
@@ -389,6 +393,10 @@ bool InputManager::loadKeybinds()
 		if (actionStr == "newFile") action = InputAction::newFile;
 		if (actionStr == "newFrame") action = InputAction::newFrame;
 		if (actionStr == "closeCanvas") action = InputAction::closeCanvas;
+		if (actionStr == "removeFrame")	action = InputAction::removeFrame;
+		if (actionStr == "quickPlay") action = InputAction::quickPlay;
+		if (actionStr == "saveFile") action = InputAction::saveFile;
+		if (actionStr == "openFile") action = InputAction::openFile;
 
         int key = value["key"];
         int mods = value["mods"];
@@ -419,4 +427,17 @@ void InputManager::bindDefaultKeybinds()
 	bindAction(InputAction::newFile, GLFW_KEY_N, GLFW_MOD_CONTROL);
 	bindAction(InputAction::newFrame, GLFW_KEY_3, 0);
 	bindAction(InputAction::closeCanvas, GLFW_KEY_W, GLFW_MOD_CONTROL);
+	bindAction(InputAction::saveFile, GLFW_KEY_S, GLFW_MOD_CONTROL);
+	bindAction(InputAction::openFile, GLFW_KEY_O, GLFW_MOD_CONTROL);
+}
+
+bool InputManager::unbindAction(InputAction action)
+{
+	auto it = ActionToKey.find(action);
+	if (it == ActionToKey.end())
+		return false;
+
+	KeyBindings.erase(it->second);
+	ActionToKey.erase(it);
+	return true;
 }
