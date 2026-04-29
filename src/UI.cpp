@@ -413,7 +413,7 @@ void UI::drawUI(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 
 	// compute the panel sizes
 	if (TopSize == 0) { TopSize = 20; }
-	if (BotSize == 0) { BotSize = static_cast<int>(0.12 * displayHeight); }
+	if (BotSize == 0) { BotSize = static_cast<int>(0.25 * displayHeight); }
 	if (LeftSize == 0) { LeftSize = static_cast<int>(0.1 * displayWidth); }
 	if (RightSize == 0) { RightSize = static_cast<int>(0.1 * displayWidth); }
 
@@ -827,15 +827,16 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 }
 
 void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRenderer) {
-	// initialize the panel
-	ImGui::SetNextWindowPos(ImVec2(LeftSize, displayHeight - BotSize), ImGuiCond_Always);
-	if (canvasManager.hasActive() && canvasManager.getActive().isAnimation()) {
-		BotSize = static_cast<int>(0.2 * displayHeight);
+	if (canvasManager.getActive().isAnimation()) {
+		ImGui::SetNextWindowPos(ImVec2(LeftSize, displayHeight - BotSize), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(ImVec2(displayWidth - LeftSize - RightSize, BotSize), ImGuiCond_Always);
+		ImGui::Begin("Bottom Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 	} else {
-		BotSize = static_cast<int>(0.05 * displayHeight);
+		float tempSize = displayHeight * 0.05f;
+		ImGui::SetNextWindowPos(ImVec2(LeftSize, displayHeight - tempSize), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(ImVec2(displayWidth - LeftSize - RightSize, tempSize), ImGuiCond_Always);
+		ImGui::Begin("Bottom Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 	}
-	ImGui::SetNextWindowSize(ImVec2(displayWidth - LeftSize - RightSize, BotSize), ImGuiCond_Always);
-	ImGui::Begin("Bottom Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
 	// only draw if there is an animations
 	if (canvasManager.hasActive() && canvasManager.getActive().isAnimation()) {
@@ -844,12 +845,10 @@ void UI::drawBottomPanel(CanvasManager& canvasManager, FrameRenderer frameRender
 		renderTimeline(canvasManager);
 	}
 
-
 	// end step
-	if (ImGui::GetWindowHeight() > displayHeight - 2 * TopSize)
-		BotSize = displayHeight - 2 * TopSize;
-	else
+	if (canvasManager.getActive().isAnimation()) {
 		BotSize = ImGui::GetWindowHeight();
+	}
 	ImGui::End();
 }
 
