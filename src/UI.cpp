@@ -1289,12 +1289,16 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 				bool isAnimTemplate = canvasManager.getActive().isUsingAnimTemplate();
 				ImGui::Text("Canvas settings: Canvas behavior, animation settings, etc.");
 				static bool changePaperColor = false;
-				if (isAnimTemplate) {
-					ImGui::TextWrapped("Some settings are disabled for canvases using the animation template.");
-				}
+
+				ImGui::SeparatorText("General Canvas Settings:");
 
 				if (ImGui::Button("Change Paper Color")) {
 					changePaperColor = true;
+				}
+
+				if (isAnimTemplate) {
+					ImGui::SameLine();
+					ImGui::TextWrapped("Disabled while using animation template.");
 				}
 				
 				if (changePaperColor && !isAnimTemplate) {
@@ -1308,22 +1312,26 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 						canvasManager.getActive().isDirty = true;
 					}
 				}
-				if(canvasManager.getActive().isAnimation()){
-					ImGui::Text("Animation FPS value");
-					ImGui::SameLine();
-					ImGui::InputInt("##FPSvalue", &fpsValue);
-					FrameRenderer::changeFPS(fpsValue);
 
-					ImGui::Text("Previous frames shown");
-					ImGui::SameLine();
-					ImGui::InputInt("##oSkBef", &framesBefore);
-					FrameRenderer::changeOnionSkinsSeen(framesBefore, -1);
+				ImGui::SeparatorText("Animation Settings:");
 
-					ImGui::Text("Next frames shown");
-					ImGui::SameLine();
-					ImGui::InputInt("##oSkAft", &framesAfter);
-					FrameRenderer::changeOnionSkinsSeen(-1, framesAfter);
-				}
+				ImGui::Text("Animation FPS value");
+				ImGui::SameLine();
+				ImGui::SetNextItemWidth(100.0f);
+				ImGui::InputInt("##FPSvalue", &fpsValue);
+				FrameRenderer::changeFPS(fpsValue);
+
+				ImGui::Text("Previous frames shown");
+				ImGui::SameLine();
+				ImGui::SetNextItemWidth(100.0f);
+				ImGui::InputInt("##oSkBef", &framesBefore);
+				FrameRenderer::changeOnionSkinsSeen(framesBefore, -1);
+
+				ImGui::Text("Next frames shown");
+				ImGui::SameLine();
+				ImGui::SetNextItemWidth(100.0f);
+				ImGui::InputInt("##oSkAft", &framesAfter);
+				FrameRenderer::changeOnionSkinsSeen(-1, framesAfter);
 			}
 			else
 				ImGui::Text("Canvas settings will appear here when a canvas is open.");
