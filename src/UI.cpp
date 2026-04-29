@@ -2271,15 +2271,26 @@ void UI::requestAppClose(CanvasManager& canvasManager)
 void UI::renderCanvasThumbnail(CanvasManager& canvasManager) {
 	if (!canvasManager.hasActive()) return;
 
-	static unsigned int textureID = 0;
+	ImVec2 pos = ImGui::GetCursorScreenPos();
+
+	static unsigned int imageTexture = 0;
+	static unsigned int paperTexture = 0;
 
 	if (rendererPtr->textureDirty) {
-		textureID = rendererPtr->getCanvasTexture();
+		imageTexture = rendererPtr->getCanvasTexture();
+		paperTexture = rendererPtr->getPaperTexture();
+
 		rendererPtr->textureDirty = false;
 	}
 
 	float width = ImGui::GetContentRegionAvail().x;
 	float height = width * canvasManager.getActive().getHeight() / canvasManager.getActive().getWidth();
 
-	ImGui::Image((void*)(intptr_t)textureID, ImVec2(width, height), ImVec2(0, 1), ImVec2(1, 0));
+	// draw the paper layer
+	ImGui::Image((void*)(intptr_t)paperTexture, ImVec2(width, height), ImVec2(0, 1), ImVec2(1, 0));
+	
+	ImGui::SetCursorScreenPos(pos);
+
+	// then draw the canvas layer on top
+	ImGui::Image((void*)(intptr_t)imageTexture, ImVec2(width, height), ImVec2(0, 1), ImVec2(1, 0));
 }

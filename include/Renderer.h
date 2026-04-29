@@ -46,6 +46,7 @@ public:
 	// just returns the canvas texture, legit only used by the UI for the canvas thumbnail
 	// yes i gave up on doing a callback function for this, UI already had a reference to renderer
 	unsigned int getCanvasTexture();
+	unsigned int getPaperTexture();
 
 	// just keeps track of if the texture has changed
 	bool textureDirty = true;

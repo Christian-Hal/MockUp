@@ -348,3 +348,7 @@ void Renderer::renderCanvas(const Canvas& canvas)
 unsigned int Renderer::getCanvasTexture() { 
 	return canvasTexture;
 }
+
+unsigned int Renderer::getPaperTexture() {
+	return paperTexture;
+}
