@@ -347,15 +347,14 @@ void FrameRenderer::updateOnionSkin(Canvas& canvas){
         Color bg = canvas.getBackgroundColor();
         Color blendedColor = canvas.colorTimes(bg, green);
         Color empty = {0,0,0,0};
+        vector<Color> layZeroDat = vector<Color>(pixelCount, empty); 
         int oldLayer = canvas.getCurLayer();
         canvas.selectLayer(0);
         for(int i = 0; i < numBefore; i++){
             if(curFrame > 1 + i){
                 for(int j = 0; j < pixelCount; j++){
                     if (frames[curFrame - 2 - i][j] == empty) continue;
-                    int x = j % width;
-                    int y = j / width;
-                    canvas.setPixel(x, y, blendedColor);
+                    layZeroDat[j] = blendedColor;
                 }
             }
         }
@@ -364,14 +363,16 @@ void FrameRenderer::updateOnionSkin(Canvas& canvas){
             if(curFrame < numFrames - i){ 
                 for(int j = 0; j < pixelCount; j++){
                     if (frames[curFrame + i][j] == empty) continue;
-                    int x = j % width;
-                    int y = j / width;
-                    canvas.setPixel(x, y, blendedColor2);
+                    layZeroDat[j] = blendedColor2;
 
                 }
             }
         }
         canvas.selectLayer(oldLayer);
+        vector<vector<Color>> layerDat = canvas.getLayerData();
+        layerDat[0] = layZeroDat;
+        canvas.setLayerData(layerDat);
+        canvas.recompositePixelsFromLayers();
     }
 }
 
@@ -395,6 +396,7 @@ void FrameRenderer::toggleOnionSkin(){
 }
 
 void FrameRenderer::saveAnimation(const string& path, Canvas& canvas){
+    removeOnionSkin(canvas);
     // Sync only the current frame to avoid corrupting stored frame data with display artifacts
     // Don't call writeAllData() here as canvas may have temp display modifications (onion skin, etc)
     frames[curFrame - 1] = vector<Color>(canvas.getData(), canvas.getData() + (canvas.getWidth() * canvas.getHeight()));
@@ -481,6 +483,7 @@ void FrameRenderer::saveAnimation(const string& path, Canvas& canvas){
         else if (ext == "jpg")
             stbi_write_jpg(finalPath.c_str(), width, height, 4, pixels.data(), 100);
     }
+    updateOnionSkin(canvas);
 }
 
 void FrameRenderer::loadAnimation(Canvas& canvas, vector<filesystem::path> images){
@@ -526,7 +529,7 @@ void FrameRenderer::loadAnimation(Canvas& canvas, vector<filesystem::path> image
     }
     
     stbi_set_flip_vertically_on_load(false);
-
+    canvas.reblendLayers();
 }
 
 // gets the current frame (which is a number from 1-NumFrames)
