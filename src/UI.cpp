@@ -2089,6 +2089,11 @@ void UI::renderLayerInfo(CanvasManager& canvasManager) {
 		std::string btnID = "##layerbtn" + std::to_string(i);
 		ImGui::InvisibleButton(btnID.c_str(), ImVec2(buttonW, ImGui::GetFrameHeight()));
 
+		// tooltip 
+		if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlapped)) {
+			ImGui::SetTooltip("Layer %d", i);
+		}
+
 		if (ImGui::IsItemClicked() && draggedLayer == -1)
 			canvasManager.getActive().selectLayer(i);
 
@@ -2120,6 +2125,7 @@ void UI::renderLayerInfo(CanvasManager& canvasManager) {
 
 	ImGui::Spacing();
 	ImGui::Text("Current Layer: %d", curLayer);
+	
 }
 
 void UI::renderBrushImports(CanvasManager& canvasManager) {
