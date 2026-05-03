@@ -57,15 +57,20 @@ void BrushManager::init()
 {
     loaded_Brushes.emplace_back(BrushTool(1,1, "DefaultBrush"));
 
-    for (const auto& path : defaultBrushPaths)
-    {
-        BrushTool temp = BrushTool();
-        if (loadBrushFromGBR(path, temp))
-            loaded_Brushes.emplace_back(temp);
+    // iterate through the brushes folder and load each brush into the program
+    std::string brushesPath = "assets/brushes";
+    try {
+        for (const auto& entry : std::filesystem::directory_iterator(brushesPath)) {
+            if (entry.is_regular_file()) {
+                std::string path = entry.path().string();
+                loadBrush(path);
+            }
+        }
+    } catch (const std::filesystem::filesystem_error& e) {
+        std::cerr << "Error reading brushes folder: " << e.what() << std::endl;
     }
 
     activeBrushIndex = 0;
-
     brushChange = true;
 }
 
