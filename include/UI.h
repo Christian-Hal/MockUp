@@ -101,6 +101,7 @@ public:
 	
 	void requestCloseCanvas(int index, CanvasManager& canvasManager);
 	void requestAppClose(CanvasManager& canvasManager);
+	void requestMainMenuReturn(CanvasManager& canvasManager);
 
 private:
 	SetCursorModeCallback setCursorModeCb;
@@ -179,6 +180,7 @@ private:
 	bool showCloseConfirm = false;
 	int pendingCloseIndex = -1;
 	bool pendingAppClose = false;
+	bool mainMenuReturn = false;
 
 	Renderer* rendererPtr = nullptr;
 };

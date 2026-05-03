@@ -947,6 +947,8 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 
 			if (pendingAppClose)
 				requestAppClose(canvasManager);
+			else if (mainMenuReturn)
+				requestMainMenuReturn(canvasManager);
 		}
 
 		ImGui::SameLine();
@@ -955,6 +957,7 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 			pendingCloseIndex = -1;
 			showCloseConfirm = false;
 			pendingAppClose = false;
+			mainMenuReturn = false;
 			ImGui::CloseCurrentPopup();
 		}
 
@@ -984,6 +987,8 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 
 			if (pendingAppClose)
 				requestAppClose(canvasManager);
+			else if (mainMenuReturn)
+				requestMainMenuReturn(canvasManager);
 		}
 
 		pendingCloseIndex = -1;
@@ -1349,7 +1354,10 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 		else if (settingsSection == 3) {
 			if (curState != UIState::start_menu) {
 				if (ImGui::Button("Return to Main Menu")) {
-					curState = UIState::start_menu;
+
+					showSettingsPopup = false;
+					ImGui::CloseCurrentPopup();
+					requestMainMenuReturn(canvasManager);
 				}
 			}
 			else
@@ -2344,4 +2352,26 @@ void UI::requestAppClose(CanvasManager& canvasManager)
 	}
 	// no dirty canvases, just close immediately
 	glfwSetWindowShouldClose(glfwGetCurrentContext(), GLFW_TRUE);
+}
+
+void UI::requestMainMenuReturn(CanvasManager& canvasManager)
+{
+	mainMenuReturn = true;
+	// close dirty canvases
+	for (int i = 0; i < canvasManager.getNumCanvases(); i++) {
+		if (canvasManager.getOpenCanvases()[i].isDirty) {
+			pendingCloseIndex = i;
+			canvasManager.setActiveCanvas(i);
+			showCloseConfirm = true;
+			return;
+		}
+	}
+
+	// close clean canvases
+	while (canvasManager.getNumCanvases() > 0)
+		canvasManager.closeCanvas(0);
+
+	// return to main menu
+	curState = UIState::start_menu;
+	mainMenuReturn = false;
 }
