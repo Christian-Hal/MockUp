@@ -421,8 +421,8 @@ void UI::drawUI(CanvasManager& canvasManager, FrameRenderer frameRenderer)
 	// compute the panel sizes
 	if (TopSize == 0) { TopSize = 20; }
 	if (BotSize == 0) { BotSize = static_cast<int>(0.25 * displayHeight); }
-	if (LeftSize == 0) { LeftSize = static_cast<int>(0.1 * displayWidth); }
-	if (RightSize == 0) { RightSize = static_cast<int>(0.1 * displayWidth); }
+	if (LeftSize == 0) { LeftSize = static_cast<int>(0.12 * displayWidth); }
+	if (RightSize == 0) { RightSize = static_cast<int>(0.12 * displayWidth); }
 
 	// ----- Call the various popup draws so they get drawn when needed -----
 	drawNewCanvasPopup(canvasManager); 	// draw the new canvas pop up
@@ -739,6 +739,9 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	// initialize the panel
 	ImGui::SetNextWindowPos(ImVec2(0, TopSize), ImGuiCond_Always); // line that needs to change to make it fit MainMenuBar
 	ImGui::SetNextWindowSize(ImVec2(LeftSize, displayHeight - TopSize), ImGuiCond_Always);
+	float maxWidth = displayWidth * 0.25f;
+	float fixedHeight = displayHeight - TopSize;
+	ImGui::SetNextWindowSizeConstraints(ImVec2(0, fixedHeight), ImVec2(maxWidth, fixedHeight));
 	ImGui::Begin("Left Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
 	renderCursorModes(canvasManager);
@@ -755,8 +758,6 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 
 	// end step
 	LeftSize = ImGui::GetWindowWidth();
-	ImVec2 size = ImGui::GetWindowSize();
-	ImGui::SetWindowSize(ImVec2(size.x, displayHeight)); // keeps its Y-value the same
 	ImGui::End();
 }
 
@@ -764,6 +765,8 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 	// initialize the panel
 	ImGui::SetNextWindowPos(ImVec2(displayWidth - RightSize, TopSize), ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(RightSize, displayHeight - TopSize), ImGuiCond_Always);
+	float maxWidth = displayWidth * 0.25f;
+	ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(maxWidth, FLT_MAX));
 	ImGui::Begin("Right Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
 	renderCanvasThumbnail(canvasManager);
@@ -1237,11 +1240,13 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 					if (ImGui::Button(label.c_str()))
 						triggerRebind(action);
 
+					ImGui::SetItemTooltip("Rebind In Progress");
 					ImGui::PopStyleColor(4);
 				}
 				else
 					if (ImGui::Button((hotkeyLabel(action) + "##" + name).c_str()))
 						triggerRebind(action);
+					ImGui::SetItemTooltip("Rebind Action");
 
 				// buttons for unbinding hotkeys
 				ImGui::SameLine(350);
@@ -1249,6 +1254,7 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 				ImGui::BeginDisabled(hotkeyLabel(action) == "Unbound");
 				if (ImGui::SmallButton(unbindLabel.c_str()))
 					InputManager::unbindAction(action);
+				ImGui::SetItemTooltip("Unbind Action");
 				ImGui::EndDisabled();
 				};
 
@@ -2161,21 +2167,33 @@ void UI::renderBrushImports(CanvasManager& canvasManager) {
 	}
 
 	// --- Displaying loaded brush options ---
+	auto BrushRow = [&](std::string name, int index) {
+		// button for setting active brush
+		if (ImGui::Button(name.c_str())) {
+			if (setActiveBrushCb) {
+				setActiveBrushCb(index);
+			}
+		}
+		ImGui::SetItemTooltip("Select Brush");
+		ImGui::SameLine();
+
+		// buttons for deleting brush imports
+		std::string label = std::string("x##unbind_") + name;
+		if (ImGui::SmallButton(label.c_str())) {
+			// delete the brush
+		}
+		ImGui::SetItemTooltip("Delete Brush");
+	};
 	// grabs the list of loaded brushes
 	static const std::vector<BrushTool> emptyBrushes;
 	const std::vector<BrushTool>& brushes = getBrushListCb ? getBrushListCb() : emptyBrushes;
 
-	// adds a button for each brush that sets it to the active one
+	// adds a button row for each loaded brush
 	ImGui::Text("Loaded Brushes: ");
 	for (int i = 0; i < brushes.size(); i++)
 	{
-		std::string buttonName = brushes[i].brushName;
-
-		if (ImGui::Button(buttonName.c_str())) {
-			if (setActiveBrushCb) {
-				setActiveBrushCb(i);
-			}
-		}
+		std::string name = brushes[i].brushName;
+		BrushRow(name, i);
 	}
 }
 
