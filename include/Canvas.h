@@ -96,6 +96,7 @@ public:
 	void undo();    // undoes the most recent strokepath and sends it to the redo stack
 	void redo();    // redoes the most recent strokepath and sends it to the undo stack
 	void resetPixel(int index, const Color color);  // resets the pixel to the given color but doesn't record it into the stroke (only for undo/redo)
+	void refreshStacks(int deletedLayer); // deletes all strokes in the undo and redo stack that reference the given layer (used when a layer is deleted)
 
 	bool canUndo() const;
 	bool canRedo() const;
