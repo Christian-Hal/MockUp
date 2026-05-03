@@ -740,8 +740,9 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	ImGui::SetNextWindowPos(ImVec2(0, TopSize), ImGuiCond_Always); // line that needs to change to make it fit MainMenuBar
 	ImGui::SetNextWindowSize(ImVec2(LeftSize, displayHeight - TopSize), ImGuiCond_Always);
 	float maxWidth = displayWidth * 0.25f;
+	float minWidth = displayWidth * 0.05f;
 	float fixedHeight = displayHeight - TopSize;
-	ImGui::SetNextWindowSizeConstraints(ImVec2(0, fixedHeight), ImVec2(maxWidth, fixedHeight));
+	ImGui::SetNextWindowSizeConstraints(ImVec2(minWidth, fixedHeight), ImVec2(maxWidth, fixedHeight));
 	ImGui::Begin("Left Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
 	renderCursorModes(canvasManager);
@@ -766,7 +767,9 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 	ImGui::SetNextWindowPos(ImVec2(displayWidth - RightSize, TopSize), ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(RightSize, displayHeight - TopSize), ImGuiCond_Always);
 	float maxWidth = displayWidth * 0.25f;
-	ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0), ImVec2(maxWidth, FLT_MAX));
+	float minWidth = displayWidth * 0.05f;
+	float fixedHeight = displayHeight - TopSize;
+	ImGui::SetNextWindowSizeConstraints(ImVec2(minWidth, fixedHeight), ImVec2(maxWidth, fixedHeight));
 	ImGui::Begin("Right Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
 	renderCanvasThumbnail(canvasManager);
