@@ -55,7 +55,7 @@ public:
 	using GetBrushListCallback = std::function<const std::vector<BrushTool>& ()>;
 	using SetActiveBrushCallback = std::function<void(int)>;
 	using GetActiveBrushCallback = std::function<const BrushTool& ()>;
-	using LoadBrushCallback = std::function<void(const std::string&)>;
+	using ImportBrushCallback = std::function<void(const std::string&)>;
 	using GenerateBrushDabCallback = std::function<std::vector<float>(int)>;
 	using GetHotkeyLabelCallback = std::function<std::string(InputAction)>;
 	using StartRebindCallback = std::function<void(InputAction)>;
@@ -70,7 +70,7 @@ public:
 	// Lets the controller provide cursor state read/write hooks.
 	// UI emits intent through these callbacks instead of owning app state.
 	void bindCursorCallbacks(SetCursorModeCallback setCb, GetCursorModeCallback getCb);
-	void bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallback setActiveCb, GetActiveBrushCallback getActiveCb, LoadBrushCallback loadBrushCb, GenerateBrushDabCallback genDabCb);
+	void bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallback setActiveCb, GetActiveBrushCallback getActiveCb, ImportBrushCallback importBrushCb, GenerateBrushDabCallback genDabCb);
 	void bindHotkeyCallbacks(GetHotkeyLabelCallback getLabelCb, StartRebindCallback startCb, BoolCallback isWaitingCb, BoolCallback didFailCb);
 	void bindCanvasCallbacks(ResetCanvasPositionCallback resetPositionCb);
 
@@ -109,7 +109,7 @@ private:
 	GetBrushListCallback getBrushListCb;
 	SetActiveBrushCallback setActiveBrushCb;
 	GetActiveBrushCallback getActiveBrushCb;
-	LoadBrushCallback loadBrushFromFileCb;
+	ImportBrushCallback importBrushFromFileCb;
 	GenerateBrushDabCallback generateDabCb;
 
 	GetHotkeyLabelCallback getHotkeyLabelCb;

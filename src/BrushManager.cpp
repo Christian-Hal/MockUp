@@ -5,6 +5,7 @@
 #include <string>
 #include <fstream>
 #include <cctype>
+#include <filesystem>
 
 #include "BrushManager.h"
 #include "stb_image.h"
@@ -72,6 +73,29 @@ void BrushManager::init()
 
     activeBrushIndex = 0;
     brushChange = true;
+}
+
+void BrushManager::importBrush(const std::string& path)
+{
+    // Create destination path
+    std::filesystem::path sourcePath(path);
+    std::filesystem::path destDir("assets/brushes");
+    std::filesystem::path destPath = destDir / sourcePath.filename();
+    
+    try {
+        // Copy the file, overwriting if it exists
+        std::filesystem::copy_file(
+            sourcePath, 
+            destPath, 
+            std::filesystem::copy_options::overwrite_existing
+        );
+        
+        // load in the brush
+        loadBrush(destPath.string());
+        
+    } catch (const std::filesystem::filesystem_error& e) {
+        std::cerr << "Failed to copy brush: " << e.what() << std::endl;
+    }
 }
 
 
@@ -385,6 +409,12 @@ void BrushManager::loadBrush(const std::string& path)
 
     std::string fileType = path.substr(dotPos);
     std::transform(fileType.begin(), fileType.end(), fileType.begin(), ::tolower);
+    
+    // Extract filename without extension for default name
+    size_t lastSlash = path.find_last_of("/\\");
+    size_t startPos = (lastSlash != std::string::npos) ? lastSlash + 1 : 0;
+    temp.brushName = path.substr(startPos, dotPos - startPos);
+    
     if (fileType == ".gbr") {
         if (loadBrushFromGBR(path, temp)) {
             loaded_Brushes.emplace_back(temp);
@@ -436,7 +466,7 @@ bool BrushManager::loadBrushFromJBR(const std::string& path, BrushTool& outBrush
         using json = nlohmann::json;
         json j = json::parse(jsonData.begin(), jsonData.end());
 
-        outBrush.brushName      = j.value("name",    "Unnamed Brush");
+        outBrush.brushName      = j.value("name", outBrush.brushName);
         outBrush.spacing        = j.value("spacing",  0.1f);
         outBrush.opacity        = j.value("opacity",  1.0f);
         outBrush.hardness       = j.value("hardness", 1.0f);

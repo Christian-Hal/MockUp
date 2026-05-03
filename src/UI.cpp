@@ -115,12 +115,12 @@ void UI::bindCanvasCallbacks(ResetCanvasPositionCallback resetPositionCb)
 	resetCanvasPositionCb = std::move(resetPositionCb);
 }
 
-void UI::bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallback setActiveCb, GetActiveBrushCallback getActiveCb, LoadBrushCallback loadBrushCb, GenerateBrushDabCallback genDabCb)
+void UI::bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallback setActiveCb, GetActiveBrushCallback getActiveCb, ImportBrushCallback importBrushCb, GenerateBrushDabCallback genDabCb)
 {
 	getBrushListCb = std::move(getListCb);
 	setActiveBrushCb = std::move(setActiveCb);
 	getActiveBrushCb = std::move(getActiveCb);
-	loadBrushFromFileCb = std::move(loadBrushCb);
+	importBrushFromFileCb = std::move(importBrushCb);
 	generateDabCb = std::move(genDabCb);
 }
 
@@ -2132,10 +2132,18 @@ void UI::renderBrushImports(CanvasManager& canvasManager) {
 	// brush import system, will probably get moved when I eventually do a UI overhaul
 	if (ImGui::Button(ICON_FA_PAINTBRUSH))
 	{
+		IGFD::FileDialogConfig config;
+		config.path = ".";
+
+		if (getDefaultFolderPathCb) {
+			config.path = getDefaultFolderPathCb();
+		}
+
 		ImGuiFileDialog::Instance()->OpenDialog(
 			"ChooseFileDlgKey",
 			"Choose File",
-			".gbr,.png,.kpp,.jbr"
+			".gbr,.png,.kpp,.jbr",
+			config
 		);
 	}
 	ImGui::SetItemTooltip("Import Brush");
@@ -2145,8 +2153,8 @@ void UI::renderBrushImports(CanvasManager& canvasManager) {
 		if (ImGuiFileDialog::Instance()->IsOk())
 		{
 			std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
-			if (loadBrushFromFileCb) {
-				loadBrushFromFileCb(filePath);
+			if (importBrushFromFileCb) {
+				importBrushFromFileCb(filePath);
 			}
 		}
 		ImGuiFileDialog::Instance()->Close();

@@ -56,7 +56,7 @@ bool AppController::init()
 		[this]() -> const std::vector<BrushTool>& { return getBrushList(); },
 		[this](int index) { setActiveBrush(index); },
 		[this]() -> const BrushTool& { return getActiveBrush(); },
-		[this](const std::string& path) { loadBrush(path); },
+		[this](const std::string& path) { importBrush(path); },
 		[this](int size) { return appState.getBrushManager().generateBrushDab(size); }
 	);
 
@@ -202,11 +202,11 @@ const std::vector<std::string>& AppController::getRecentActivity()
 	return appState.getRecentActivity();
 }
 
-void AppController::loadBrush(const std::string& path)
+void AppController::importBrush(const std::string& path)
 {
 	auto& brushManager = appState.getBrushManager();
 	const auto beforeCount = brushManager.getLoadedBrushes().size();
-	brushManager.loadBrush(path);
+	brushManager.importBrush(path);
 
 	const auto afterCount = brushManager.getLoadedBrushes().size();
 	if (afterCount > beforeCount) {

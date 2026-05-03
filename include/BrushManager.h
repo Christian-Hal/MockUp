@@ -22,6 +22,9 @@ class BrushManager
         // brush loader method
         void loadBrush(const std::string& path);
 
+        // brush importer method, will add it the app's brush folder and then load it in
+        void importBrush(const std::string& path);
+
         // various getter methods
         const std::vector<BrushTool>& getLoadedBrushes();
 
@@ -32,9 +35,6 @@ class BrushManager
     private:
         // list of all loaded brushes
         std::vector<BrushTool> loaded_Brushes;
-
-        // list of all default brush paths to load on init
-        const std::vector<std::string> defaultBrushPaths = {"assets/circle.gbr", "assets/confetti.gbr"}; //"cross.gbr"
 
         // index of the active brush in loaded_Brushes
         int activeBrushIndex = 0;
