@@ -100,8 +100,8 @@ public:
 	static bool showOpenDialog;
 	
 	void requestCloseCanvas(int index, CanvasManager& canvasManager);
-	void requestAppClose(CanvasManager& canvasManager);
-	void requestMainMenuReturn(CanvasManager& canvasManager);
+	void closeAllTabs(CanvasManager& canvasManager);
+	bool pendingAppClose = false;
 
 private:
 	SetCursorModeCallback setCursorModeCb;
@@ -179,7 +179,6 @@ private:
 	bool showSettingsPopup = false;
 	bool showCloseConfirm = false;
 	int pendingCloseIndex = -1;
-	bool pendingAppClose = false;
 	bool mainMenuReturn = false;
 
 	Renderer* rendererPtr = nullptr;

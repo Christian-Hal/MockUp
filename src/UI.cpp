@@ -945,10 +945,8 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 			showCloseConfirm = false;
 			ImGui::CloseCurrentPopup();
 
-			if (pendingAppClose)
-				requestAppClose(canvasManager);
-			else if (mainMenuReturn)
-				requestMainMenuReturn(canvasManager);
+			if (pendingAppClose || mainMenuReturn)
+				closeAllTabs(canvasManager);
 		}
 
 		ImGui::SameLine();
@@ -984,16 +982,21 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 
 			canvasManager.getActive().isDirty = false;
 			canvasManager.closeCanvas(pendingCloseIndex);
+		}
 
-			if (pendingAppClose)
-				requestAppClose(canvasManager);
-			else if (mainMenuReturn)
-				requestMainMenuReturn(canvasManager);
+		else
+		{
+			pendingAppClose = false;
+			mainMenuReturn = false;
 		}
 
 		pendingCloseIndex = -1;
 		showCloseConfirm = false;
 		ImGuiFileDialog::Instance()->Close();
+
+		//checks if closing all canvases for returning to main menu or closing program
+		if (pendingAppClose || mainMenuReturn)
+			closeAllTabs(canvasManager);
 	}
 
 	ImGui::End();
@@ -1357,7 +1360,8 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 
 					showSettingsPopup = false;
 					ImGui::CloseCurrentPopup();
-					requestMainMenuReturn(canvasManager);
+					mainMenuReturn = true;
+					closeAllTabs(canvasManager);
 				}
 			}
 			else
@@ -2330,48 +2334,41 @@ void UI::shutdown() {
 // function for closing hotkey
 void UI::requestCloseCanvas(int index, CanvasManager& canvasManager)
 {
+	// close dirty canvases
 	if (canvasManager.getOpenCanvases()[index].isDirty)
 	{
 		pendingCloseIndex = index;
+		canvasManager.setActiveCanvas(index);
 		showCloseConfirm = true;
 	}
+	// close clean canvases
 	else
 		canvasManager.closeCanvas(index);
 }
 
-void UI::requestAppClose(CanvasManager& canvasManager)
+void UI::closeAllTabs(CanvasManager& canvasManager)
 {
-	pendingAppClose = true;
 	for (int i = 0; i < canvasManager.getNumCanvases(); i++) {
-		if (canvasManager.getOpenCanvases()[i].isDirty) {
-			pendingCloseIndex = i;
-			canvasManager.setActiveCanvas(i);
-			showCloseConfirm = true;
+		// close dirty canvases
+		if (canvasManager.getOpenCanvases()[i].isDirty)
+		{
+			requestCloseCanvas(i, canvasManager);
 			return;
 		}
-	}
-	// no dirty canvases, just close immediately
-	glfwSetWindowShouldClose(glfwGetCurrentContext(), GLFW_TRUE);
-}
-
-void UI::requestMainMenuReturn(CanvasManager& canvasManager)
-{
-	mainMenuReturn = true;
-	// close dirty canvases
-	for (int i = 0; i < canvasManager.getNumCanvases(); i++) {
-		if (canvasManager.getOpenCanvases()[i].isDirty) {
-			pendingCloseIndex = i;
-			canvasManager.setActiveCanvas(i);
-			showCloseConfirm = true;
-			return;
+		// close clean canvases
+		else
+		{
+			requestCloseCanvas(i, canvasManager);
+			i--;
 		}
 	}
 
-	// close clean canvases
-	while (canvasManager.getNumCanvases() > 0)
-		canvasManager.closeCanvas(0);
+	if (pendingAppClose)
+		glfwSetWindowShouldClose(glfwGetCurrentContext(), GLFW_TRUE);
 
-	// return to main menu
-	curState = UIState::start_menu;
-	mainMenuReturn = false;
+	else if (mainMenuReturn)
+	{
+		curState = UIState::start_menu;
+		mainMenuReturn = false;
+	}
 }

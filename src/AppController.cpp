@@ -138,7 +138,8 @@ void AppController::run()
 			}
 
 			if (anyDirty) {
-				ui.requestAppClose(canvasManager); // shows the popup
+				ui.pendingAppClose = true;
+				ui.closeAllTabs(canvasManager); // shows the popup
 			}
 			else {
 				glfwSetWindowShouldClose(appState.getWindow().handle(), GLFW_TRUE);
