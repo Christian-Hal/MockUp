@@ -2044,6 +2044,9 @@ void UI::renderLayerInfo(CanvasManager& canvasManager) {
 	float buttonH = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemSpacing.y;
 	float buttonW = 33.0f;
 
+	float listHeight = std::min(100.0f, (numLayers - 1) * buttonH); // + ImGui::GetStyle().ItemSpacing.y);
+	ImGui::BeginChild("LayerButtonsScroll", ImVec2(0, listHeight));
+
 	float listOriginY = ImGui::GetCursorScreenPos().y;
 
 	for (int i = 1; i < numLayers; i++) {
@@ -2127,10 +2130,12 @@ void UI::renderLayerInfo(CanvasManager& canvasManager) {
 			hoverSlot = std::clamp(hoverSlot, 1, numLayers - 1);
 			swapTarget = (hoverSlot != i) ? hoverSlot : -1;
 		}
-
-		// Always advance layout cursor by one fixed slot
-		ImGui::SetCursorScreenPos(ImVec2(basePos.x, basePos.y + buttonH));
 	}
+
+	// Reset cursor to a valid position within the child before closing
+	ImGui::SetCursorPos(ImVec2(0, 0));
+
+	ImGui::EndChild();
 
 	// Commit on release
 	if (draggedLayer != -1 && !ImGui::IsMouseDown(0)) {
@@ -2207,12 +2212,15 @@ void UI::renderBrushImports(CanvasManager& canvasManager) {
 	const std::vector<BrushTool>& brushes = getBrushListCb ? getBrushListCb() : emptyBrushes;
 
 	// adds a button row for each loaded brush
-	ImGui::Text("Loaded Brushes: ");
-	for (int i = 0; i < brushes.size(); i++)
+	int numBrushes = brushes.size();
+	float listHeight = std::min(200.0f, (numBrushes - 1) * 35.0f); // + ImGui::GetStyle().ItemSpacing.y);
+	ImGui::BeginChild("BrushList", ImVec2(0, listHeight));
+	for (int i = 0; i < numBrushes; i++)
 	{
 		std::string name = brushes[i].brushName;
 		BrushRow(name, i);
 	}
+	ImGui::EndChild();
 }
 
 void UI::renderCursorModes(CanvasManager& canvasManager) {
