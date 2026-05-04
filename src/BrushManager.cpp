@@ -57,6 +57,7 @@ static std::vector<DabCache> s_dabCache;
 void BrushManager::init()
 {
     loaded_Brushes.emplace_back(BrushTool(1,1, "DefaultBrush"));
+    loaded_Brush_Paths.push_back(""); // empty path for default brush
 
     // iterate through the brushes folder and load each brush into the program
     std::string brushesPath = "assets/brushes";
@@ -105,18 +106,12 @@ void BrushManager::deleteBrush(int index)
         return;
     }
 
-    try { // try and remove the brush file from the assets/brushes folder, if it exists there
-        std::string brushName = loaded_Brushes[index].brushName;
-        for (const auto& entry : std::filesystem::directory_iterator("assets/brushes")) {
-            // Check if it's a regular file and if the stem matches
-            if (entry.is_regular_file() && entry.path().stem() == brushName) {
-                if (std::filesystem::remove(entry.path())) {
-                    std::cout << "Deleted: " << entry.path().filename() << std::endl;
-                }
-            }
-        }
+    // delete the file from the brushes folder using the parallel vector to get the path
+    std::string pathToDelete = loaded_Brush_Paths[index];
+    try {
+        std::filesystem::remove(pathToDelete);
     } catch (const std::filesystem::filesystem_error& e) {
-        std::cerr << "Failed to delete brush: " << e.what() << std::endl;
+        std::cerr << "Failed to delete brush file: " << e.what() << std::endl;
     }
 
     // remove brush from the loaded brushes and reset active brush to default
@@ -445,24 +440,28 @@ void BrushManager::loadBrush(const std::string& path)
     if (fileType == ".gbr") {
         if (loadBrushFromGBR(path, temp)) {
             loaded_Brushes.emplace_back(temp);
+            loaded_Brush_Paths.push_back(path); // keep track of the path for deletion
             brushChange = true;
         }
     }
     else if (fileType == ".png") {
         if (loadBrushTipFromPNG(path, temp)) {
             loaded_Brushes.emplace_back(temp);
+            loaded_Brush_Paths.push_back(path); // keep track of the path for deletion
             brushChange = true;
         }
     }
     else if (fileType == ".kpp") {
         if (loadBrushFromKPP(path, temp)) {
             loaded_Brushes.emplace_back(temp);
+            loaded_Brush_Paths.push_back(path); // keep track of the path for deletion
             brushChange = true;
         }
     }
     else if (fileType == ".jbr") {
         if (loadBrushFromJBR(path, temp)) {
             loaded_Brushes.emplace_back(temp);
+            loaded_Brush_Paths.push_back(path); // keep track of the path for deletion
             brushChange = true;
         }
     }

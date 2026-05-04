@@ -758,6 +758,17 @@ void UI::drawLeftPanel(CanvasManager& canvasManager) {
 	renderColorWheel(canvasManager, active_color);
 	renderColorSet(canvasManager, active_color);
 
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	// brush import system
+	renderBrushImports(canvasManager);
+
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
+
 	// end step
 	LeftSize = ImGui::GetWindowWidth();
 	ImGui::End();
@@ -797,9 +808,6 @@ void UI::drawRightPanel(CanvasManager& canvasManager) {
 		ImGui::Separator();
 		ImGui::Spacing();
 	}
-
-	// brush import system
-	renderBrushImports(canvasManager);
 
 	// end step
 	RightSize = ImGui::GetWindowWidth();
@@ -2132,9 +2140,6 @@ void UI::renderLayerInfo(CanvasManager& canvasManager) {
 		}
 	}
 
-	// Reset cursor to a valid position within the child before closing
-	ImGui::SetCursorPos(ImVec2(0, 0));
-
 	ImGui::EndChild();
 
 	// Commit on release
@@ -2188,37 +2193,37 @@ void UI::renderBrushImports(CanvasManager& canvasManager) {
 	}
 
 	// --- Displaying loaded brush options ---
-	auto BrushRow = [&](std::string name, int index) {
-		// button for setting active brush
-		if (ImGui::Button(name.c_str())) {
-			if (setActiveBrushCb) {
-				setActiveBrushCb(index);
-			}
-		}
-		ImGui::SetItemTooltip("Select Brush");
-		ImGui::SameLine();
-
-		// buttons for deleting brush imports
-		std::string label = std::string("x##delete_") + name;
-		if (ImGui::SmallButton(label.c_str())) {
-			if (deleteBrushCb) {
-				deleteBrushCb(index);
-			}
-		}
-		ImGui::SetItemTooltip("Delete Brush");
-	};
 	// grabs the list of loaded brushes
 	static const std::vector<BrushTool> emptyBrushes;
 	const std::vector<BrushTool>& brushes = getBrushListCb ? getBrushListCb() : emptyBrushes;
 
 	// adds a button row for each loaded brush
 	int numBrushes = brushes.size();
-	float listHeight = std::min(200.0f, (numBrushes - 1) * 35.0f); // + ImGui::GetStyle().ItemSpacing.y);
+	float buttonH = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemSpacing.y;
+	float listHeight = std::min(200.0f, numBrushes * buttonH);
 	ImGui::BeginChild("BrushList", ImVec2(0, listHeight));
 	for (int i = 0; i < numBrushes; i++)
 	{
 		std::string name = brushes[i].brushName;
-		BrushRow(name, i);
+		if (name.empty()) name = "Unnamed Brush";
+		
+		// button for setting active brush
+		std::string buttonLabel = name + "##brush_" + std::to_string(i);
+		if (ImGui::Button(buttonLabel.c_str())) {
+			if (setActiveBrushCb) {
+				setActiveBrushCb(i);
+			}
+		}
+
+		ImGui::SameLine();
+
+		// buttons for deleting brush imports
+		std::string deleteLabel = "x##delete_" + std::to_string(i);
+		if (ImGui::SmallButton(deleteLabel.c_str())) {
+			if (deleteBrushCb) {
+				deleteBrushCb(i);
+			}
+		}
 	}
 	ImGui::EndChild();
 }

@@ -34,6 +34,7 @@ class BrushManager
     private:
         // list of all loaded brushes
         std::vector<BrushTool> loaded_Brushes;
+        std::vector<std::string> loaded_Brush_Paths; // parallel vector to keep track of file paths for deletion
 
         // index of the active brush in loaded_Brushes
         int activeBrushIndex = 0;
