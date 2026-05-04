@@ -5,6 +5,8 @@
 
 #include "Globals.h"
 
+#include "stb_image.h"
+
 // global instance reference
 extern Globals global;
 
@@ -48,6 +50,17 @@ bool Window::create(int w, int h, const char* title, Globals gb) {
 	m_window = glfwCreateWindow(w, h, title, nullptr, nullptr);
 	if (!m_window) {
 		return false; 
+	}
+
+	int w1, h1, c1;
+	unsigned char* pixels = stbi_load("assets/icon1.png", &w1, &h1, &c1, 4);
+
+	if (pixels)
+	{
+		GLFWimage icons;
+		icons = { w1, h1, pixels };
+		glfwSetWindowIcon(m_window, 1, &icons);
+		stbi_image_free(pixels);
 	}
 
 	glfwMakeContextCurrent(m_window);
