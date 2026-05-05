@@ -23,6 +23,7 @@
 
 #include "IconsFontAwesome6.h"
 
+#include "miniz.h" 
 
 std::string overwritePath;
 
@@ -217,6 +218,45 @@ PreviewImage* getPreview(const std::string& path) {
 	}
 
 	// store in cache to prevent reloading constantly	
+	previewCache[path] = preview;
+	return &previewCache[path];
+}
+
+PreviewImage* getORAPreview(const std::string& path) {
+	// Check cache first
+	auto imageThumbnail = previewCache.find(path);
+	if (imageThumbnail != previewCache.end())
+		// reusing stored image
+		return &imageThumbnail->second;
+
+	// reading the compressed ORA file
+	mz_zip_archive zip = {};
+	if (!mz_zip_reader_init_file(&zip, path.c_str(), 0))
+		return nullptr;
+
+	// find the merged image
+	int fileIndex = mz_zip_reader_locate_file(&zip, "mergedimage.png", nullptr, 0);
+	if (fileIndex < 0) {
+		mz_zip_reader_end(&zip);
+		return nullptr;
+	}
+
+	size_t dataSize = 0;
+	void* data = mz_zip_reader_extract_to_heap(&zip, fileIndex, &dataSize, 0);
+	mz_zip_reader_end(&zip);
+
+	if (!data)
+		return nullptr;
+
+	PreviewImage preview;
+
+	// using LoadTextureFromMemory instead of LoadTEextureFromFile bc the .png is compressed in an ORA file
+	bool previewLoaded = LoadTextureFromMemory(data, dataSize, &preview.texture, &preview.width, &preview.height);
+	mz_free(data);
+
+	if (!previewLoaded)
+		return nullptr;
+
 	previewCache[path] = preview;
 	return &previewCache[path];
 }
@@ -575,21 +615,23 @@ void UI::drawStartScreen(CanvasManager& canvasManager)
 			std::string extension = filePath.substr(filePath.find_last_of('.'));
 
 			// need to figure something out for ora files 
-			if (extension != ".ora") {
-				PreviewImage* preview = getPreview(filePath);
+			  
+			PreviewImage* preview = (extension != ".ora")
+				? getPreview(filePath)
+				: getORAPreview(filePath);
 
-				if (preview && preview->texture) {
-					float maxSize = 200.0f;
-					float ratio = (float)preview->width / (float)preview->height;
+			if (preview && preview->texture) {
+				float maxSize = 200.0f;
+				float ratio = (float)preview->width / (float)preview->height;
 
-					ImVec2 size;
-					if (ratio > 1.0f)
-						size = ImVec2(maxSize, maxSize / ratio);
-					else
-						size = ImVec2(maxSize * ratio, maxSize);
-					ImGui::Image((ImTextureID)(intptr_t)preview->texture, size);
-				}
+				ImVec2 size;
+				if (ratio > 1.0f)
+					size = ImVec2(maxSize, maxSize / ratio);
+				else
+					size = ImVec2(maxSize * ratio, maxSize);
+				ImGui::Image((ImTextureID)(intptr_t)preview->texture, size);
 			}
+			
 
 			if (ImGui::Button(fileName.c_str(), ImVec2(150, 0))) {
 				if (extension == ".ora")
@@ -985,9 +1027,15 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 			if (canvasManager.getActive().isAnimation() && (extension == ".png" || extension == ".jpg"))
 				FrameRenderer::saveAnimation(filePath, canvasManager.getActive());
 			else if (extension == ".ora")
+			{
 				canvasManager.saveORA(filePath);
+				saveToRecentActivityCb(filePath);
+			}
 			else
+			{
 				canvasManager.saveToFile(filePath);
+				saveToRecentActivityCb(filePath);
+			}
 
 			canvasManager.getActive().isDirty = false;
 			canvasManager.closeCanvas(pendingCloseIndex);
