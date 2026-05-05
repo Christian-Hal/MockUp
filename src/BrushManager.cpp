@@ -116,6 +116,7 @@ void BrushManager::deleteBrush(int index)
 
     // remove brush from the loaded brushes and reset active brush to default
     loaded_Brushes.erase(loaded_Brushes.begin() + index);
+    loaded_Brush_Paths.erase(loaded_Brush_Paths.begin() + index);
     activeBrushIndex = 0;
     brushChange = true;
 }
