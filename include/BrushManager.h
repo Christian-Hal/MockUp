@@ -19,8 +19,10 @@ class BrushManager
         void setActiveBrush(int index);
         bool brushChange = false;
 
-        // brush loader method
+        // various brush import / loading functions
         void loadBrush(const std::string& path);
+        void importBrush(const std::string& path);
+        void deleteBrush(int index);
 
         // various getter methods
         const std::vector<BrushTool>& getLoadedBrushes();
@@ -32,9 +34,7 @@ class BrushManager
     private:
         // list of all loaded brushes
         std::vector<BrushTool> loaded_Brushes;
-
-        // list of all default brush paths to load on init
-        const std::vector<std::string> defaultBrushPaths = {"assets/circle.gbr", "assets/confetti.gbr"}; //"cross.gbr"
+        std::vector<std::string> loaded_Brush_Paths; // parallel vector to keep track of file paths for deletion
 
         // index of the active brush in loaded_Brushes
         int activeBrushIndex = 0;

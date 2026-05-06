@@ -55,7 +55,8 @@ public:
 	using GetBrushListCallback = std::function<const std::vector<BrushTool>& ()>;
 	using SetActiveBrushCallback = std::function<void(int)>;
 	using GetActiveBrushCallback = std::function<const BrushTool& ()>;
-	using LoadBrushCallback = std::function<void(const std::string&)>;
+	using ImportBrushCallback = std::function<void(const std::string&)>;
+	using DeleteBrushCallback = std::function<void(int)>;
 	using GenerateBrushDabCallback = std::function<std::vector<float>(int)>;
 	using GetHotkeyLabelCallback = std::function<std::string(InputAction)>;
 	using StartRebindCallback = std::function<void(InputAction)>;
@@ -70,7 +71,7 @@ public:
 	// Lets the controller provide cursor state read/write hooks.
 	// UI emits intent through these callbacks instead of owning app state.
 	void bindCursorCallbacks(SetCursorModeCallback setCb, GetCursorModeCallback getCb);
-	void bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallback setActiveCb, GetActiveBrushCallback getActiveCb, LoadBrushCallback loadBrushCb, GenerateBrushDabCallback genDabCb);
+	void bindBrushCallbacks(GetBrushListCallback getListCb, SetActiveBrushCallback setActiveCb, GetActiveBrushCallback getActiveCb, ImportBrushCallback importBrushCb, DeleteBrushCallback deleteCb, GenerateBrushDabCallback genDabCb);
 	void bindHotkeyCallbacks(GetHotkeyLabelCallback getLabelCb, StartRebindCallback startCb, BoolCallback isWaitingCb, BoolCallback didFailCb);
 	void bindCanvasCallbacks(ResetCanvasPositionCallback resetPositionCb);
 
@@ -100,7 +101,8 @@ public:
 	static bool showOpenDialog;
 	
 	void requestCloseCanvas(int index, CanvasManager& canvasManager);
-	void requestAppClose(CanvasManager& canvasManager);
+	void closeAllTabs(CanvasManager& canvasManager);
+	bool pendingAppClose = false;
 
 private:
 	SetCursorModeCallback setCursorModeCb;
@@ -109,7 +111,8 @@ private:
 	GetBrushListCallback getBrushListCb;
 	SetActiveBrushCallback setActiveBrushCb;
 	GetActiveBrushCallback getActiveBrushCb;
-	LoadBrushCallback loadBrushFromFileCb;
+	ImportBrushCallback importBrushFromFileCb;
+	DeleteBrushCallback deleteBrushCb;
 	GenerateBrushDabCallback generateDabCb;
 
 	GetHotkeyLabelCallback getHotkeyLabelCb;
@@ -178,7 +181,7 @@ private:
 	bool showSettingsPopup = false;
 	bool showCloseConfirm = false;
 	int pendingCloseIndex = -1;
-	bool pendingAppClose = false;
+	bool mainMenuReturn = false;
 
 	Renderer* rendererPtr = nullptr;
 };

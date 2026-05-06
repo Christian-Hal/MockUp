@@ -57,13 +57,24 @@ file(GLOB_RECURSE PROJECT_SOURCES
      src/*.c
 )
 
-if(WIN32)
-    add_executable(${PROJECT_NAME} WIN32)
-    target_link_options(${PROJECT_NAME} PRIVATE "/ENTRY:mainCRTStartup")
-else()
-    add_executable(${PROJECT_NAME})
-endif()
 
+
+if(WIN32)
+    set(APP_ICON resource.rc)
+
+    add_executable(${PROJECT_NAME} WIN32
+        ${PROJECT_SOURCES}
+        ${APP_ICON}
+    )
+    
+    target_link_options(${PROJECT_NAME} PRIVATE "/ENTRY:mainCRTStartup")
+
+else()
+    add_executable(${PROJECT_NAME}
+        ${PROJECT_SOURCES}    
+    )
+
+endif()
 
 target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES})
 

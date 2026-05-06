@@ -501,6 +501,9 @@ void Canvas::removeLayer(){
                 pixels[i] = col;
             }
         }
+        // Save the deleted layer number before curLayer is modified
+        int deletedLayer = curLayer;
+        
         layerData.erase(layerData.begin()+curLayer);
         // update the number of layers and the current layer if needed
         numLayers--;
@@ -508,9 +511,39 @@ void Canvas::removeLayer(){
             curLayer--;
         }
 
+		// Remove strokes from the deleted layer and adjust layer references in undo/redo stacks
+		refreshStacks(deletedLayer);
+
 		// since this has the unintended effected of ruining the data in
 		// pixel, we need to reiterate through each value for each layer to
 		// make sure pixel is correct
+	}
+}
+
+void Canvas::refreshStacks(int deletedLayer) {
+	// iterate through each item in the undo / redo stacks and remove items that reference the deleted layer
+	for (auto item = undoStack.begin(); item != undoStack.end();) {
+		if (item->layerNum == deletedLayer) {
+			item = undoStack.erase(item);
+		}
+		else {
+			if (item->layerNum > deletedLayer) {
+				item->layerNum--;
+			}
+			++item;
+		}
+	}
+
+	for (auto item = redoStack.begin(); item != redoStack.end();) {
+		if (item->layerNum == deletedLayer) {
+			item = redoStack.erase(item);
+		}
+		else {
+			if (item->layerNum > deletedLayer) {
+				item->layerNum--;
+			}
+			++item;
+		}
 	}
 }
 
@@ -520,11 +553,56 @@ void Canvas::selectLayer(int layerNum) {
 }
 
 /*
-This function will swap the layers 
+This function will swap the layers and update the undo/redo stacks accordingly
 */
 void Canvas::swapLayers(int layerOne, int layerTwo){
 	layerData[layerOne].swap(layerData[layerTwo]);
+	
+	// Update undo stack to swap layer references
+	for (auto& stroke : undoStack) {
+		if (stroke.layerNum == layerOne) {
+			stroke.layerNum = layerTwo;
+		} else if (stroke.layerNum == layerTwo) {
+			stroke.layerNum = layerOne;
+		}
+	}
+	
+	// Update redo stack to swap layer references
+	for (auto& stroke : redoStack) {
+		if (stroke.layerNum == layerOne) {
+			stroke.layerNum = layerTwo;
+		} else if (stroke.layerNum == layerTwo) {
+			stroke.layerNum = layerOne;
+		}
+	}
+	
 	reblendLayers();
+}
+
+/*
+This function moves a layer from one position to another by recursively swapping with neighboring layers.
+*/
+void Canvas::moveLayer(int fromLayer, int toLayer) {
+	// makes sure its within range
+	if (fromLayer < 0 || fromLayer >= numLayers || toLayer < 0 || toLayer >= numLayers) {
+		return;
+	}
+	
+	// if at target layer then return
+	if (fromLayer == toLayer) {
+		return;
+	}
+	
+	// moving down layer list
+	if (fromLayer > toLayer) {
+		swapLayers(fromLayer, fromLayer - 1);
+		moveLayer(fromLayer - 1, toLayer);
+	}
+	// moving up layer list
+	else {
+		swapLayers(fromLayer, fromLayer + 1);
+		moveLayer(fromLayer + 1, toLayer);
+	}
 }
 
 

@@ -5,6 +5,7 @@
 #include <string>
 #include <fstream>
 #include <cctype>
+#include <filesystem>
 
 #include "BrushManager.h"
 #include "stb_image.h"
@@ -56,16 +57,67 @@ static std::vector<DabCache> s_dabCache;
 void BrushManager::init()
 {
     loaded_Brushes.emplace_back(BrushTool(1,1, "DefaultBrush"));
+    loaded_Brush_Paths.push_back(""); // empty path for default brush
 
-    for (const auto& path : defaultBrushPaths)
-    {
-        BrushTool temp = BrushTool();
-        if (loadBrushFromGBR(path, temp))
-            loaded_Brushes.emplace_back(temp);
+    // iterate through the brushes folder and load each brush into the program
+    std::string brushesPath = "assets/brushes";
+    try {
+        for (const auto& entry : std::filesystem::directory_iterator(brushesPath)) {
+            if (entry.is_regular_file()) {
+                std::string path = entry.path().string();
+                loadBrush(path);
+            }
+        }
+    } catch (const std::filesystem::filesystem_error& e) {
+        std::cerr << "Error reading brushes folder: " << e.what() << std::endl;
     }
 
     activeBrushIndex = 0;
+    brushChange = true;
+}
 
+void BrushManager::importBrush(const std::string& path)
+{
+    // Create destination path
+    std::filesystem::path sourcePath(path);
+    std::filesystem::path destDir("assets/brushes");
+    std::filesystem::path destPath = destDir / sourcePath.filename();
+    
+    try {
+        // Copy the file, overwriting if it exists
+        std::filesystem::copy_file(
+            sourcePath, 
+            destPath, 
+            std::filesystem::copy_options::overwrite_existing
+        );
+        
+        // load in the brush
+        loadBrush(destPath.string());
+        
+    } catch (const std::filesystem::filesystem_error& e) {
+        std::cerr << "Failed to copy brush: " << e.what() << std::endl;
+    }
+}
+
+void BrushManager::deleteBrush(int index)
+{
+    // if the index is out of bounds then do nothing
+    if (index < 0 || index >= static_cast<int>(loaded_Brushes.size())) {
+        return;
+    }
+
+    // delete the file from the brushes folder using the parallel vector to get the path
+    std::string pathToDelete = loaded_Brush_Paths[index];
+    try {
+        std::filesystem::remove(pathToDelete);
+    } catch (const std::filesystem::filesystem_error& e) {
+        std::cerr << "Failed to delete brush file: " << e.what() << std::endl;
+    }
+
+    // remove brush from the loaded brushes and reset active brush to default
+    loaded_Brushes.erase(loaded_Brushes.begin() + index);
+    loaded_Brush_Paths.erase(loaded_Brush_Paths.begin() + index);
+    activeBrushIndex = 0;
     brushChange = true;
 }
 
@@ -380,27 +432,37 @@ void BrushManager::loadBrush(const std::string& path)
 
     std::string fileType = path.substr(dotPos);
     std::transform(fileType.begin(), fileType.end(), fileType.begin(), ::tolower);
+    
+    // Extract filename without extension for default name
+    size_t lastSlash = path.find_last_of("/\\");
+    size_t startPos = (lastSlash != std::string::npos) ? lastSlash + 1 : 0;
+    temp.brushName = path.substr(startPos, dotPos - startPos);
+    
     if (fileType == ".gbr") {
         if (loadBrushFromGBR(path, temp)) {
             loaded_Brushes.emplace_back(temp);
+            loaded_Brush_Paths.push_back(path); // keep track of the path for deletion
             brushChange = true;
         }
     }
     else if (fileType == ".png") {
         if (loadBrushTipFromPNG(path, temp)) {
             loaded_Brushes.emplace_back(temp);
+            loaded_Brush_Paths.push_back(path); // keep track of the path for deletion
             brushChange = true;
         }
     }
     else if (fileType == ".kpp") {
         if (loadBrushFromKPP(path, temp)) {
             loaded_Brushes.emplace_back(temp);
+            loaded_Brush_Paths.push_back(path); // keep track of the path for deletion
             brushChange = true;
         }
     }
     else if (fileType == ".jbr") {
         if (loadBrushFromJBR(path, temp)) {
             loaded_Brushes.emplace_back(temp);
+            loaded_Brush_Paths.push_back(path); // keep track of the path for deletion
             brushChange = true;
         }
     }
@@ -431,7 +493,7 @@ bool BrushManager::loadBrushFromJBR(const std::string& path, BrushTool& outBrush
         using json = nlohmann::json;
         json j = json::parse(jsonData.begin(), jsonData.end());
 
-        outBrush.brushName      = j.value("name",    "Unnamed Brush");
+        outBrush.brushName      = j.value("name", outBrush.brushName);
         outBrush.spacing        = j.value("spacing",  0.1f);
         outBrush.opacity        = j.value("opacity",  1.0f);
         outBrush.hardness       = j.value("hardness", 1.0f);
