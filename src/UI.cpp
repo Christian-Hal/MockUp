@@ -1231,22 +1231,36 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 	}
 
 	if (ImGui::BeginPopupModal("Settings", nullptr, ImGuiWindowFlags_NoResize)) {
-		// Create a child region that will take all remaining vertical space
+		// created seperate children for the left and right column so that only the right scrolls
 		float windowHeight = ImGui::GetContentRegionAvail().y - 50; // leave ~50px for Close button
-		ImGui::BeginChild("SettingsContent", ImVec2(0, windowHeight), false);
-
-		ImGui::Columns(2, nullptr, true);
-		ImGui::SetColumnWidth(0, 150);
-
+		float leftColumnWidth = 160;
+		
 		// Left column: categories
-		if (ImGui::Button("Folder Settings##settings_folders")) settingsSection = 0;
-		if (ImGui::Button("Shortcut Settings##settings_shortcuts")) settingsSection = 1;
-		if (ImGui::Button("Canvas Settings##settings_canvases")) settingsSection = 2;
-		if (ImGui::Button("MockUp Settings##settings_mockup")) settingsSection = 3;
+		ImGui::BeginChild("SettingsLeft", ImVec2(leftColumnWidth, windowHeight), true, ImGuiWindowFlags_NoScrollbar);
+		ImGui::Spacing();
 
-		ImGui::NextColumn();
+		if (ImGui::Button("Folder Settings##settings_folders", ImVec2(-1, 0))) settingsSection = 0;
+		if (ImGui::Button("Shortcut Settings##settings_shortcuts", ImVec2(-1, 0))) settingsSection = 1;
+		if (ImGui::Button("Canvas Settings##settings_canvases", ImVec2(-1, 0))) settingsSection = 2;
+
+		// push menu button to the bottom
+		float availableHeight = ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeight() - 2 * ImGui::GetStyle().ItemSpacing.y;
+		if (availableHeight > 0) {
+			ImGui::Dummy(ImVec2(0, availableHeight));
+		}
+		if (ImGui::Button("Return to Main Menu", ImVec2(-1, 0)) && curState != UIState::start_menu) {
+			showSettingsPopup = false;
+			ImGui::CloseCurrentPopup();
+			mainMenuReturn = true;
+			closeAllTabs(canvasManager);
+		}
+
+		ImGui::EndChild();
+		ImGui::SameLine();
 
 		// Right column: content
+		ImGui::BeginChild("SettingsRight", ImVec2(0, windowHeight), true);
+		ImGui::Spacing();
 		if (settingsSection == 0) {
 			ImGui::Text("Folder adjacent settings: Saving / Loading / Imports");
 			// default folder path stuff	
@@ -1285,6 +1299,7 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 		}
 		else if (settingsSection == 1) {
 			ImGui::Text("Click a button, then press a key to rebind.");
+			ImGui::Text("Press esc to cancel a rebind in action.");
 
 			static InputAction waitingAction = static_cast<InputAction>(-1);
 
@@ -1422,20 +1437,6 @@ void UI::drawSettingsPopup(CanvasManager& canvasManager) {
 
 		}
 
-		else if (settingsSection == 3) {
-			if (curState != UIState::start_menu) {
-				if (ImGui::Button("Return to Main Menu")) {
-
-					showSettingsPopup = false;
-					ImGui::CloseCurrentPopup();
-					mainMenuReturn = true;
-					closeAllTabs(canvasManager);
-				}
-			}
-			else
-				ImGui::Text("Already on Main Menu");
-		}
-		ImGui::Columns(1);
 		ImGui::EndChild();
 
 		// Separator and Close button at the bottom
