@@ -8,6 +8,7 @@
 #include <map>
 #include <tuple>
 #include <unordered_map>
+#include <filesystem>
 
 #include "ImGuiFileDialog.h"
 
@@ -522,6 +523,24 @@ void UI::drawStartScreen(CanvasManager& canvasManager)
 		);
 	}
 
+	ImGui::Dummy(ImVec2(0, 10)); 			// creates some vertical space
+	ImGui::SetCursorPosX(centerX); 			// center the button
+
+	if (ImGui::Button("Open Animation" " " ICON_FA_FOLDER, buttonSize)) {
+		IGFD::FileDialogConfig config;
+
+		// the  path the file explorer starts in. "." is the current active directory
+		if (getDefaultFolderPathCb) config.path = getDefaultFolderPathCb();
+		else config.path = ".";
+
+		ImGuiFileDialog::Instance()->OpenDialog(
+			"LoadAnimDlg",
+			"Choose File",
+			nullptr,
+			config
+		);
+	}
+
 	if (ImGuiFileDialog::Instance()->Display("LoadFileDlg"))
 	{
 		if (ImGuiFileDialog::Instance()->IsOk())
@@ -554,37 +573,24 @@ void UI::drawStartScreen(CanvasManager& canvasManager)
 		ImGuiFileDialog::Instance()->Close();
 	}
 
-	if (ImGuiFileDialog::Instance()->Display("LoadFileAnim"))
+	if (ImGuiFileDialog::Instance()->Display("LoadAnimDlg"))
 	{
 		if (ImGuiFileDialog::Instance()->IsOk())
 		{
-			std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
+			std::string folder = ImGuiFileDialog::Instance()->GetCurrentPath();
 
-			std::string extension = ImGuiFileDialog::Instance()->GetCurrentFilter();
+			canvasManager.loadAnimation(folder);
 
-			if (extension == ".ora")
-			{
-				canvasManager.loadORA(filePath);
-				// centering the loaded image 
-				resetCanvasPositionCb();
-			}
-			else
-			{
-				canvasManager.loadFromFile(filePath);
-				// centering the loaded image 
-				resetCanvasPositionCb();
-			}
-
-			// save to recent activity list
-			saveToRecentActivityCb(filePath);
+			// Save the animation directory to recent activity
+			saveToRecentActivityCb(folder);
 
 			// if the current UI state is the start menu then change it to the main screen
 			if (curState == UIState::start_menu) { curState = UIState::main_screen; }
-
 		}
 
 		ImGuiFileDialog::Instance()->Close();
 	}
+
 	// end step
 	ImGui::End();
 
@@ -612,30 +618,34 @@ void UI::drawStartScreen(CanvasManager& canvasManager)
 			ImGui::BeginGroup();
 
 			// if the button is clicked then load in the file
-			std::string extension = filePath.substr(filePath.find_last_of('.'));
+			std::string extension = ""; // default to no extension
 
-			// need to figure something out for ora files 
-			  
-			PreviewImage* preview = (extension != ".ora")
+			// if its a directory, then its an animation which doesn't have a preview or extension
+			if (!std::filesystem::is_directory(filePath)) {
+				extension = filePath.substr(filePath.find_last_of('.'));
+
+				PreviewImage* preview = (extension != ".ora")
 				? getPreview(filePath)
 				: getORAPreview(filePath);
 
-			if (preview && preview->texture) {
-				float maxSize = 200.0f;
-				float ratio = (float)preview->width / (float)preview->height;
+				if (preview && preview->texture) {
+					float maxSize = 200.0f;
+					float ratio = (float)preview->width / (float)preview->height;
 
-				ImVec2 size;
-				if (ratio > 1.0f)
-					size = ImVec2(maxSize, maxSize / ratio);
-				else
-					size = ImVec2(maxSize * ratio, maxSize);
-				ImGui::Image((ImTextureID)(intptr_t)preview->texture, size);
-			}
-			
+					ImVec2 size;
+					if (ratio > 1.0f)
+						size = ImVec2(maxSize, maxSize / ratio);
+					else
+						size = ImVec2(maxSize * ratio, maxSize);
+					ImGui::Image((ImTextureID)(intptr_t)preview->texture, size);
+				}
+			}	
 
 			if (ImGui::Button(fileName.c_str(), ImVec2(150, 0))) {
 				if (extension == ".ora")
 					canvasManager.loadORA(filePath);
+				else if (extension == "") // no extensions means directory which means animation
+					canvasManager.loadAnimation(filePath);
 				else
 					canvasManager.loadFromFile(filePath);
 				// centering the loaded image 
@@ -646,7 +656,6 @@ void UI::drawStartScreen(CanvasManager& canvasManager)
 			}
 
 			ImGui::EndGroup();
-
 		}
 	}
 
@@ -1024,8 +1033,10 @@ void UI::drawCanvasTabs(CanvasManager& canvasManager)
 			std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
 			std::string extension = ImGuiFileDialog::Instance()->GetCurrentFilter();
 
-			if (canvasManager.getActive().isAnimation() && (extension == ".png" || extension == ".jpg"))
+			if (canvasManager.getActive().isAnimation() && (extension == ".png" || extension == ".jpg")) {
 				FrameRenderer::saveAnimation(filePath, canvasManager.getActive());
+				saveToRecentActivityCb(filePath);
+			}
 			else if (extension == ".ora")
 			{
 				canvasManager.saveORA(filePath);
@@ -1686,6 +1697,9 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 
 			FrameRenderer::saveAnimation(filePath, canvasManager.getActive());
 			canvasManager.getActive().isDirty = false;
+
+			// Save the animation directory to recent activity
+			saveToRecentActivityCb(filePath);
 		}
 
 		ImGuiFileDialog::Instance()->Close();
@@ -1697,6 +1711,9 @@ void UI::drawMainMenu(CanvasManager& canvasManager) {
 			std::string folder = ImGuiFileDialog::Instance()->GetCurrentPath();
 
 			canvasManager.loadAnimation(folder);
+
+			// Save the animation directory to recent activity
+			saveToRecentActivityCb(folder);
 
 			// if the current UI state is the start menu then change it to the main screen
 			if (curState == UIState::start_menu) { curState = UIState::main_screen; }
