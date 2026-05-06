@@ -81,6 +81,7 @@ public:
 	void removeLayer();
 	void selectLayer(int layerNum);
 	void swapLayers(int layerOne, int layerTwo);
+	void moveLayer(int fromLayer, int toLayer);
 	void reblendLayers();
 
 	// rotation, zoom, and offset data for each canvas

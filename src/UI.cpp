@@ -2220,7 +2220,7 @@ void UI::renderLayerInfo(CanvasManager& canvasManager) {
 	if (draggedLayer != -1 && !ImGui::IsMouseDown(0)) {
 		if (swapTarget != -1)
 		{
-			canvasManager.getActive().swapLayers(draggedLayer, swapTarget);
+			canvasManager.getActive().moveLayer(draggedLayer, swapTarget);
 			canvasManager.getActive().selectLayer(swapTarget);
 		}
 

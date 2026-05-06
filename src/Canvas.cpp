@@ -579,6 +579,32 @@ void Canvas::swapLayers(int layerOne, int layerTwo){
 	reblendLayers();
 }
 
+/*
+This function moves a layer from one position to another by recursively swapping with neighboring layers.
+*/
+void Canvas::moveLayer(int fromLayer, int toLayer) {
+	// makes sure its within range
+	if (fromLayer < 0 || fromLayer >= numLayers || toLayer < 0 || toLayer >= numLayers) {
+		return;
+	}
+	
+	// if at target layer then return
+	if (fromLayer == toLayer) {
+		return;
+	}
+	
+	// moving down layer list
+	if (fromLayer > toLayer) {
+		swapLayers(fromLayer, fromLayer - 1);
+		moveLayer(fromLayer - 1, toLayer);
+	}
+	// moving up layer list
+	else {
+		swapLayers(fromLayer, fromLayer + 1);
+		moveLayer(fromLayer + 1, toLayer);
+	}
+}
+
 
 void Canvas::loadImage(unsigned char* data, int layerIndex)
 {
