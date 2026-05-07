@@ -3,6 +3,15 @@ project(MockUp)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# Set default build type to Release if not specified
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
+# Optimization flags
+set(CMAKE_CXX_FLAGS_DEBUG "-O2 -g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
 # GLFW
 add_subdirectory(external/glfw)
 
